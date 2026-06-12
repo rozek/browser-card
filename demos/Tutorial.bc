@@ -1,0 +1,3578 @@
+{
+  "id": "bc-deck-700",
+  "name": "Tutorial",
+  "readOnly": false,
+  "swipeToAdjacentCard": true,
+  "script": "",
+  "CardWidth": 600,
+  "CardHeight": 450,
+  "SnapToGrid": true,
+  "GridWidth": 10,
+  "GridHeight": 10,
+  "cards": [
+    {
+      "id": "bc-card-701",
+      "name": "Welcome",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7001",
+          "number": 1,
+          "zIndex": 1,
+          "visible": true,
+          "script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 210) + 2) % 360 }))\non('render', () => {\n  const hue = me._hue ?? 210\n  return html`\n    <div style=${{\n      width:'100%', height:'100%',\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      background:`linear-gradient(120deg, hsl(${hue},65%,28%), hsl(${(hue+70)%360},70%,45%))`,\n      color:'#fff', borderRadius:'0 0 14px 14px',\n    }}>\n      <div style=${{ fontSize:'24px', fontWeight:'bold', letterSpacing:'3px' }}>BrowserCard Tutorial</div>\n      <div style=${{ fontSize:'11px', opacity:0.85 }}>an interactive tour - and itself just an ordinary deck</div>\n    </div>\n  `\n})",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Header",
+          "type": "generic",
+          "Offsets": [
+            0,
+            600,
+            0,
+            64
+          ],
+          "props": {}
+        },
+        {
+          "id": "bc-widget-7002",
+          "number": 2,
+          "zIndex": 2,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Intro",
+          "type": "field",
+          "Offsets": [
+            40,
+            520,
+            80,
+            100
+          ],
+          "text": "Welcome! BrowserCard is a browser-based reinterpretation of HyperCard: you build decks of cards, place widgets on them, and bring everything to life with small JavaScript snippets. No server, no build step - decks live in your browser and can be shared as plain files or complete web apps.",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 11,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7003",
+          "number": 3,
+          "zIndex": 3,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "DecoHex",
+          "type": "shape",
+          "Offsets": [
+            120,
+            90,
+            196,
+            64
+          ],
+          "variant": "polygon",
+          "sides": 6,
+          "fillColor": "#ede9fe",
+          "borderColor": "#7c3aed",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7004",
+          "number": 4,
+          "zIndex": 4,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "DecoOval",
+          "type": "shape",
+          "Offsets": [
+            255,
+            90,
+            208,
+            40
+          ],
+          "variant": "oval",
+          "fillColor": "#fce7f3",
+          "borderColor": "#ec4899",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7005",
+          "number": 5,
+          "zIndex": 5,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "DecoArc",
+          "type": "shape",
+          "Offsets": [
+            380,
+            100,
+            200,
+            56
+          ],
+          "variant": "arc",
+          "curvature": 0.4,
+          "arrowEnd": true,
+          "borderColor": "#0369a1",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7006",
+          "number": 6,
+          "zIndex": 6,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Start",
+          "type": "button",
+          "Offsets": [
+            210,
+            180,
+            300,
+            40
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Start the tour ▶"
+        },
+        {
+          "id": "bc-widget-7007",
+          "number": 7,
+          "zIndex": 7,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Hint",
+          "type": "field",
+          "Offsets": [
+            150,
+            300,
+            352,
+            22
+          ],
+          "text": "or use the ◀ ▶ buttons at the bottom of every card",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7008",
+          "number": 8,
+          "zIndex": 8,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7009",
+          "number": 9,
+          "zIndex": 9,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-702",
+      "name": "Concepts",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7021",
+          "number": 21,
+          "zIndex": 21,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#1d3461",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7022",
+          "number": 22,
+          "zIndex": 22,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "Concepts",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7010",
+          "number": 10,
+          "zIndex": 10,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain",
+          "type": "field",
+          "Offsets": [
+            16,
+            280,
+            52,
+            190
+          ],
+          "text": "A DECK is a document - like a HyperCard stack.\n\nIt contains an ordered list of CARDS, exactly one of which is shown at a time.\n\nEach card carries WIDGETS: buttons, text fields, shapes, pictures - and fully custom widgets you define yourself.\n\nEvery deck, card and widget has its own script.",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7011",
+          "number": 11,
+          "zIndex": 11,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "DeckBox",
+          "type": "shape",
+          "Offsets": [
+            316,
+            268,
+            52,
+            330
+          ],
+          "variant": "rounded-rectangle",
+          "cornerRadius": 12,
+          "fillColor": "#eef2ff",
+          "borderColor": "#1d3461",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7012",
+          "number": 12,
+          "zIndex": 12,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "DeckLabel",
+          "type": "field",
+          "Offsets": [
+            330,
+            80,
+            60,
+            22
+          ],
+          "text": "Deck",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#1d3461",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7013",
+          "number": 13,
+          "zIndex": 13,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "CardBox",
+          "type": "shape",
+          "Offsets": [
+            332,
+            236,
+            88,
+            232
+          ],
+          "variant": "rounded-rectangle",
+          "cornerRadius": 10,
+          "fillColor": "#ffffff",
+          "borderColor": "#3b82f6",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7014",
+          "number": 14,
+          "zIndex": 14,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "CardLabel",
+          "type": "field",
+          "Offsets": [
+            346,
+            80,
+            96,
+            22
+          ],
+          "text": "Card",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#3b82f6",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7015",
+          "number": 15,
+          "zIndex": 15,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "WidgetBtn",
+          "type": "shape",
+          "Offsets": [
+            350,
+            110,
+            130,
+            30
+          ],
+          "variant": "rounded-rectangle",
+          "cornerRadius": 8,
+          "fillColor": "#1d6fd8",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7016",
+          "number": 16,
+          "zIndex": 16,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "WidgetBtnLabel",
+          "type": "field",
+          "Offsets": [
+            350,
+            110,
+            134,
+            22
+          ],
+          "text": "a button",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#ffffff",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7017",
+          "number": 17,
+          "zIndex": 17,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "WidgetOval",
+          "type": "shape",
+          "Offsets": [
+            490,
+            96,
+            130,
+            30
+          ],
+          "variant": "oval",
+          "fillColor": "#fce7f3",
+          "borderColor": "#ec4899",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7018",
+          "number": 18,
+          "zIndex": 18,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "WidgetField",
+          "type": "shape",
+          "Offsets": [
+            350,
+            236,
+            176,
+            46
+          ],
+          "variant": "rectangle",
+          "fillColor": "#f8fafc",
+          "borderColor": "#94a3b8",
+          "borderWidth": 1
+        },
+        {
+          "id": "bc-widget-7019",
+          "number": 19,
+          "zIndex": 19,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "WidgetFieldLabel",
+          "type": "field",
+          "Offsets": [
+            358,
+            160,
+            184,
+            22
+          ],
+          "text": "a text field",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#64748b"
+        },
+        {
+          "id": "bc-widget-7020",
+          "number": 20,
+          "zIndex": 20,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "WidgetsLabel",
+          "type": "field",
+          "Offsets": [
+            350,
+            236,
+            294,
+            22
+          ],
+          "text": "… these are widgets",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7023",
+          "number": 23,
+          "zIndex": 23,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7024",
+          "number": 24,
+          "zIndex": 24,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7025",
+          "number": 25,
+          "zIndex": 25,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-703",
+      "name": "Buttons & Fields",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7039",
+          "number": 39,
+          "zIndex": 39,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#0c4a6e",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7040",
+          "number": 40,
+          "zIndex": 40,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "Buttons & Fields",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7026",
+          "number": 26,
+          "zIndex": 26,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label1",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            46,
+            24
+          ],
+          "text": "buttons come in 8 styles - click any:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7027",
+          "number": 27,
+          "zIndex": 27,
+          "visible": true,
+          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Rounded",
+          "type": "button",
+          "Offsets": [
+            16,
+            130,
+            74,
+            28
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false
+        },
+        {
+          "id": "bc-widget-7028",
+          "number": 28,
+          "zIndex": 28,
+          "visible": true,
+          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Standard",
+          "type": "button",
+          "Offsets": [
+            158,
+            130,
+            74,
+            28
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false
+        },
+        {
+          "id": "bc-widget-7029",
+          "number": 29,
+          "zIndex": 29,
+          "visible": true,
+          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Oval",
+          "type": "button",
+          "Offsets": [
+            16,
+            130,
+            108,
+            28
+          ],
+          "variant": "oval",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false
+        },
+        {
+          "id": "bc-widget-7030",
+          "number": 30,
+          "zIndex": 30,
+          "visible": true,
+          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Shadow",
+          "type": "button",
+          "Offsets": [
+            158,
+            130,
+            108,
+            28
+          ],
+          "variant": "shadow",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false
+        },
+        {
+          "id": "bc-widget-7031",
+          "number": 31,
+          "zIndex": 31,
+          "visible": true,
+          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Checkbox",
+          "type": "button",
+          "Offsets": [
+            16,
+            272,
+            142,
+            22
+          ],
+          "variant": "checkbox",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "a checkbox - it toggles"
+        },
+        {
+          "id": "bc-widget-7032",
+          "number": 32,
+          "zIndex": 32,
+          "visible": true,
+          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Radio",
+          "type": "button",
+          "Offsets": [
+            16,
+            272,
+            170,
+            22
+          ],
+          "variant": "radio",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "a radio button"
+        },
+        {
+          "id": "bc-widget-7033",
+          "number": 33,
+          "zIndex": 33,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Out",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            200,
+            40
+          ],
+          "variant": "rectangle",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#223",
+          "text": "(button clicks are reported here)"
+        },
+        {
+          "id": "bc-widget-7034",
+          "number": 34,
+          "zIndex": 34,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label2",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            250,
+            40
+          ],
+          "text": "each button runs its own little script when clicked - more about scripting in a minute",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7035",
+          "number": 35,
+          "zIndex": 35,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label3",
+          "type": "field",
+          "Offsets": [
+            304,
+            280,
+            46,
+            24
+          ],
+          "text": "fields hold text - some are editable:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7036",
+          "number": 36,
+          "zIndex": 36,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Editable",
+          "type": "field",
+          "Offsets": [
+            304,
+            280,
+            74,
+            84
+          ],
+          "variant": "opaque",
+          "lockText": false,
+          "scrolling": true,
+          "showLines": true,
+          "dontSearch": false,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#223",
+          "text": "this field is editable right here in browse mode - click and type!"
+        },
+        {
+          "id": "bc-widget-7037",
+          "number": 37,
+          "zIndex": 37,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Locked",
+          "type": "field",
+          "Offsets": [
+            304,
+            280,
+            168,
+            28
+          ],
+          "variant": "shadow",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "textAlign": "center",
+          "color": "#345",
+          "text": "this one is locked (and centered)"
+        },
+        {
+          "id": "bc-widget-7038",
+          "number": 38,
+          "zIndex": 38,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label4",
+          "type": "field",
+          "Offsets": [
+            304,
+            280,
+            206,
+            56
+          ],
+          "text": "whatever you type is written back into the field's data (me.text) - scripts always see the current content",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7041",
+          "number": 41,
+          "zIndex": 41,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7042",
+          "number": 42,
+          "zIndex": 42,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7043",
+          "number": 43,
+          "zIndex": 43,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-704",
+      "name": "Shapes & Pictures",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7059",
+          "number": 59,
+          "zIndex": 59,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#14532d",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7060",
+          "number": 60,
+          "zIndex": 60,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "Shapes & Pictures",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7044",
+          "number": 44,
+          "zIndex": 44,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label1",
+          "type": "field",
+          "Offsets": [
+            16,
+            300,
+            46,
+            24
+          ],
+          "text": "shapes: rectangles, ovals, polygons …",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7045",
+          "number": 45,
+          "zIndex": 45,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Rect",
+          "type": "shape",
+          "Offsets": [
+            16,
+            110,
+            72,
+            46
+          ],
+          "variant": "rounded-rectangle",
+          "cornerRadius": 12,
+          "fillColor": "#dcfce7",
+          "borderColor": "#22c55e",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7046",
+          "number": 46,
+          "zIndex": 46,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Oval",
+          "type": "shape",
+          "Offsets": [
+            136,
+            110,
+            72,
+            46
+          ],
+          "variant": "oval",
+          "fillColor": "#fce7f3",
+          "borderColor": "#ec4899",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7047",
+          "number": 47,
+          "zIndex": 47,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Hexagon",
+          "type": "shape",
+          "Offsets": [
+            256,
+            90,
+            68,
+            52
+          ],
+          "variant": "polygon",
+          "sides": 6,
+          "fillColor": "#ede9fe",
+          "borderColor": "#7c3aed",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7048",
+          "number": 48,
+          "zIndex": 48,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Twelve",
+          "type": "shape",
+          "Offsets": [
+            356,
+            90,
+            68,
+            52
+          ],
+          "variant": "polygon",
+          "sides": 12,
+          "fillColor": "#dbeafe",
+          "borderColor": "#2563eb",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7049",
+          "number": 49,
+          "zIndex": 49,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label2",
+          "type": "field",
+          "Offsets": [
+            16,
+            300,
+            128,
+            24
+          ],
+          "text": "… lines and arcs, with arrowheads:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7050",
+          "number": 50,
+          "zIndex": 50,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "ArrowLine",
+          "type": "shape",
+          "Offsets": [
+            16,
+            130,
+            154,
+            40
+          ],
+          "variant": "line",
+          "borderColor": "#0369a1",
+          "borderWidth": 3,
+          "arrowStart": true,
+          "arrowEnd": true
+        },
+        {
+          "id": "bc-widget-7051",
+          "number": 51,
+          "zIndex": 51,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "ArcUp",
+          "type": "shape",
+          "Offsets": [
+            186,
+            130,
+            154,
+            40
+          ],
+          "variant": "arc",
+          "curvature": 0.5,
+          "arrowEnd": true,
+          "borderColor": "#9333ea",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7052",
+          "number": 52,
+          "zIndex": 52,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "ArcDown",
+          "type": "shape",
+          "Offsets": [
+            356,
+            130,
+            154,
+            40
+          ],
+          "variant": "arc",
+          "curvature": -0.5,
+          "arrowEnd": true,
+          "borderColor": "#ca8a04",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7053",
+          "number": 53,
+          "zIndex": 53,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label3",
+          "type": "field",
+          "Offsets": [
+            16,
+            300,
+            184,
+            24
+          ],
+          "text": "pictures scale in five different modes:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7054",
+          "number": 54,
+          "zIndex": 54,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "PicFit",
+          "type": "picture",
+          "Offsets": [
+            16,
+            130,
+            210,
+            86
+          ],
+          "variant": "scale-aspect-fit",
+          "autoHilite": false,
+          "imageData": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2280%22%20height%3D%2260%22%3E%3Crect%20width%3D%2280%22%20height%3D%2260%22%20fill%3D%22%23ffd166%22%2F%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2230%22%20r%3D%2222%22%20fill%3D%22%23ef476f%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2235%22%20font-size%3D%2213%22%20text-anchor%3D%22middle%22%20fill%3D%22%23fff%22%3E80x60%3C%2Ftext%3E%3C%2Fsvg%3E",
+          "actualWidth": 80,
+          "actualHeight": 60
+        },
+        {
+          "id": "bc-widget-7055",
+          "number": 55,
+          "zIndex": 55,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "PicFill",
+          "type": "picture",
+          "Offsets": [
+            156,
+            130,
+            210,
+            86
+          ],
+          "variant": "scale-aspect-fill",
+          "autoHilite": false,
+          "imageData": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2280%22%20height%3D%2260%22%3E%3Crect%20width%3D%2280%22%20height%3D%2260%22%20fill%3D%22%23ffd166%22%2F%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2230%22%20r%3D%2222%22%20fill%3D%22%23ef476f%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2235%22%20font-size%3D%2213%22%20text-anchor%3D%22middle%22%20fill%3D%22%23fff%22%3E80x60%3C%2Ftext%3E%3C%2Fsvg%3E",
+          "actualWidth": 80,
+          "actualHeight": 60
+        },
+        {
+          "id": "bc-widget-7056",
+          "number": 56,
+          "zIndex": 56,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "PicActual",
+          "type": "picture",
+          "Offsets": [
+            296,
+            130,
+            210,
+            86
+          ],
+          "variant": "actual-size",
+          "autoHilite": false,
+          "imageData": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2280%22%20height%3D%2260%22%3E%3Crect%20width%3D%2280%22%20height%3D%2260%22%20fill%3D%22%23ffd166%22%2F%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2230%22%20r%3D%2222%22%20fill%3D%22%23ef476f%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2235%22%20font-size%3D%2213%22%20text-anchor%3D%22middle%22%20fill%3D%22%23fff%22%3E80x60%3C%2Ftext%3E%3C%2Fsvg%3E",
+          "actualWidth": 80,
+          "actualHeight": 60
+        },
+        {
+          "id": "bc-widget-7057",
+          "number": 57,
+          "zIndex": 57,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "PicNote",
+          "type": "field",
+          "Offsets": [
+            436,
+            148,
+            210,
+            86
+          ],
+          "text": "aspect-fit, aspect-fill and actual-size of the same 80x60 SVG",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7058",
+          "number": 58,
+          "zIndex": 58,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label4",
+          "type": "field",
+          "Offsets": [
+            16,
+            568,
+            306,
+            36
+          ],
+          "text": "every widget is positioned with anchors + offsets, so layouts may also stretch with the card - and snap to a grid while editing",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7061",
+          "number": 61,
+          "zIndex": 61,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7062",
+          "number": 62,
+          "zIndex": 62,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7063",
+          "number": 63,
+          "zIndex": 63,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-705",
+      "name": "Scripting",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7075",
+          "number": 75,
+          "zIndex": 75,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#4c1d95",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7076",
+          "number": 76,
+          "zIndex": 76,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "Scripting",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7064",
+          "number": 64,
+          "zIndex": 64,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            46,
+            60
+          ],
+          "text": "every visual has a script: plain JavaScript that registers handlers with on(). The script of a button may be just one line:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7065",
+          "number": 65,
+          "zIndex": 65,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Code1",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            112,
+            34
+          ],
+          "variant": "rectangle",
+          "lockText": true,
+          "scrolling": true,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#0a3069",
+          "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
+          "text": "on('touchUp', () => go(nextCard))"
+        },
+        {
+          "id": "bc-widget-7066",
+          "number": 66,
+          "zIndex": 66,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain2",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            156,
+            40
+          ],
+          "text": "dialogs are async and return real values:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7067",
+          "number": 67,
+          "zIndex": 67,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Code2",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            200,
+            62
+          ],
+          "variant": "rectangle",
+          "lockText": true,
+          "scrolling": true,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#0a3069",
+          "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
+          "text": "on('touchUp', async () => {\n  const Choice = await answer('Sure?','Yes','No')\n  widget('Out').text = 'you chose: ' + Choice\n})"
+        },
+        {
+          "id": "bc-widget-7068",
+          "number": 68,
+          "zIndex": 68,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain3",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            270,
+            40
+          ],
+          "text": "try them - the results appear on the right:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7069",
+          "number": 69,
+          "zIndex": 69,
+          "visible": true,
+          "script": "on('touchUp', async () => { const Choice = await answer('Sure?','Yes','No'); widget('Out').text = 'answer(...) returned: ' + JSON.stringify(Choice) })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "TryAnswer",
+          "type": "button",
+          "Offsets": [
+            304,
+            132,
+            46,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "answer(…)"
+        },
+        {
+          "id": "bc-widget-7070",
+          "number": 70,
+          "zIndex": 70,
+          "visible": true,
+          "script": "on('touchUp', async () => { const Reply = await ask('Your name?','stranger'); widget('Out').text = (Reply === null ? 'ask(...) was cancelled (null)' : 'ask(...) returned: ' + JSON.stringify(Reply)) })",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "TryAsk",
+          "type": "button",
+          "Offsets": [
+            444,
+            132,
+            46,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "ask(…)"
+        },
+        {
+          "id": "bc-widget-7071",
+          "number": 71,
+          "zIndex": 71,
+          "visible": true,
+          "script": "on('touchUp', () => println('println() writes to the built-in console!'))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "TryPrintln",
+          "type": "button",
+          "Offsets": [
+            304,
+            132,
+            88,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "println(…)"
+        },
+        {
+          "id": "bc-widget-7072",
+          "number": 72,
+          "zIndex": 72,
+          "visible": true,
+          "script": "on('touchUp', () => openURL('https://github.com/rozek/browser-card'))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "TryURL",
+          "type": "button",
+          "Offsets": [
+            444,
+            132,
+            88,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "openURL(…)"
+        },
+        {
+          "id": "bc-widget-7073",
+          "number": 73,
+          "zIndex": 73,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Out",
+          "type": "field",
+          "Offsets": [
+            304,
+            272,
+            130,
+            56
+          ],
+          "variant": "rectangle",
+          "lockText": true,
+          "scrolling": true,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#223",
+          "text": "(dialog results appear here)"
+        },
+        {
+          "id": "bc-widget-7074",
+          "number": 74,
+          "zIndex": 74,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Note",
+          "type": "field",
+          "Offsets": [
+            304,
+            272,
+            334,
+            56
+          ],
+          "text": "navigation: go(nextCard), go('Card Name') or go(3) - plus card(), cardNumber() and cardCount()",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7077",
+          "number": 77,
+          "zIndex": 77,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7078",
+          "number": 78,
+          "zIndex": 78,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7079",
+          "number": 79,
+          "zIndex": 79,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-706",
+      "name": "Custom Widgets & State",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7088",
+          "number": 88,
+          "zIndex": 88,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#7c2d12",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7089",
+          "number": 89,
+          "zIndex": 89,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "Custom Widgets & State",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7080",
+          "number": 80,
+          "zIndex": 80,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            46,
+            78
+          ],
+          "text": "custom widgets render themselves with Preact + htm: register on('render') and return an html template. Assignments to me.* re-render the widget AND are saved with the deck:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7081",
+          "number": 81,
+          "zIndex": 81,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Code",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            130,
+            118
+          ],
+          "variant": "rectangle",
+          "lockText": true,
+          "scrolling": true,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#0a3069",
+          "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
+          "text": "on('render', () => {\n  const count = me.count ?? 0\n  return html`\n    <div>\n      <b>${count}</b>\n      <button onClick=${() => {\n        me.count = count+1\n      }}>+</button>\n    </div>`\n})"
+        },
+        {
+          "id": "bc-widget-7082",
+          "number": 82,
+          "zIndex": 82,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Note",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            256,
+            56
+          ],
+          "text": "use me.own.* for private state that should neither re-render nor be persisted",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7083",
+          "number": 83,
+          "zIndex": 83,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label1",
+          "type": "field",
+          "Offsets": [
+            304,
+            272,
+            46,
+            24
+          ],
+          "text": "this counter is exactly that widget:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7084",
+          "number": 84,
+          "zIndex": 84,
+          "visible": true,
+          "script": "on('render', () => {\n  const count = me.count ?? 0\n  return html`\n    <div style=${{ display:'flex', flexDirection:'column', alignItems:'center',\n      justifyContent:'center', gap:'6px', width:'100%', height:'100%',\n      background:'#fff', border:'2px solid #1d3461', borderRadius:'10px' }}>\n      <div style=${{ fontSize:'30px', fontWeight:'bold', color:'#1d3461', lineHeight:1 }}>${count}</div>\n      <div>\n        <button style=${{ padding:'3px 12px', marginRight:'6px' }} onClick=${() => { me.count = count-1 }}>-</button>\n        <button style=${{ padding:'3px 12px' }} onClick=${() => { me.count = count+1 }}>+</button>\n      </div>\n    </div>`\n})",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Counter",
+          "type": "generic",
+          "Offsets": [
+            304,
+            272,
+            74,
+            90
+          ],
+          "props": {}
+        },
+        {
+          "id": "bc-widget-7085",
+          "number": 85,
+          "zIndex": 85,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label2",
+          "type": "field",
+          "Offsets": [
+            304,
+            272,
+            172,
+            24
+          ],
+          "text": "and this clock ticks via every():",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7086",
+          "number": 86,
+          "zIndex": 86,
+          "visible": true,
+          "script": "on('ready', () => every(1000, () => { me._now = Date.now() }))\non('render', () => {\n  const now = new Date(me._now ?? Date.now())\n  const pad = (n) => String(n).padStart(2,'0')\n  return html`\n    <div style=${{ display:'flex', alignItems:'center', justifyContent:'center',\n      width:'100%', height:'100%', background:'#101418', color:'#7fdcff',\n      fontFamily:'ui-monospace, monospace', fontSize:'18px', letterSpacing:'2px',\n      borderRadius:'10px' }}>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</div>`\n})",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Clock",
+          "type": "generic",
+          "Offsets": [
+            304,
+            272,
+            198,
+            46
+          ],
+          "props": {}
+        },
+        {
+          "id": "bc-widget-7087",
+          "number": 87,
+          "zIndex": 87,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Note2",
+          "type": "field",
+          "Offsets": [
+            304,
+            272,
+            252,
+            56
+          ],
+          "text": "the counter value survives card changes and is persisted with the deck - try it, leave and come back!",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7090",
+          "number": 90,
+          "zIndex": 90,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7091",
+          "number": 91,
+          "zIndex": 91,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7092",
+          "number": 92,
+          "zIndex": 92,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-707",
+      "name": "Messaging & Timers",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7101",
+          "number": 101,
+          "zIndex": 101,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#831843",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7102",
+          "number": 102,
+          "zIndex": 102,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "Messaging & Timers",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7093",
+          "number": 93,
+          "zIndex": 93,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            46,
+            60
+          ],
+          "text": "widgets talk to each other: send('Dice','roll') delivers a message to the script of the dice widget:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7094",
+          "number": 94,
+          "zIndex": 94,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Code",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            112,
+            50
+          ],
+          "variant": "rectangle",
+          "lockText": true,
+          "scrolling": true,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#0a3069",
+          "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
+          "text": "// in the dice widget's script:\non('roll', () => {\n  me._value = 1 + Math.floor(Math.random()*6)\n})"
+        },
+        {
+          "id": "bc-widget-7095",
+          "number": 95,
+          "zIndex": 95,
+          "visible": true,
+          "script": "on('touchUp', () => send('Dice','roll'))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Roll",
+          "type": "button",
+          "Offsets": [
+            16,
+            272,
+            174,
+            32
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "send('Dice','roll') ▶"
+        },
+        {
+          "id": "bc-widget-7096",
+          "number": 96,
+          "zIndex": 96,
+          "visible": true,
+          "script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return html`\n    <div style=${{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px',\n      width:'100%', height:'100%', background:'#fff', border:'2px solid #1d3461', borderRadius:'10px' }}>\n      <div style=${{ display:'grid', gridTemplateColumns:'repeat(3,9px)', gridTemplateRows:'repeat(3,9px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa', border:'1px solid #ccd', borderRadius:'8px' }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => html`\n          <div key=${i} style=${{ width:'9px', height:'9px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent' }}></div>`)}\n      </div>\n      <div style=${{ fontSize:'24px', fontWeight:'bold', color:'#1d3461' }}>${value}</div>\n    </div>`\n})",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Dice",
+          "type": "generic",
+          "Offsets": [
+            16,
+            272,
+            214,
+            70
+          ],
+          "props": {}
+        },
+        {
+          "id": "bc-widget-7097",
+          "number": 97,
+          "zIndex": 97,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Label1",
+          "type": "field",
+          "Offsets": [
+            304,
+            272,
+            46,
+            40
+          ],
+          "text": "timers via every() and after() clean up after themselves:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7098",
+          "number": 98,
+          "zIndex": 98,
+          "visible": true,
+          "script": "on('ready', () => {\n  me.own.t0 = Date.now()\n  every(100, () => { me._ms = Date.now()-me.own.t0 })\n})\non('render', () => html`\n  <div style=${{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n    width:'100%', height:'100%', background:'#101418', color:'#7fdcff', borderRadius:'10px' }}>\n    <div style=${{ fontSize:'22px', fontFamily:'ui-monospace, monospace' }}>${((me._ms ?? 0)/1000).toFixed(1)}s</div>\n    <div style=${{ fontSize:'9px', opacity:0.7 }}>since you arrived on this card</div>\n  </div>`)",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Stopwatch",
+          "type": "generic",
+          "Offsets": [
+            304,
+            272,
+            94,
+            74
+          ],
+          "props": {}
+        },
+        {
+          "id": "bc-widget-7099",
+          "number": 99,
+          "zIndex": 99,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Note",
+          "type": "field",
+          "Offsets": [
+            304,
+            272,
+            176,
+            76
+          ],
+          "text": "leave this card and come back: the stopwatch restarts because its every() timer is cancelled automatically when the card disappears - no manual cleanup needed",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7100",
+          "number": 100,
+          "zIndex": 100,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Note2",
+          "type": "field",
+          "Offsets": [
+            16,
+            272,
+            296,
+            56
+          ],
+          "text": "a click on a button also bubbles a touchUp message up to the script of its card",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6"
+        },
+        {
+          "id": "bc-widget-7103",
+          "number": 103,
+          "zIndex": 103,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7104",
+          "number": 104,
+          "zIndex": 104,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7105",
+          "number": 105,
+          "zIndex": 105,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-708",
+      "name": "The Designer",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7110",
+          "number": 110,
+          "zIndex": 110,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#374151",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7111",
+          "number": 111,
+          "zIndex": 111,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "The Designer",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7106",
+          "number": 106,
+          "zIndex": 106,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain",
+          "type": "field",
+          "Offsets": [
+            16,
+            400,
+            46,
+            40
+          ],
+          "text": "everything you saw can be built visually - this tutorial deck included. Open the designer and:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7107",
+          "number": 107,
+          "zIndex": 107,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Checklist",
+          "type": "field",
+          "Offsets": [
+            30,
+            540,
+            92,
+            216
+          ],
+          "text": "✎ Edit toggles edit mode - drag widgets around, resize them with 8 handles, nudge with arrow keys, snap to a grid\n\nthe properties panel (right) edits every detail; multi-line texts open in a draggable editor window via ⤢\n\n\"+ New\" inserts widgets, \"Card ▾\" manages cards, \"▦ Cards\" shows wireframe thumbnails of the whole deck\n\nundo/redo (Ctrl/Cmd+Z), and copy/paste cards or widgets across decks via the clipboard\n\n📷 downloads a screenshot of the card in its native pixel size",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7108",
+          "number": 108,
+          "zIndex": 108,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "PlayArea",
+          "type": "shape",
+          "Offsets": [
+            420,
+            150,
+            260,
+            80
+          ],
+          "variant": "rounded-rectangle",
+          "cornerRadius": 12,
+          "fillColor": "#fde68a",
+          "borderColor": "#d97706",
+          "borderWidth": 2
+        },
+        {
+          "id": "bc-widget-7109",
+          "number": 109,
+          "zIndex": 109,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "PlayLabel",
+          "type": "field",
+          "Offsets": [
+            424,
+            150,
+            288,
+            40
+          ],
+          "text": "practice on me - enter edit mode and drag me around!",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#92400e",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7112",
+          "number": 112,
+          "zIndex": 112,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7113",
+          "number": 113,
+          "zIndex": 113,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7114",
+          "number": 114,
+          "zIndex": 114,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-709",
+      "name": "Sharing & Export",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7119",
+          "number": 119,
+          "zIndex": 119,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#0f766e",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7120",
+          "number": 120,
+          "zIndex": 120,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "Sharing & Export",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7115",
+          "number": 115,
+          "zIndex": 115,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Explain",
+          "type": "field",
+          "Offsets": [
+            16,
+            560,
+            46,
+            40
+          ],
+          "text": "decks are plain JSON and travel well. Everything lives in the \"Deck ▾\" menu:",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7116",
+          "number": 116,
+          "zIndex": 116,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Steps",
+          "type": "field",
+          "Offsets": [
+            30,
+            540,
+            92,
+            152
+          ],
+          "text": "1.  Export as JSON - the raw deck data, re-importable anywhere (also from a URL)\n\n2.  Export for Embedding… - an HTML snippet with a ready-made <bc-deck> element for any web page\n\n3.  Export as Standalone App… - a complete HTML file: open it anywhere and this very tutorial runs as its own web app, no designer required",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334"
+        },
+        {
+          "id": "bc-widget-7117",
+          "number": 117,
+          "zIndex": 117,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Code",
+          "type": "field",
+          "Offsets": [
+            30,
+            540,
+            252,
+            62
+          ],
+          "variant": "rectangle",
+          "lockText": true,
+          "scrolling": true,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#0a3069",
+          "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
+          "text": "<script type=\"module\"\n  src=\"https://rozek.github.io/browser-card/dist/BrowserCard.js\"></script>\n<bc-deck style=\"display:block; width:100%; height:100%\" src=\"…\"></bc-deck>"
+        },
+        {
+          "id": "bc-widget-7118",
+          "number": 118,
+          "zIndex": 118,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Note",
+          "type": "field",
+          "Offsets": [
+            30,
+            540,
+            324,
+            40
+          ],
+          "text": "that is the entire embedding code - the deck JSON goes into the src attribute. Try it: export THIS deck as a standalone app and open the file!",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#0f766e",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7121",
+          "number": 121,
+          "zIndex": 121,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7122",
+          "number": 122,
+          "zIndex": 122,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        },
+        {
+          "id": "bc-widget-7123",
+          "number": 123,
+          "zIndex": 123,
+          "visible": true,
+          "script": "on('touchUp', () => go(nextCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Next",
+          "type": "button",
+          "Offsets": [
+            494,
+            90,
+            406,
+            30
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Next ▶"
+        }
+      ]
+    },
+    {
+      "id": "bc-card-710",
+      "name": "The End",
+      "color": "#f7f8fb",
+      "alpha": 1,
+      "dontSearch": false,
+      "script": "on('ready', () => {\n  const P = widget('Progress')\n  if (P != null) { P.text = cardNumber() + ' / ' + cardCount() }\n})",
+      "objects": [
+        {
+          "id": "bc-widget-7124",
+          "number": 124,
+          "zIndex": 124,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderBar",
+          "type": "shape",
+          "Offsets": [
+            0,
+            600,
+            0,
+            36
+          ],
+          "variant": "rectangle",
+          "fillColor": "#1d3461",
+          "borderColor": "transparent",
+          "borderWidth": 0
+        },
+        {
+          "id": "bc-widget-7125",
+          "number": 125,
+          "zIndex": 125,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "HeaderTitle",
+          "type": "field",
+          "Offsets": [
+            12,
+            460,
+            4,
+            29
+          ],
+          "text": "That's BrowserCard!",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 13,
+          "color": "#ffffff",
+          "fontWeight": "bold"
+        },
+        {
+          "id": "bc-widget-7126",
+          "number": 126,
+          "zIndex": 126,
+          "visible": true,
+          "script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 120) + 3) % 360 }))\non('render', () => html`\n  <div style=${{ display:'flex', alignItems:'center', justifyContent:'center',\n    width:'100%', height:'100%', borderRadius:'12px',\n    background:`linear-gradient(120deg, hsl(${me._hue ?? 120},65%,35%), hsl(${((me._hue ?? 120)+80)%360},70%,45%))`,\n    color:'#fff', fontSize:'22px', fontWeight:'bold', letterSpacing:'2px' }}>\n    🎉 you made it!\n  </div>`)",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Banner",
+          "type": "generic",
+          "Offsets": [
+            120,
+            360,
+            56,
+            64
+          ],
+          "props": {}
+        },
+        {
+          "id": "bc-widget-7127",
+          "number": 127,
+          "zIndex": 127,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Recap",
+          "type": "field",
+          "Offsets": [
+            60,
+            480,
+            136,
+            120
+          ],
+          "text": "You have seen decks, cards and widgets - buttons, fields, shapes, pictures and custom widgets - plus scripting with dialogs, messaging, timers, reactive state, the visual designer, and how to share your work as JSON, embed snippet or standalone web app.\n\nNow build something of your own!",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 10,
+          "color": "#334",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7128",
+          "number": 128,
+          "zIndex": 128,
+          "visible": true,
+          "script": "on('touchUp', () => go(firstCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Restart",
+          "type": "button",
+          "Offsets": [
+            120,
+            170,
+            280,
+            36
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "↺ Restart the tour"
+        },
+        {
+          "id": "bc-widget-7129",
+          "number": 129,
+          "zIndex": 129,
+          "visible": true,
+          "script": "on('touchUp', () => openURL('https://github.com/rozek/browser-card'))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Repo",
+          "type": "button",
+          "Offsets": [
+            310,
+            170,
+            280,
+            36
+          ],
+          "variant": "rounded-rect",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "Visit the repo ↗"
+        },
+        {
+          "id": "bc-widget-7130",
+          "number": 130,
+          "zIndex": 130,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Bye",
+          "type": "field",
+          "Offsets": [
+            150,
+            300,
+            330,
+            22
+          ],
+          "text": "BrowserCard - HyperCard, reborn in your browser",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7131",
+          "number": 131,
+          "zIndex": 131,
+          "visible": true,
+          "script": "",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Progress",
+          "type": "field",
+          "Offsets": [
+            255,
+            90,
+            410,
+            22
+          ],
+          "text": "",
+          "variant": "transparent",
+          "lockText": true,
+          "scrolling": false,
+          "showLines": false,
+          "dontSearch": true,
+          "sharedText": false,
+          "fontSize": 9,
+          "color": "#8892a6",
+          "textAlign": "center"
+        },
+        {
+          "id": "bc-widget-7132",
+          "number": 132,
+          "zIndex": 132,
+          "visible": true,
+          "script": "on('touchUp', () => go(prevCard))",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "name": "Back",
+          "type": "button",
+          "Offsets": [
+            16,
+            90,
+            406,
+            30
+          ],
+          "variant": "standard",
+          "showName": true,
+          "autoHilite": true,
+          "enabled": true,
+          "sharedHilite": false,
+          "text": "◀ Back"
+        }
+      ]
+    }
+  ]
+}

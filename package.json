@@ -1,0 +1,63 @@
+{
+  "name": "browser-card",
+  "version": "0.0.17",
+  "description": "a HyperCard reinterpretation for the web — build, script and share interactive card stacks right in your browser, then embed them anywhere as a custom element",
+  "license": "MIT",
+  "author": "Andreas Rozek <a.rozek@gmx.de> (https://www.rozek.de)",
+  "type": "module",
+  "module": "./dist/BrowserCard.js",
+  "exports": {
+    ".": "./dist/BrowserCard.js"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rozek/browser-card.git"
+  },
+  "homepage": "https://rozek.github.io/browser-card/",
+  "bugs": "https://github.com/rozek/browser-card/issues",
+  "keywords": [
+    "hypercard",
+    "novocard",
+    "card-stack",
+    "authoring-tool",
+    "no-code",
+    "low-code",
+    "visual-editor",
+    "custom-elements",
+    "web-components",
+    "typescript",
+    "preact",
+    "htm",
+    "indexeddb",
+    "esm",
+    "embeddable",
+    "interactive-documents",
+    "hypermedia"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:applet": "tsc && vite build --mode applet",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "htm": "^3.1.1",
+    "idb-keyval": "^6.2.4",
+    "javascript-interface-library": "^1.0.8",
+    "marked": "^18.0.4",
+    "marked-highlight": "^2.2.4",
+    "marked-katex-extension": "^5.1.10",
+    "preact": "^10.24.3",
+    "svelte-coordinate-conversion": "^1.0.3"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.5"
+  }
+}

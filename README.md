@@ -4,6 +4,8 @@
 
 BrowserCard (abbreviation: **BC**) is a browser-based reinterpretation of [NovoCard](http://plectrum.com/novocard/NovoCard.html) by Plectrum - itself a reinterpretation of Apple's legendary [HyperCard](https://en.wikipedia.org/wiki/HyperCard) (1987). NovoCard was originally an iPad app (2012-2013) but BrowserCard brings the concept to modern desktop and mobile browsers - without any server: decks live in your browser's IndexedDB and may be exported as plain JSON files or complete web pages.
 
+Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.html)!
+
 ![Screenshot of a simple BrowserCard deck](Showcase.png)
 
 > This work was intended as a test (of my agent skills and) of Anthropic's new model "Fable 5": the preparatory work - in the form of an analysis of the available information on NovoCard, considerations regarding useful changes for use in the browser, and the creation of a data model and a specification - was done in advance (by [my own variant](https://github.com/rozek/nanoclaw) of [nanoclaw](https://github.com/nanocoai/nanoclaw)); but the actual implementation was handled almost entirely by Claude Cowork and Fable 5. And, what can I say: in my opinion, the new model passed with flying colors!

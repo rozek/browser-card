@@ -78,6 +78,135 @@ A stack has a *native* canvas size, set in the designer via the deck properties 
 
 Priority: CSS variables → `CardWidth`/`CardHeight` from the stack → built-in defaults.
 
+
+## Scripting Guide
+
+Every visual - the stack itself, every card, and every object on a card - has its own script, written in **BrowserScript**: plain, modern JavaScript with a small set of injected functions and values. Edit scripts in the properties panel (applied when the field loses focus) or click "⤢" to open them in a draggable, resizable editor window.
+
+A script runs **asynchronously** whenever its visual is instantiated (when the stack loads, when its card is shown) - and again after every script change. Its job is to do any setup it needs and to register handlers for messages:
+
+> Nota bene: because of their asynchronous nature, you are allowed to import external ESM modules using "import" expressions like `import { z } from 'https://cdn.jsdelivr.net/npm/zod@3/+esm'`
+
+```javascript
+on('touchUp', () => go(nextCard))            // a button script: navigate on click
+```
+
+Handlers may be `async` and may use the full BrowserScript API:
+
+```javascript
+on('touchUp', async () => {
+  const Choice = await answer('Delete everything?', 'Yes', 'No')
+  if (Choice === 'Yes') {
+    const Reason = await ask('Why?', 'just because')
+    if (Reason != null) { println('deleted because: ' + Reason) }
+  }
+})
+```
+
+### Reactive state with `me` and `my`
+
+Inside a script, `me` (synonym: `my`) is a reactive proxy of the visual itself. Reading gives you its current properties (including live geometry), writing re-renders it immediately - and since assignments become part of the stack data, they are persisted together with the stack when you edit in the designer:
+
+```javascript
+on('render', () => {                              // a custom widget: a counter
+  const count = my.count ?? 0
+  return html`
+    <div style=${{ textAlign:'center' }}>
+      <b>${count}</b>
+      <button onClick=${() => { my.count = count+1 }}>+</button>
+    </div>
+  `
+})
+```
+
+Use `my.own` for *transient* script-private state: writes to `my.own.whatever` neither re-render nor persist.
+
+Custom widgets ("generic" objects) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. Widgets additionally receive `props` (their read-only configuration, editable as JSON in the designer) and `dispatch(msg)` to send messages to themselves and their card.
+
+### Timers that clean up after themselves
+
+`after(ms, fn)` and `every(ms, fn)` register timers on the script instance - they are cancelled automatically when the visual disappears (card change, script change, deletion). No `clearInterval` bookkeeping needed:
+
+```javascript
+on('ready', () => every(1000, () => { my.time = Date.now() }))
+on('render', () => html`<div>${new Date(my.time ?? Date.now()).toLocaleTimeString()}</div>`)
+```
+
+### Talking to other objects
+
+`widget(nameOrIndex)` returns the reactive proxy of another object on the current card; `send(target, msg, ...args)` delivers a message to its script:
+
+```javascript
+// in the script of widget "Sender":
+on('touchUp', () => send('Display', 'showValue', 42))
+
+// in the script of widget "Display":
+on('showValue', (Value) => { my.shownValue = Value })
+```
+
+### Imports and behaviors
+
+Scripts may import any ES module: `const { default:fn } = await import('https://...')`. With `await behaveLike('name')` a script loads and runs a predefined *behavior* (the intrinsic behaviors `button`, `field`, `shape` and `picture` are built in; external ones are resolved as URL, absolute or relative path, or by name from GitHub).
+
+## Script API Reference
+
+### Lifecycle and messages
+
+| Message | When | Notes |
+|---------|------|-------|
+| `render` | on every (re-)render of the visual | must return `html\`...\`` **synchronously**; the result is rendered first inside the visual's DOM element |
+| `ready` | once all inner visuals have been instantiated and initialized | fires inside-out: widgets → card → stack |
+| `obsolete` | right before the visual is removed (navigation, deletion, script change) | for cleanup; `after()`/`every()` timers are cancelled automatically afterwards |
+| `touchUp` | a button (or auto-hiliting picture) was clicked | dispatched to the object's and its card's script |
+| *custom* | whatever you `send()` or `dispatch()` | handler arguments = the extra `send()` arguments |
+
+### Functions
+
+| Function | Description |
+|----------|-------------|
+| `on(msg, fn)` | registers a handler for a message (one handler per message; later calls replace earlier ones) |
+| `go(target)` | navigates to a card: a card ref (`nextCard`, `card(...)`, ...), a card name, or a 1-based number |
+| `card(nameOrNumber)` | returns a card ref by name or 1-based index (or `null`) |
+| `cardNumber()` | 1-based number of the current card (live) |
+| `cardCount()` | number of cards in the stack |
+| `widget(nameOrIndex)` | reactive proxy of an object on the current card, by name or 1-based index (or `null`) |
+| `await send(target, msg, ...args)` | sends a message to another object's script (name, index or proxy); resolves with `false` if no handler exists |
+| `dispatch(msg)` | *(widgets only)* sends a message to the widget's own and its card's script |
+| `await answer(message, ...buttons)` | shows a dialog; resolves with the label of the clicked button |
+| `await ask(prompt, default?)` | shows an input dialog; resolves with the input or `null` on cancel |
+| `openURL(url)` | opens a URL in a new tab |
+| `print(...)` / `println(...)` | writes to the built-in console (which pops up automatically) |
+| `clearConsole()` | clears the built-in console |
+| `after(ms, fn)` | one-shot timer, cancelled automatically on teardown |
+| `every(ms, fn)` | repeating timer, cancelled automatically on teardown |
+| `await behaveLike(name)` | loads and runs a behavior (one per visual) |
+
+### Values
+
+| Value | Description |
+|-------|-------------|
+| `me` / `my` | reactive proxy of the visual running the script |
+| `my.Applet` | proxy of the surrounding stack |
+| `my.Card` | proxy of the current card |
+| `my.Card.WidgetList` | proxies of all objects on the current card, in drawing order |
+| `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
+| `nextCard`, `prevCard`, `firstCard`, `lastCard` | card refs for `go()` |
+| `html` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
+| `props` | *(widgets only)* the widget's read-only configuration object |
+
+### Geometry on `me` (objects only)
+
+| Property | Description |
+|----------|-------------|
+| `my.x`, `my.y`, `my.Width`, `my.Height` | live pixel geometry, computed from the anchor system |
+| `my.Anchors`, `my.Offsets` | the underlying anchor-based geometry (writable) |
+| `my.changeGeometryTo(x?, y?, w?, h?)` | computes and applies new offsets from pixel values; omitted arguments keep their current value |
+
+```javascript
+my.changeGeometryTo(my.x + 20)               // move 20px to the right
+my.changeGeometryTo(null, null, 300)         // set width to 300px, keep position
+```
+
 ## Technology
 
 - TypeScript + [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) - no JSX, no build step required for scripts

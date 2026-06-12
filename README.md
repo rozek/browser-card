@@ -53,7 +53,7 @@ While editing, the stack is auto-saved to IndexedDB (debounced, and again when y
 `<bc-stack>` renders just the stack itself - no menu bar, no footer, no IndexedDB, no global keyboard handlers. Dialogs stay confined to the element, so several stacks may live on the same page:
 
 ```html
-<script type="module" src="https://rozek.github.io/browser-card/dist/browser-card.esm.js"></script>
+<script type="module" src="https://rozek.github.io/browser-card/dist/BrowserCard.js"></script>
 
 <bc-stack
   style="display:block; width:600px; height:450px"

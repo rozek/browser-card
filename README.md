@@ -146,7 +146,7 @@ on('showValue', (Value) => { my.shownValue = Value })
 
 ### Imports and behaviors
 
-Scripts may import any ES module: `const { default:fn } = await import('https://...')`. With `await behaveLike('name')` a script loads and runs a predefined *behavior* (the intrinsic behaviors `button`, `field`, `shape` and `picture` are built in; external ones are resolved as URL, absolute or relative path, or by name from GitHub).
+Scripts may import any ES module: `const { default:fn } = await import('https://...')`. With `await behaveLike('name')` a script loads and runs a predefined *behavior* (the intrinsic behaviors `button`, `field`, `shape` and `picture` are built in; external ones are resolved as URL, absolute or relative path, or by name from GitHub) - see [Behaviors](#behaviors) below for how to write and share your own.
 
 ## Script API Reference
 
@@ -206,6 +206,61 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 my.changeGeometryTo(my.x + 20)               // move 20px to the right
 my.changeGeometryTo(null, null, 300)         // set width to 300px, keep position
 ```
+
+## Behaviors
+
+A *behavior* is a reusable script, packaged as an ordinary ES module - the BrowserCard way of sharing functionality between objects, cards and stacks. A visual whose script calls `await behaveLike(...)` runs the behavior as if its code were part of the script itself (only one behavior per visual; additional calls are ignored).
+
+### Writing a behavior
+
+Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need (everything from the [Script API Reference](#script-api-reference) is available, incl. `on`, `me`, `html`, `after`, `every`, `props` and `dispatch`):
+
+```javascript
+// Blinker.js - a behavior for "generic" widgets: makes its content blink
+
+export default async function ({ on, me, every, html }) {
+  on('ready',  () => every(500, () => { me.shown = ! me.shown }))
+  on('render', () => html`
+    <div style=${{
+      display:'flex', alignItems:'center', justifyContent:'center',
+      width:'100%', height:'100%',
+      visibility:(me.shown === false ? 'hidden' : 'visible'),
+    }}>${me.text ?? 'blink!'}</div>
+  `)
+}
+```
+
+The visual's own script may then add object-specific details before or after loading the behavior:
+
+```javascript
+await behaveLike('./Blinker.js')
+on('touchUp', () => go(nextCard))      // an additional, object-specific handler
+```
+
+Note: `on()` registers one handler per message - if both the behavior and the script register the same message, the later registration (usually the script's) wins.
+
+### Importing ("using") a behavior
+
+`behaveLike()` accepts four notations:
+
+| Argument | Resolution |
+|----------|-----------|
+| `'https://...'` | used as is |
+| `'/path/to/Behavior.js'` | relative to the current origin |
+| `'./Behavior.js'`, `'../shared/Behavior.js'` | relative to the current page |
+| `'name'` (no slashes, no dots) | `https://rozek.github.io/browser-card/Behaviors/<Decks\|Cards\|Widgets>/<name>.js` - depending on the type of the calling visual |
+
+The intrinsic names `button`, `field`, `shape` and `picture` are reserved for the built-in behaviors (they are also what renders these object types - a button script implicitly starts with `await behaveLike('button')`).
+
+### Exporting ("sharing") a behavior
+
+Since behaviors are plain ES modules, sharing one simply means hosting the file somewhere it can be imported from:
+
+- **GitHub Pages** (like this repo's `Behaviors/` folder): served with the correct MIME type and CORS headers - bare-name resolution expects exactly this layout
+- **any web server** under your control - make sure `.js` files are served as `text/javascript` and, for cross-origin use, with `Access-Control-Allow-Origin: *`
+- **jsDelivr** for files in any public GitHub repo: `https://cdn.jsdelivr.net/gh/<user>/<repo>/<path>.js` (note: `raw.githubusercontent.com` does *not* work - it serves `text/plain`, which browsers refuse to import)
+
+To contribute a behavior to the shared collection, place it in this repository's `Behaviors/Decks`, `Behaviors/Cards` or `Behaviors/Widgets` folder (via pull request) - it then becomes loadable by its bare name.
 
 ## Technology
 

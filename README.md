@@ -1,20 +1,22 @@
 # BrowserCard #
 
-**a HyperCard reinterpretation for the web — build, script and share interactive card stacks right in your browser, then embed them anywhere as a custom element**
+**a HyperCard reinterpretation for the web — build, script and share interactive card decks right in your browser, then embed them anywhere as a custom element**
 
-BrowserCard (abbreviation: **BC**) is a browser-based reinterpretation of [NovoCard](http://plectrum.com/novocard/NovoCard.html) by Plectrum - itself a reinterpretation of Apple's legendary [HyperCard](https://en.wikipedia.org/wiki/HyperCard) (1987). NovoCard was originally an iPad app (2012-2013) but BrowserCard brings the concept to modern desktop and mobile browsers - without any server: stacks live in your browser's IndexedDB and may be exported as plain JSON files or complete web pages.
+BrowserCard (abbreviation: **BC**) is a browser-based reinterpretation of [NovoCard](http://plectrum.com/novocard/NovoCard.html) by Plectrum - itself a reinterpretation of Apple's legendary [HyperCard](https://en.wikipedia.org/wiki/HyperCard) (1987). NovoCard was originally an iPad app (2012-2013) but BrowserCard brings the concept to modern desktop and mobile browsers - without any server: decks live in your browser's IndexedDB and may be exported as plain JSON files or complete web pages.
 
 ## What you can do with it
 
-**Build stacks visually.** A stack is a document made of cards, and cards carry objects: buttons (8 styles, incl. checkboxes and radio buttons), text fields (editable or locked, with or without ruled lines), shapes (rectangles, ovals, lines, arcs and polygons - with arrowheads, if you like), pictures, and fully custom widgets. Switch the designer into edit mode and place objects by dragging, resize them with eight handles, nudge them pixel-wise with the arrow keys, or let them snap to a configurable grid. A properties panel lets you inspect and edit every detail - including an anchor-based geometry system that keeps objects in place (or lets them stretch) when a stack is shown at a different size.
+**Build decks visually.** A deck is a document made of cards, and cards carry widgets: buttons (8 styles, incl. checkboxes and radio buttons), text fields (editable or locked, with or without ruled lines), shapes (rectangles, ovals, lines, arcs and polygons - with arrowheads, if you like), pictures, and fully custom widgets. Switch the designer into edit mode and place widgets by dragging, resize them with eight handles, nudge them pixel-wise with the arrow keys, or let them snap to a configurable grid. A properties panel lets you inspect and edit every detail - including an anchor-based geometry system that keeps widgets in place (or lets them stretch) when a deck is shown at a different size.
 
-**Script everything with plain JavaScript.** Every visual - stack, card or object - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('touchUp', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other objects via `widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `me.count` and the widget re-renders.
+**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('touchUp', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `me.count` and the widget re-renders.
 
-**Stay organized.** The stacks panel lists every stack stored in your browser - create, open, rename or delete them there. The card browser shows live wireframe thumbnails of all cards in the current stack and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
+**Stay organized.** The decks panel lists every deck stored in your browser - create, open, rename or delete them there. The card browser shows live wireframe thumbnails of all cards in the current deck and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
 
-**Move content around.** Copy cards and objects to the system clipboard (with BrowserCard-specific MIME types and a plain text fallback) and paste them into another card, another stack, or another browser tab - BrowserCard detects by itself what the clipboard contains. Import stacks from JSON files or directly from a URL; export them as JSON, as a ready-to-paste embedding snippet, or as a complete standalone web app.
+**Move content around.** Copy cards and widgets to the system clipboard (with BrowserCard-specific MIME types and a plain text fallback) and paste them into another card, another deck, or another browser tab - BrowserCard detects by itself what the clipboard contains. Import decks from JSON files or directly from a URL; export them as JSON, as a ready-to-paste embedding snippet, or as a complete standalone web app.
 
-**Share your work.** Exported stacks run on any web page - without the designer chrome, without IndexedDB, without any build step. One `<script>` tag, one custom element, done.
+**Take screenshots.** The 📷 button in the footer downloads a PNG of the current card - always in the deck's native pixel size, no matter how the card is currently scaled on screen.
+
+**Share your work.** Exported decks run on any web page - without the designer chrome, without IndexedDB, without any build step. One `<script>` tag, one custom element, done.
 
 ## Using the designer
 
@@ -32,7 +34,7 @@ Load the module and place a `<bc-designer>` element - that's all:
   </style>
 </head>
 <body>
-  <script type="module" src="https://rozek.github.io/browser-card/dist/browser-card.esm.js"></script>
+  <script type="module" src="https://rozek.github.io/browser-card/dist/BrowserCard.js"></script>
   <bc-designer style="display:block; width:100%; height:100%"></bc-designer>
 </body>
 </html>
@@ -42,48 +44,48 @@ Load the module and place a `<bc-designer>` element - that's all:
 
 | Attribute  | Type        | Description |
 | ---------- | ----------- | ----------- |
-| `src`      | JSON string | initial stack data; empty = built-in demo stack; a persisted copy from IndexedDB takes precedence |
-| `name`     | string      | determines the IndexedDB key (`bc-stack:<name>`) under which the stack is persisted |
-| `readonly` | boolean     | locks the deck (presence = locked); a stack whose `readOnly` property is `true` is locked as well |
+| `src`      | JSON string | initial deck data; empty = built-in demo deck; a persisted copy from IndexedDB takes precedence |
+| `name`     | string      | determines the IndexedDB key (`bc-deck:<name>`) under which the deck is persisted |
+| `readonly` | boolean     | locks the deck (presence = locked); a deck whose `readOnly` property is `true` is locked as well |
 
-While editing, the stack is auto-saved to IndexedDB (debounced, and again when you leave edit mode). The "Stack" menu offers manual save, revert, reset, JSON export/import, import from URL, and the two embedding exports described below.
+While editing, the deck is auto-saved to IndexedDB (debounced, and again when you leave edit mode). The "Deck" menu offers manual save, revert, reset, JSON export/import, import from URL, and the two embedding exports described below.
 
-## Embedding stacks in web pages
+## Embedding decks in web pages
 
-`<bc-stack>` renders just the stack itself - no menu bar, no footer, no IndexedDB, no global keyboard handlers. Dialogs stay confined to the element, so several stacks may live on the same page:
+`<bc-deck>` renders just the deck itself - no menu bar, no footer, no IndexedDB, no global keyboard handlers. Dialogs stay confined to the element, so several decks may live on the same page:
 
 ```html
 <script type="module" src="https://rozek.github.io/browser-card/dist/BrowserCard.js"></script>
 
-<bc-stack
+<bc-deck
   style="display:block; width:600px; height:450px"
-  src="... HTML-escaped JSON serialization of the stack ..."
-></bc-stack>
+  src="... HTML-escaped JSON serialization of the deck ..."
+></bc-deck>
 ```
 
-You rarely have to write this by hand: in the designer, open the "Stack" menu and choose
+You rarely have to write this by hand: in the designer, open the "Deck" menu and choose
 
-- **Export for Embedding…** - downloads an HTML snippet containing the `<script>` tag and a ready-made `<bc-stack>` element (in the stack's native size) which you can copy into any page, or
-- **Export as Standalone App…** - downloads a complete HTML page in which the stack fills the browser window.
+- **Export for Embedding…** - downloads an HTML snippet containing the `<script>` tag and a ready-made `<bc-deck>` element (in the deck's native size) which you can copy into any page, or
+- **Export as Standalone App…** - downloads a complete HTML page in which the deck fills the browser window.
 
 ### Sizing
 
-A stack has a *native* canvas size, set in the designer via the deck properties `CardWidth`/`CardHeight` (default: 600x450). When a stack is displayed, the canvas is scaled proportionally to fit its element - so the element's CSS size (`style="width:...; height:..."`) determines what you see. If you want to *override* the native canvas size in a particular page, set the CSS variables `--canvas-width`/`--canvas-height` on the element:
+A deck has a *native* canvas size, set in the designer via the deck properties `CardWidth`/`CardHeight` (default: 600x450). When a deck is displayed, the canvas is scaled proportionally to fit its element - so the element's CSS size (`style="width:...; height:..."`) determines what you see. If you want to *override* the native canvas size in a particular page, set the CSS variables `--canvas-width`/`--canvas-height` on the element:
 
 ```html
-<bc-stack style="display:block; width:100%; height:100%;
+<bc-deck style="display:block; width:100%; height:100%;
                  --canvas-width:800; --canvas-height:600"
-  src="..."></bc-stack>
+  src="..."></bc-deck>
 ```
 
-Priority: CSS variables → `CardWidth`/`CardHeight` from the stack → built-in defaults.
+Priority: CSS variables → `CardWidth`/`CardHeight` from the deck → built-in defaults.
 
 
 ## Scripting Guide
 
-Every visual - the stack itself, every card, and every object on a card - has its own script, written in **BrowserScript**: plain, modern JavaScript with a small set of injected functions and values. Edit scripts in the properties panel (applied when the field loses focus) or click "⤢" to open them in a draggable, resizable editor window.
+Every visual - the deck itself, every card, and every widget on a card - has its own script, written in **BrowserScript**: plain, modern JavaScript with a small set of injected functions and values. Edit scripts in the properties panel (applied when the field loses focus) or click "⤢" to open them in a draggable, resizable editor window.
 
-A script runs **asynchronously** whenever its visual is instantiated (when the stack loads, when its card is shown) - and again after every script change. Its job is to do any setup it needs and to register handlers for messages:
+A script runs **asynchronously** whenever its visual is instantiated (when the deck loads, when its card is shown) - and again after every script change. Its job is to do any setup it needs and to register handlers for messages:
 
 > Nota bene: because of their asynchronous nature, you are allowed to import external ESM modules using "import" expressions like `import { z } from 'https://cdn.jsdelivr.net/npm/zod@3/+esm'`
 
@@ -105,7 +107,7 @@ on('touchUp', async () => {
 
 ### Reactive state with `me` and `my`
 
-Inside a script, `me` (synonym: `my`) is a reactive proxy of the visual itself. Reading gives you its current properties (including live geometry), writing re-renders it immediately - and since assignments become part of the stack data, they are persisted together with the stack when you edit in the designer:
+Inside a script, `me` (synonym: `my`) is a reactive proxy of the visual itself. Reading gives you its current properties (including live geometry), writing re-renders it immediately - and since assignments become part of the deck data, they are persisted together with the deck when you edit in the designer:
 
 ```javascript
 on('render', () => {                              // a custom widget: a counter
@@ -121,7 +123,7 @@ on('render', () => {                              // a custom widget: a counter
 
 Use `my.own` for *transient* script-private state: writes to `my.own.whatever` neither re-render nor persist.
 
-Custom widgets ("generic" objects) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. Widgets additionally receive `props` (their read-only configuration, editable as JSON in the designer) and `dispatch(msg)` to send messages to themselves and their card.
+Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. Widgets additionally receive `props` (their read-only configuration, editable as JSON in the designer) and `dispatch(msg)` to send messages to themselves and their card.
 
 ### Timers that clean up after themselves
 
@@ -132,9 +134,9 @@ on('ready', () => every(1000, () => { my.time = Date.now() }))
 on('render', () => html`<div>${new Date(my.time ?? Date.now()).toLocaleTimeString()}</div>`)
 ```
 
-### Talking to other objects
+### Talking to other widgets
 
-`widget(nameOrIndex)` returns the reactive proxy of another object on the current card; `send(target, msg, ...args)` delivers a message to its script:
+`widget(nameOrIndex)` returns the reactive proxy of another widget on the current card; `send(target, msg, ...args)` delivers a message to its script:
 
 ```javascript
 // in the script of widget "Sender":
@@ -155,9 +157,9 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | Message | When | Notes |
 |---------|------|-------|
 | `render` | on every (re-)render of the visual | must return `html\`...\`` **synchronously**; the result is rendered first inside the visual's DOM element |
-| `ready` | once all inner visuals have been instantiated and initialized | fires inside-out: widgets → card → stack |
+| `ready` | once all inner visuals have been instantiated and initialized | fires inside-out: widgets → card → deck |
 | `obsolete` | right before the visual is removed (navigation, deletion, script change) | for cleanup; `after()`/`every()` timers are cancelled automatically afterwards |
-| `touchUp` | a button (or auto-hiliting picture) was clicked | dispatched to the object's and its card's script |
+| `touchUp` | a button (or auto-hiliting picture) was clicked | dispatched to the widget's and its card's script |
 | *custom* | whatever you `send()` or `dispatch()` | handler arguments = the extra `send()` arguments |
 
 ### Functions
@@ -168,9 +170,9 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `go(target)` | navigates to a card: a card ref (`nextCard`, `card(...)`, ...), a card name, or a 1-based number |
 | `card(nameOrNumber)` | returns a card ref by name or 1-based index (or `null`) |
 | `cardNumber()` | 1-based number of the current card (live) |
-| `cardCount()` | number of cards in the stack |
-| `widget(nameOrIndex)` | reactive proxy of an object on the current card, by name or 1-based index (or `null`) |
-| `await send(target, msg, ...args)` | sends a message to another object's script (name, index or proxy); resolves with `false` if no handler exists |
+| `cardCount()` | number of cards in the deck |
+| `widget(nameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
+| `await send(target, msg, ...args)` | sends a message to another widget's script (name, index or proxy); resolves with `false` if no handler exists |
 | `dispatch(msg)` | *(widgets only)* sends a message to the widget's own and its card's script |
 | `await answer(message, ...buttons)` | shows a dialog; resolves with the label of the clicked button |
 | `await ask(prompt, default?)` | shows an input dialog; resolves with the input or `null` on cancel |
@@ -186,15 +188,15 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | Value | Description |
 |-------|-------------|
 | `me` / `my` | reactive proxy of the visual running the script |
-| `my.Applet` | proxy of the surrounding stack |
+| `my.Applet` | proxy of the surrounding deck |
 | `my.Card` | proxy of the current card |
-| `my.Card.WidgetList` | proxies of all objects on the current card, in drawing order |
+| `my.Card.WidgetList` | proxies of all widgets on the current card, in drawing order |
 | `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
 | `nextCard`, `prevCard`, `firstCard`, `lastCard` | card refs for `go()` |
 | `html` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
 | `props` | *(widgets only)* the widget's read-only configuration object |
 
-### Geometry on `me` (objects only)
+### Geometry on `me` (widgets only)
 
 | Property | Description |
 |----------|-------------|
@@ -209,7 +211,7 @@ my.changeGeometryTo(null, null, 300)         // set width to 300px, keep positio
 
 ## Behaviors
 
-A *behavior* is a reusable script, packaged as an ordinary ES module - the BrowserCard way of sharing functionality between objects, cards and stacks. A visual whose script calls `await behaveLike(...)` runs the behavior as if its code were part of the script itself (only one behavior per visual; additional calls are ignored).
+A *behavior* is a reusable script, packaged as an ordinary ES module - the BrowserCard way of sharing functionality between widgets, cards and decks. A visual whose script calls `await behaveLike(...)` runs the behavior as if its code were part of the script itself (only one behavior per visual; additional calls are ignored).
 
 ### Writing a behavior
 
@@ -230,11 +232,11 @@ export default async function ({ on, me, every, html }) {
 }
 ```
 
-The visual's own script may then add object-specific details before or after loading the behavior:
+The visual's own script may then add widget-specific details before or after loading the behavior:
 
 ```javascript
 await behaveLike('./Blinker.js')
-on('touchUp', () => go(nextCard))      // an additional, object-specific handler
+on('touchUp', () => go(nextCard))      // an additional, widget-specific handler
 ```
 
 Note: `on()` registers one handler per message - if both the behavior and the script register the same message, the later registration (usually the script's) wins.
@@ -248,33 +250,33 @@ Note: `on()` registers one handler per message - if both the behavior and the sc
 | `'https://...'` | used as is |
 | `'/path/to/Behavior.js'` | relative to the current origin |
 | `'./Behavior.js'`, `'../shared/Behavior.js'` | relative to the current page |
-| `'name'` (no slashes, no dots) | `https://rozek.github.io/browser-card/Behaviors/<Decks\|Cards\|Widgets>/<name>.js` - depending on the type of the calling visual |
+| `'name'` (no slashes, no dots) | `https://rozek.github.io/browser-card/behaviors/<Decks\|Cards\|Widgets>/<name>.js` - depending on the type of the calling visual |
 
-The intrinsic names `button`, `field`, `shape` and `picture` are reserved for the built-in behaviors (they are also what renders these object types - a button script implicitly starts with `await behaveLike('button')`).
+The intrinsic names `button`, `field`, `shape` and `picture` are reserved for the built-in behaviors (they are also what renders these widget types - a button script implicitly starts with `await behaveLike('button')`).
 
 ### Exporting ("sharing") a behavior
 
 Since behaviors are plain ES modules, sharing one simply means hosting the file somewhere it can be imported from:
 
-- **GitHub Pages** (like this repo's `Behaviors/` folder): served with the correct MIME type and CORS headers - bare-name resolution expects exactly this layout
+- **GitHub Pages** (like this repo's `behaviors/` folder): served with the correct MIME type and CORS headers - bare-name resolution expects exactly this layout
 - **any web server** under your control - make sure `.js` files are served as `text/javascript` and, for cross-origin use, with `Access-Control-Allow-Origin: *`
 - **jsDelivr** for files in any public GitHub repo: `https://cdn.jsdelivr.net/gh/<user>/<repo>/<path>.js` (note: `raw.githubusercontent.com` does *not* work - it serves `text/plain`, which browsers refuse to import)
 
-To contribute a behavior to the shared collection, place it in this repository's `Behaviors/Decks`, `Behaviors/Cards` or `Behaviors/Widgets` folder (via pull request) - it then becomes loadable by its bare name.
+To contribute a behavior to the shared collection, place it in this repository's `behaviors/Decks`, `behaviors/Cards` or `behaviors/Widgets` folder (via pull request) - it then becomes loadable by its bare name.
 
 ## Technology
 
 - TypeScript + [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) - no JSX, no build step required for scripts
-- a single, self-contained ESM module defining the custom elements `<bc-designer>` and `<bc-stack>`
-- stack data as plain JSON, persisted in IndexedDB via [idb-keyval](https://github.com/jakearchibald/idb-keyval)
+- a single, self-contained ESM module defining the custom elements `<bc-designer>` and `<bc-deck>`
+- deck data as plain JSON, persisted in IndexedDB via [idb-keyval](https://github.com/jakearchibald/idb-keyval)
 - built with [Vite](https://vitejs.dev)
 
 ## Build
 
 ```bash
 npm install
-npm run build       # type-checks and bundles dist/browser-card.esm.js
-npm run dev         # Vite dev server with the demo stack
+npm run build       # type-checks and bundles dist/BrowserCard.js
+npm run dev         # Vite dev server with the demo deck
 ```
 
 ## License

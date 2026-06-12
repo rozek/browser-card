@@ -1,7 +1,7 @@
 {
   "name": "browser-card",
   "version": "0.0.17",
-  "description": "a HyperCard reinterpretation for the web — build, script and share interactive card stacks right in your browser, then embed them anywhere as a custom element",
+  "description": "a HyperCard reinterpretation for the web — build, script and share interactive card decks right in your browser, then embed them anywhere as a custom element",
   "license": "MIT",
   "author": "Andreas Rozek <a.rozek@gmx.de> (https://www.rozek.de)",
   "type": "module",
@@ -22,7 +22,7 @@
   "keywords": [
     "hypercard",
     "novocard",
-    "card-stack",
+    "card-deck",
     "authoring-tool",
     "no-code",
     "low-code",

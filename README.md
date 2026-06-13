@@ -14,7 +14,7 @@ Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.h
 
 **Build decks visually.** A deck is a document made of cards, and cards carry widgets: buttons (8 styles, incl. checkboxes and radio buttons), text fields (editable or locked, with or without ruled lines), shapes (rectangles, ovals, lines, arcs and polygons - with arrowheads, if you like), pictures, and fully custom widgets. Switch the designer into edit mode and place widgets by dragging, resize them with eight handles, nudge them pixel-wise with the arrow keys, or let them snap to a configurable grid. A properties panel lets you inspect and edit every detail - including an anchor-based geometry system that keeps widgets in place (or lets them stretch) when a deck is shown at a different size.
 
-**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('touchUp', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.count` and the widget re-renders.
+**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.count` and the widget re-renders.
 
 **Stay organized.** The decks panel lists every deck stored in your browser - create, open, rename or delete them there. The card browser shows live wireframe thumbnails of all cards in the current deck and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
 
@@ -96,13 +96,13 @@ A script runs **asynchronously** whenever its visual is instantiated (when the d
 > Nota bene: because of their asynchronous nature, you are allowed to import external ESM modules using "import" expressions like `import { z } from 'https://cdn.jsdelivr.net/npm/zod@3/+esm'`
 
 ```javascript
-on('touchUp', () => go(nextCard))            // a button script: navigate on click
+on('click', () => go(nextCard))            // a button script: navigate on click
 ```
 
 Handlers may be `async` and may use the full BrowserCard Scripting API:
 
 ```javascript
-on('touchUp', async () => {
+on('click', async () => {
   const Choice = await answer('Delete everything?', 'Yes', 'No')
   if (Choice === 'Yes') {
     const Reason = await ask('Why?', 'just because')
@@ -170,7 +170,7 @@ on('render', () => html`<div>${new Date(my.time ?? Date.now()).toLocaleTimeStrin
 
 ```javascript
 // in the script of widget "Sender":
-on('touchUp', () => send('Display', 'showValue', 42))
+on('click', () => send('Display', 'showValue', 42))
 
 // in the script of widget "Display":
 on('showValue', (Value) => { my.shownValue = Value })
@@ -189,7 +189,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `render` | on every (re-)render of the visual | must return `html\`...\`` **synchronously**; the result is rendered first inside the visual's DOM element |
 | `ready` | once all inner visuals have been instantiated and initialized | fires inside-out: widgets → card → deck |
 | `obsolete` | right before the visual is removed (navigation, deletion, script change) | for cleanup; `after()`/`every()` timers are cancelled automatically afterwards |
-| `touchUp` | a button (or auto-hiliting picture) was clicked | bubbles up the hierarchy: the widget's script, then its card's, then the deck's |
+| `click` | a button (or auto-hiliting picture) was clicked | bubbles up the hierarchy: the widget's script, then its card's, then the deck's |
 | *custom* | whatever you `send()` or `dispatch()` | handler arguments = the extra `send()` arguments |
 
 ### Functions
@@ -267,7 +267,7 @@ The visual's own script may then add widget-specific details before or after loa
 
 ```javascript
 await behaveLike('./Blinker.js')
-on('touchUp', () => go(nextCard))      // an additional, widget-specific handler
+on('click', () => go(nextCard))      // an additional, widget-specific handler
 ```
 
 Note: `on()` registers one handler per message - if both the behavior and the script register the same message, the later registration (usually the script's) wins.

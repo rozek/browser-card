@@ -143,7 +143,7 @@
           "number": 6,
           "zIndex": 6,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -226,7 +226,7 @@
           "number": 9,
           "zIndex": 9,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -631,7 +631,7 @@
           "number": 24,
           "zIndex": 24,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -656,7 +656,7 @@
           "number": 25,
           "zIndex": 25,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -772,7 +772,7 @@
           "number": 27,
           "zIndex": 27,
           "visible": true,
-          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "script": "on('click', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -796,7 +796,7 @@
           "number": 28,
           "zIndex": 28,
           "visible": true,
-          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "script": "on('click', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -820,7 +820,7 @@
           "number": 29,
           "zIndex": 29,
           "visible": true,
-          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "script": "on('click', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -844,7 +844,7 @@
           "number": 30,
           "zIndex": 30,
           "visible": true,
-          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "script": "on('click', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -868,7 +868,7 @@
           "number": 31,
           "zIndex": 31,
           "visible": true,
-          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "script": "on('click', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -894,7 +894,7 @@
           "number": 32,
           "zIndex": 32,
           "visible": true,
-          "script": "on('touchUp', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
+          "script": "on('click', () => { widget('Out').text = 'you clicked the ' + me.name + ' button' })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1119,7 +1119,7 @@
           "number": 42,
           "zIndex": 42,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1144,7 +1144,7 @@
           "number": 43,
           "zIndex": 43,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1642,7 +1642,7 @@
           "number": 62,
           "zIndex": 62,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1667,7 +1667,7 @@
           "number": 63,
           "zIndex": 63,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1804,7 +1804,7 @@
           "fontSize": 9,
           "color": "#0a3069",
           "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
-          "text": "on('touchUp', () => go(nextCard))"
+          "text": "on('click', () => go(nextCard))"
         },
         {
           "id": "bc-widget-7066",
@@ -1861,7 +1861,7 @@
           "fontSize": 9,
           "color": "#0a3069",
           "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
-          "text": "on('touchUp', async () => {\n  const Choice = await answer('Sure?','Yes','No')\n  widget('Out').text = 'you chose: ' + Choice\n})"
+          "text": "on('click', async () => {\n  const Choice = await answer('Sure?','Yes','No')\n  widget('Out').text = 'you chose: ' + Choice\n})"
         },
         {
           "id": "bc-widget-7068",
@@ -1896,7 +1896,7 @@
           "number": 69,
           "zIndex": 69,
           "visible": true,
-          "script": "on('touchUp', async () => { const Choice = await answer('Sure?','Yes','No'); widget('Out').text = 'answer(...) returned: ' + JSON.stringify(Choice) })",
+          "script": "on('click', async () => { const Choice = await answer('Sure?','Yes','No'); widget('Out').text = 'answer(...) returned: ' + JSON.stringify(Choice) })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1921,7 +1921,7 @@
           "number": 70,
           "zIndex": 70,
           "visible": true,
-          "script": "on('touchUp', async () => { const Reply = await ask('Your name?','stranger'); widget('Out').text = (Reply === null ? 'ask(...) was cancelled (null)' : 'ask(...) returned: ' + JSON.stringify(Reply)) })",
+          "script": "on('click', async () => { const Reply = await ask('Your name?','stranger'); widget('Out').text = (Reply === null ? 'ask(...) was cancelled (null)' : 'ask(...) returned: ' + JSON.stringify(Reply)) })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1946,7 +1946,7 @@
           "number": 71,
           "zIndex": 71,
           "visible": true,
-          "script": "on('touchUp', () => println('println() writes to the built-in console!'))",
+          "script": "on('click', () => println('println() writes to the built-in console!'))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -1971,7 +1971,7 @@
           "number": 72,
           "zIndex": 72,
           "visible": true,
-          "script": "on('touchUp', () => openURL('https://github.com/rozek/browser-card'))",
+          "script": "on('click', () => openURL('https://github.com/rozek/browser-card'))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2081,7 +2081,7 @@
           "number": 78,
           "zIndex": 78,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2106,7 +2106,7 @@
           "number": 79,
           "zIndex": 79,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2434,7 +2434,7 @@
           "number": 91,
           "zIndex": 91,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2459,7 +2459,7 @@
           "number": 92,
           "zIndex": 92,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2603,7 +2603,7 @@
           "number": 95,
           "zIndex": 95,
           "visible": true,
-          "script": "on('touchUp', () => send('Dice','roll'))",
+          "script": "on('click', () => send('Dice','roll'))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2739,7 +2739,7 @@
             320,
             56
           ],
-          "text": "a click on a button also bubbles a touchUp message up to the script of its card",
+          "text": "a click on a button also bubbles a click message up to the script of its card",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -2783,7 +2783,7 @@
           "number": 104,
           "zIndex": 104,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2808,7 +2808,7 @@
           "number": 105,
           "zIndex": 105,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3033,7 +3033,7 @@
           "number": 113,
           "zIndex": 113,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3058,7 +3058,7 @@
           "number": 114,
           "zIndex": 114,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3288,7 +3288,7 @@
           "number": 122,
           "zIndex": 122,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3313,7 +3313,7 @@
           "number": 123,
           "zIndex": 123,
           "visible": true,
-          "script": "on('touchUp', () => go(nextCard))",
+          "script": "on('click', () => go(nextCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3450,7 +3450,7 @@
           "number": 128,
           "zIndex": 128,
           "visible": true,
-          "script": "on('touchUp', () => go(firstCard))",
+          "script": "on('click', () => go(firstCard))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3475,7 +3475,7 @@
           "number": 129,
           "zIndex": 129,
           "visible": true,
-          "script": "on('touchUp', () => openURL('https://github.com/rozek/browser-card'))",
+          "script": "on('click', () => openURL('https://github.com/rozek/browser-card'))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3558,7 +3558,7 @@
           "number": 132,
           "zIndex": 132,
           "visible": true,
-          "script": "on('touchUp', () => go(prevCard))",
+          "script": "on('click', () => go(prevCard))",
           "Anchors": [
             "left-width",
             "top-height"

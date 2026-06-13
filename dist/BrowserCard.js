@@ -17977,7 +17977,7 @@ function Bu(t) {
     ]
   };
 }
-const C2 = "0.0.31", O4 = _.ValueIsTextline, Du = {
+const C2 = "0.0.32", O4 = _.ValueIsTextline, Du = {
   h: Wr,
   Fragment: fn,
   render: jr,
@@ -19550,7 +19550,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => go(card('Demo Widgets')))"
+          script: "on('click', () => go(card('Demo Widgets')))"
         },
         {
           id: ue("widget"),
@@ -19566,7 +19566,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => go(card('Script Demo')))"
+          script: "on('click', () => go(card('Script Demo')))"
         },
         {
           id: ue("widget"),
@@ -19582,7 +19582,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => go(card('Widget Demo')))"
+          script: "on('click', () => go(card('Widget Demo')))"
         },
         {
           id: ue("widget"),
@@ -19598,7 +19598,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => go(card('About BrowserCard')))"
+          script: "on('click', () => go(card('About BrowserCard')))"
         }
       ]
     },
@@ -20058,7 +20058,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => answer('Hello from a script!', 'OK'))"
+          script: "on('click', () => answer('Hello from a script!', 'OK'))"
         },
         {
           id: ue("widget"),
@@ -20074,7 +20074,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => ask('What is your name?', ''))"
+          script: "on('click', () => ask('What is your name?', ''))"
         },
         {
           id: ue("widget"),
@@ -20090,7 +20090,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => openURL('https://github.com/rozek/webapp-crafter'))"
+          script: "on('click', () => openURL('https://github.com/rozek/webapp-crafter'))"
         },
         {
           id: ue("widget"),
@@ -20106,7 +20106,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => go(nextCard))"
+          script: "on('click', () => go(nextCard))"
         }
       ]
     },
@@ -20255,7 +20255,7 @@ on('render', () => {
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => go(card('Start')))"
+          script: "on('click', () => go(card('Start')))"
         }
       ]
     },
@@ -20355,7 +20355,7 @@ Technology:
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => go(card('Start')))"
+          script: "on('click', () => go(card('Start')))"
         }
       ]
     }
@@ -20712,7 +20712,7 @@ function a2(t, e, r) {
 K0.set("button", async ({ on: t, me: e, html: r, dispatch: n }) => {
   const a = e;
   function i() {
-    a.autoHilite === !0 && (a.variant === "checkbox" || a.variant === "radio") && (a.hilite = !a.hilite), n("touchUp");
+    a.autoHilite === !0 && (a.variant === "checkbox" || a.variant === "radio") && (a.hilite = !a.hilite), n("click");
   }
   t("render", () => {
     const s = (

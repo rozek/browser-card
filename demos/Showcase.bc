@@ -72,7 +72,7 @@
           "number": 3,
           "zIndex": 3,
           "visible": true,
-          "script": "on('touchUp', async () => { const Name = await ask('What is your name?','') ; if (Name != null) { await answer('Hello, ' + (Name || 'stranger') + '!','Nice to meet you') } })",
+          "script": "on('click', async () => { const Name = await ask('What is your name?','') ; if (Name != null) { await answer('Hello, ' + (Name || 'stranger') + '!','Nice to meet you') } })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -97,7 +97,7 @@
           "number": 4,
           "zIndex": 4,
           "visible": true,
-          "script": "on('touchUp', () => { me.Card.color = (me.hilite ? '#1b2430' : '#f4f6fa') })",
+          "script": "on('click', () => { me.Card.color = (me.hilite ? '#1b2430' : '#f4f6fa') })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -150,7 +150,7 @@
           "number": 6,
           "zIndex": 6,
           "visible": true,
-          "script": "on('touchUp', () => send('Dice','roll'))",
+          "script": "on('click', () => send('Dice','roll'))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -388,7 +388,7 @@
           "number": 16,
           "zIndex": 16,
           "visible": true,
-          "script": "on('touchUp', () => openURL('https://github.com/rozek/browser-card'))",
+          "script": "on('click', () => openURL('https://github.com/rozek/browser-card'))",
           "Anchors": [
             "left-width",
             "top-height"

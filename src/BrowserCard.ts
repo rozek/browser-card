@@ -4,7 +4,7 @@
 *                                                                              *
 *******************************************************************************/
 
-  const BC_Version = '0.0.31'
+  const BC_Version = '0.0.32'
 
   declare const download:Function
 
@@ -1003,7 +1003,7 @@ debugger
 
   let IdCounter:number = 0
 
-  function newInternalId (Type:'deck'|'background'|'card'|'widget'):string {
+  export function newInternalId (Type:'deck'|'background'|'card'|'widget'):string {
     IdCounter += 1
     return `bc-${Type}-${IdCounter}`
   }
@@ -1586,14 +1586,14 @@ debugger
 
 /**** EOLCount ****/
 
-  function EOLCount (fullText:BC_Text):BC_Ordinal {
+  export function EOLCount (fullText:BC_Text):BC_Ordinal {
     let MatchList = fullText.match(/\n/g)
     return (MatchList === null ? 0 : MatchList.length)
   }
 
 /**** StringFromArguments ****/
 
-  function StringFromArguments (Arguments:any[], withEOL:boolean = false):BC_Text {
+  export function StringFromArguments (Arguments:any[], withEOL:boolean = false):BC_Text {
     let Result = ''
       for (let i = 0; i < Arguments.length; i++) {
         let Argument = Arguments[i]
@@ -2959,7 +2959,7 @@ interface BC_CardRef {
 //                            ScriptInstance                                   //
 //----------------------------------------------------------------------------//
 
-class ScriptInstance {
+export class ScriptInstance {
 
 /**** on — registers a message handler (called from within a script) ****/
 
@@ -3060,7 +3060,7 @@ const _InternalBehaviors = new Map<string, InternalBehaviorFn>()
 
 /**** resolveBehaviorUrl — maps a name/path/URL to a loadable ES-module URL ****/
 
-function resolveBehaviorUrl (nameOrUrl:string, visualType:'deck'|'card'|'widget'):string {
+export function resolveBehaviorUrl (nameOrUrl:string, visualType:'deck'|'card'|'widget'):string {
   if (/^https?:\/\//i.test(nameOrUrl)) { return nameOrUrl }
   if (nameOrUrl.startsWith('/'))        { return window.location.origin + nameOrUrl }
   if (nameOrUrl.includes('/') || nameOrUrl.includes('.')) {
@@ -3125,7 +3125,7 @@ function buildScriptParams (
 
 /**** buildContext — creates the script context for a Visual ****/
 
-function buildContext (
+export function buildContext (
   _Deck:       BC_Deck,
   Cards:        BC_Card[],
   me:           BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null,
@@ -3282,7 +3282,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [30, 116, 263, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => go(card('Demo Widgets')))`,
+          script: `on('click', () => go(card('Demo Widgets')))`,
         },
         {
           id: newInternalId('widget'), name: 'Script Demo', number: 4,
@@ -3290,7 +3290,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [161, 116, 263, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => go(card('Script Demo')))`,
+          script: `on('click', () => go(card('Script Demo')))`,
         },
         {
           id: newInternalId('widget'), name: 'Widget Demo', number: 5,
@@ -3298,7 +3298,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [293, 116, 263, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => go(card('Widget Demo')))`,
+          script: `on('click', () => go(card('Widget Demo')))`,
         },
         {
           id: newInternalId('widget'), name: 'About BrowserCard', number: 6,
@@ -3306,7 +3306,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [424, 146, 263, 33],
           visible: true, variant: 'shadow',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => go(card('About BrowserCard')))`,
+          script: `on('click', () => go(card('About BrowserCard')))`,
         },
       ],
     },
@@ -3465,7 +3465,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [60, 143, 150, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => answer('Hello from a script!', 'OK'))`,
+          script: `on('click', () => answer('Hello from a script!', 'OK'))`,
         },
         {
           id: newInternalId('widget'), name: 'InputBtn', number: 4,
@@ -3473,7 +3473,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [229, 143, 150, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => ask('What is your name?', ''))`,
+          script: `on('click', () => ask('What is your name?', ''))`,
         },
         {
           id: newInternalId('widget'), name: 'Open URL', number: 5,
@@ -3481,7 +3481,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [398, 143, 150, 33],
           visible: true, variant: 'shadow',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => openURL('https://github.com/rozek/webapp-crafter'))`,
+          script: `on('click', () => openURL('https://github.com/rozek/webapp-crafter'))`,
         },
         {
           id: newInternalId('widget'), name: 'NextCardBtn', number: 6,
@@ -3489,7 +3489,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [229, 143, 210, 33],
           visible: true, variant: 'standard',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => go(nextCard))`,
+          script: `on('click', () => go(nextCard))`,
         },
       ],
     },
@@ -3590,7 +3590,7 @@ on('render', () => {
           Anchors: ['left-width', 'top-height'], Offsets: [413, 128, 383, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => go(card('Start')))`,
+          script: `on('click', () => go(card('Start')))`,
         },
       ],
     },
@@ -3634,7 +3634,7 @@ on('render', () => {
           Anchors: ['left-width', 'top-height'], Offsets: [236, 128, 360, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => go(card('Start')))`,
+          script: `on('click', () => go(card('Start')))`,
         },
       ],
     },
@@ -3679,7 +3679,7 @@ on('render', () => {
 
 /**** ValueIsWidgetJSON/CardJSON/Deck — light structural checks ****/
 
-  function ValueIsWidgetJSON (Value:any):boolean {
+  export function ValueIsWidgetJSON (Value:any):boolean {
     return (
       ValueIsPlainObject(Value) &&
       ValueIsString(Value.id) && ValueIsString(Value.type) &&
@@ -3687,7 +3687,7 @@ on('render', () => {
     )
   }
 
-  function ValueIsCardJSON (Value:any):boolean {
+  export function ValueIsCardJSON (Value:any):boolean {
     return (
       ValueIsPlainObject(Value) &&
       ValueIsString(Value.id) && ValueIsString(Value.name) &&
@@ -3696,7 +3696,7 @@ on('render', () => {
     )
   }
 
-  function ValueIsDeck (Value:any):boolean {
+  export function ValueIsDeck (Value:any):boolean {
     return (
       ValueIsPlainObject(Value) &&
       ValueIsString(Value.name) &&
@@ -3779,7 +3779,7 @@ on('render', () => {
 
 /**** adjustIdCounterFor — prevents id collisions after loading a deck ****/
 
-  function adjustIdCounterFor (Deck:BC_Deck):void {
+  export function adjustIdCounterFor (Deck:BC_Deck):void {
     const consider = (Id:string | undefined):void => {
       if (Id == null) { return }
       const Match = /-(\d+)$/.exec(Id)
@@ -3876,7 +3876,7 @@ function widgetPropsToCSS (w:BC_Widget):Record<string,string> {
 
 /**** resolveGeometry — compute pixel rect from Anchors + Offsets + container size ****/
 
-function resolveGeometry (
+export function resolveGeometry (
   Anchors:BC_Anchors, Offsets:BC_Offsets, containerW:number, containerH:number
 ):{ left:number; top:number; width:number; height:number } {
   let left = 0, width = 0, top = 0, height = 0
@@ -3898,7 +3898,7 @@ function resolveGeometry (
 
 /**** computeOffsets — inverse of resolveGeometry: pixel values → Offsets ****/
 
-function computeOffsets (
+export function computeOffsets (
   x:BC_Location, y:BC_Location, Width:BC_Dimension, Height:BC_Dimension,
   Anchors:BC_Anchors, containerW:number, containerH:number
 ):BC_Offsets {
@@ -3922,7 +3922,7 @@ function computeOffsets (
 
 /**** makeWidgetProxy ****/
 
-function makeWidgetProxy (
+export function makeWidgetProxy (
   Obj:         BC_Widget,
   SizeRef:     { current:{ W:number; H:number } },
   deckProxy:   BC_DeckProxy,
@@ -3968,7 +3968,7 @@ function makeWidgetProxy (
 
 /**** makeCardProxy ****/
 
-function makeCardProxy (
+export function makeCardProxy (
   Card:          BC_Card,
   deckProxy:     BC_DeckProxy,
   widgetListRef: { current:BC_WidgetProxy[] },
@@ -3998,7 +3998,7 @@ function makeCardProxy (
 
 /**** makeDeckProxy ****/
 
-function makeDeckProxy (
+export function makeDeckProxy (
   Deck:         BC_Deck,
   cardProxyRef: { current:BC_CardProxy | null },
   forceUpdate:  () => void,
@@ -4149,7 +4149,7 @@ _InternalBehaviors.set('button', async ({ on, me, html, dispatch }) => {
       (O.autoHilite === true) &&
       ((O.variant === 'checkbox') || (O.variant === 'radio'))
     ) { O.hilite = ! O.hilite }              // a radio group is up to the script
-    dispatch('touchUp')
+    dispatch('click')
   }
   on('render', () => {
     const Label = (              // "text" takes precedence over the mere name
@@ -4360,7 +4360,7 @@ function WidgetView ({
 
 /**** uniqueNameIn — appends a counter until the name is unique ****/
 
-  function uniqueNameIn (BaseName:string, existingNames:Set<string>):string {
+  export function uniqueNameIn (BaseName:string, existingNames:Set<string>):string {
     let Name = BaseName, Counter = 1
     while (existingNames.has(Name)) { Counter += 1; Name = `${BaseName} ${Counter}` }
     return Name
@@ -6574,7 +6574,7 @@ function downloadFile (Name:string, Text:string, MIMEType:string):void {
 
 /**** escapedForHTML — escapes a string for use in HTML attributes/content ****/
 
-function escapedForHTML (Text:string):string {
+export function escapedForHTML (Text:string):string {
   return Text
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;')

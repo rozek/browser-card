@@ -4,7 +4,7 @@
 *                                                                              *
 *******************************************************************************/
 
-  const BC_Version = '0.0.30'
+  const BC_Version = '0.0.31'
 
   declare const download:Function
 
@@ -2903,7 +2903,7 @@ const Styles = `
 `
 
 //----------------------------------------------------------------------------//
-//                         BrowserScript runtime                              //
+//                            script runtime                                 //
 //----------------------------------------------------------------------------//
 
 // every Visual has an async script; handlers are registered with on('msg', fn)
@@ -2977,7 +2977,7 @@ class ScriptInstance {
     try {
       await (new Function(...Params, `return (async () => {\n${script}\n})()`))(...Args)
     } catch (Signal) {
-      console.warn('[BrowserScript] script error:', Signal)
+      console.warn('[BrowserCard] script error:', Signal)
     }
   }
 
@@ -2990,7 +2990,7 @@ class ScriptInstance {
       await Handler(...callArgs)
       return true
     } catch (Signal) {
-      console.warn(`[BrowserScript] handler "${msg}" error:`, Signal)
+      console.warn(`[BrowserCard] handler "${msg}" error:`, Signal)
       return false
     }
   }
@@ -3001,7 +3001,7 @@ class ScriptInstance {
     const Handler = this.#handlers.get('render')
     if (Handler == null) { return null }
     try { return Handler() } catch (Signal) {
-      console.warn('[BrowserScript] render handler error:', Signal)
+      console.warn('[BrowserCard] render handler error:', Signal)
       return null
     }
   }
@@ -3036,7 +3036,7 @@ class ScriptInstance {
       try {
         await Handler()
       } catch (Signal) {
-        console.warn('[BrowserScript] handler "obsolete" error:', Signal)
+        console.warn('[BrowserCard] handler "obsolete" error:', Signal)
       }
     }
 
@@ -3123,7 +3123,7 @@ function buildScriptParams (
   return { Params, Args }
 }
 
-/**** buildContext — creates the BrowserScript context for a Visual ****/
+/**** buildContext — creates the script context for a Visual ****/
 
 function buildContext (
   _Deck:       BC_Deck,
@@ -3456,7 +3456,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'This card demonstrates BrowserScript. Each button has a script which runs when it is clicked.',
+          text: 'This card demonstrates scripting. Each button has a script which runs when it is clicked.',
           fontSize: 11, color: '#1d3461', script: '',
         },
         {
@@ -3465,7 +3465,7 @@ const DemoDeck:BC_Deck = (() => {
           Anchors: ['left-width', 'top-height'], Offsets: [60, 143, 150, 33],
           visible: true, variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('touchUp', () => answer('Hello from BrowserScript!', 'OK'))`,
+          script: `on('touchUp', () => answer('Hello from a script!', 'OK'))`,
         },
         {
           id: newInternalId('widget'), name: 'InputBtn', number: 4,
@@ -3625,7 +3625,7 @@ on('render', () => {
           visible: true, variant: 'transparent',
           lockText: true, scrolling: true, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting language (BrowserScript):\nBrowserScript is plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full BrowserScript context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
+          text: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting:\nScripts are plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full script context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
           fontSize: 11, color: '#1d3461', script: '',
         },
         {
@@ -4291,7 +4291,7 @@ function WidgetView ({
       try {
         new Function(`return (async () => {\n${userScript}\n})()`)
       } catch (Signal) {
-        console.warn('[BrowserScript] syntax error in script of widget ' + quoted(Obj.name) + ':', Signal)
+        console.warn('[BrowserCard] syntax error in script of widget ' + quoted(Obj.name) + ':', Signal)
         userScript = ''
       }
     }
@@ -6173,7 +6173,7 @@ function DeckView ({
     clearConsole () { Console_clear(deckProxy) },
   }), [])
 
-/**** makeBaseContext — builds a BrowserScript context for any Visual in this Deck ****/
+/**** makeBaseContext — builds a script context for any Visual in this Deck ****/
 
   const makeBaseContext = useCallback((me:BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null):BC_ScriptContext => {
     return buildContext(

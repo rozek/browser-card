@@ -17977,7 +17977,7 @@ function Bu(t) {
     ]
   };
 }
-const C2 = "0.0.30", O4 = _.ValueIsTextline, Du = {
+const C2 = "0.0.31", O4 = _.ValueIsTextline, Du = {
   h: Wr,
   Fragment: fn,
   render: jr,
@@ -19277,7 +19277,7 @@ class Fs {
 ${e}
 })()`)(...n);
       } catch (a) {
-        console.warn("[BrowserScript] script error:", a);
+        console.warn("[BrowserCard] script error:", a);
       }
   }
   /**** dispatch — asynchronously invokes the named handler ****/
@@ -19288,7 +19288,7 @@ ${e}
     try {
       return await n(...r), !0;
     } catch (a) {
-      return console.warn(`[BrowserScript] handler "${e}" error:`, a), !1;
+      return console.warn(`[BrowserCard] handler "${e}" error:`, a), !1;
     }
   }
   /**** renderResult — synchronously invokes the 'render' handler ****/
@@ -19299,7 +19299,7 @@ ${e}
     try {
       return e();
     } catch (r) {
-      return console.warn("[BrowserScript] render handler error:", r), null;
+      return console.warn("[BrowserCard] render handler error:", r), null;
     }
   }
   after(e, r) {
@@ -19323,7 +19323,7 @@ ${e}
       try {
         await e();
       } catch (a) {
-        console.warn('[BrowserScript] handler "obsolete" error:', a);
+        console.warn('[BrowserCard] handler "obsolete" error:', a);
       }
     r.forEach((a) => clearTimeout(a)), n.forEach((a) => clearInterval(a));
   }
@@ -20039,7 +20039,7 @@ Click one of the buttons below to learn more.`,
           showLines: !1,
           dontSearch: !1,
           sharedText: !1,
-          text: "This card demonstrates BrowserScript. Each button has a script which runs when it is clicked.",
+          text: "This card demonstrates scripting. Each button has a script which runs when it is clicked.",
           fontSize: 11,
           color: "#1d3461",
           script: ""
@@ -20058,7 +20058,7 @@ Click one of the buttons below to learn more.`,
           autoHilite: !0,
           enabled: !0,
           sharedHilite: !1,
-          script: "on('touchUp', () => answer('Hello from BrowserScript!', 'OK'))"
+          script: "on('touchUp', () => answer('Hello from a script!', 'OK'))"
         },
         {
           id: ue("widget"),
@@ -20325,11 +20325,11 @@ on('render', () => {
 Concept:
 BrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.
 
-Scripting language (BrowserScript):
-BrowserScript is plain JavaScript. Event handlers are registered with on('message', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.
+Scripting:
+Scripts are plain JavaScript. Event handlers are registered with on('message', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.
 
 Widgets:
-BC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on('render', () => html\`...\`) and receives html, Configuration and dispatch in addition to the full BrowserScript context.
+BC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on('render', () => html\`...\`) and receives html, Configuration and dispatch in addition to the full script context.
 
 Technology:
 - TypeScript + Preact + htm
@@ -20816,7 +20816,7 @@ function i2({
 ${Ce}
 })()`);
       } catch (Fe) {
-        console.warn("[BrowserScript] syntax error in script of widget " + _.quoted(t.name) + ":", Fe), Ce = "";
+        console.warn("[BrowserCard] syntax error in script of widget " + _.quoted(t.name) + ":", Fe), Ce = "";
       }
     const Ae = B + Ce;
     return W.run(Ae, j, pe).then(async () => {

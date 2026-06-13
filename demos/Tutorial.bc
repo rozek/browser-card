@@ -36,7 +36,7 @@
             0,
             64
           ],
-          "props": {},
+          "Configuration": {},
           "_hue": 248
         },
         {
@@ -2320,7 +2320,7 @@
             74,
             90
           ],
-          "props": {}
+          "Configuration": {}
         },
         {
           "id": "bc-widget-7085",
@@ -2369,7 +2369,7 @@
             198,
             46
           ],
-          "props": {},
+          "Configuration": {},
           "_now": 1781327508018
         },
         {
@@ -2641,7 +2641,7 @@
             240,
             70
           ],
-          "props": {}
+          "Configuration": {}
         },
         {
           "id": "bc-widget-7097",
@@ -2690,7 +2690,7 @@
             94,
             74
           ],
-          "props": {},
+          "Configuration": {},
           "_ms": 48102
         },
         {
@@ -3413,7 +3413,7 @@
             56,
             64
           ],
-          "props": {},
+          "Configuration": {},
           "_hue": 96
         },
         {

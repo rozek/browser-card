@@ -4,7 +4,7 @@
 *                                                                              *
 *******************************************************************************/
 
-  const BC_Version = '0.0.26'
+  const BC_Version = '0.0.30'
 
   declare const download:Function
 
@@ -28,16 +28,27 @@
 
   const ValueIsPhoneNumber = ValueIsTextline // *C* should be implemented
 
-  import { render, html }                                        from 'htm/preact'
-  import { Fragment, createContext, toChildArray, cloneElement } from 'preact'
-  import { createPortal }                                        from 'preact/compat'
-  import { useId, useRef, useState, useEffect, useCallback, useMemo, useContext, useErrorBoundary } from 'preact/hooks'
+  import { render, html }                                           from 'htm/preact'
+  import { h, Fragment, createContext, toChildArray, cloneElement, createRef, createElement } from 'preact'
+  import { createPortal, memo, forwardRef }                         from 'preact/compat'
+  import { useId, useRef, useState, useReducer, useEffect, useLayoutEffect, useCallback, useMemo, useContext, useErrorBoundary } from 'preact/hooks'
   export {
     render, html,
-    createContext, toChildArray, cloneElement,
-    createPortal,
-    useId, useRef, useState, useEffect, useCallback, useMemo, useContext, useErrorBoundary,
+    h, Fragment, createContext, toChildArray, cloneElement, createRef, createElement,
+    createPortal, memo, forwardRef,
+    useId, useRef, useState, useReducer, useEffect, useLayoutEffect, useCallback, useMemo, useContext, useErrorBoundary,
   }
+
+/**** "Preact" bundles the most important preact exports for use in scripts ****/
+/****  - so scripts never have to (and must not) re-import preact themselves  ****/
+
+  const Preact = {
+    h, Fragment, render, createContext, createElement, cloneElement, createRef,
+    toChildArray, createPortal, memo, forwardRef,
+    useId, useRef, useState, useReducer, useEffect, useLayoutEffect,
+    useCallback, useMemo, useContext, useErrorBoundary,
+  }
+  export { Preact }
   export { BC_Version }
   export {
     quoted, escaped, HTMLsafe,
@@ -2248,7 +2259,7 @@ interface BC_Widget extends BC_Visual {
   Size?:            BC_Dimension
   Geometry?:        BC_Geometry
   changeGeometryTo?:(x?:BC_Location|null, y?:BC_Location|null, Width?:BC_Dimension|null, Height?:BC_Dimension|null) => BC_Offsets
-  props?:     Record<string, unknown>
+  Configuration?: Record<string, unknown>   // custom-widget config (generic only)
   variant?:   BC_WidgetVariant   // button/field/shape/picture visual style
   // button fields:
   showName?:     boolean
@@ -2926,6 +2937,7 @@ interface BC_ScriptContext {
   firstCard: BC_CardRef
   lastCard:  BC_CardRef
   html:      typeof html    // htm/preact tagged template literal — do NOT re-import preact or htm
+  preact:    typeof Preact  // the most important preact exports — do NOT re-import preact
 }
 
 /**** BC_ConsoleFns — console functions, provided by the surrounding Deck ****/
@@ -3210,6 +3222,7 @@ function buildContext (
     firstCard: makeRef('first'),
     lastCard:  makeRef('last'),
     html,
+    preact: Preact,
   }
 }
 
@@ -3518,11 +3531,11 @@ const DemoDeck:BC_Deck = (() => {
           id: newInternalId('widget'), name: 'Counter', number: 3,
           type: 'generic', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [150, 300, 113, 195],
-          visible: true, props: { label:'Clicks' },
+          visible: true, Configuration: { label:'Clicks' },
           script: `\
 on('render', () => {
   const count = me.count ?? 0
-  const label = props.label ?? 'Counter'
+  const label = Configuration.label ?? 'Counter'
   return html\`
     <div style=\${{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -3552,7 +3565,7 @@ on('render', () => {
           id: newInternalId('widget'), name: 'Clock', number: 4,
           type: 'generic', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [60, 225, 330, 75],
-          visible: true, props: {},
+          visible: true, Configuration: {},
           script: `\
 let _timer = null
 on('ready', () => { _timer = setInterval(() => { me._time = Date.now() }, 1000) })
@@ -3612,7 +3625,7 @@ on('render', () => {
           visible: true, variant: 'transparent',
           lockText: true, scrolling: true, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting language (BrowserScript):\nBrowserScript is plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, props and dispatch in addition to the full BrowserScript context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
+          text: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting language (BrowserScript):\nBrowserScript is plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full BrowserScript context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
           fontSize: 11, color: '#1d3461', script: '',
         },
         {
@@ -4248,12 +4261,12 @@ function WidgetView ({
   const ContextRef = useRef<BC_ScriptContext | null>(null)
   if (ContextRef.current == null) { ContextRef.current = makeContext(proxy) }
 
-  // extra bindings: props and dispatch
+  // extra bindings: Configuration (custom-widget config) and dispatch
   const ExtraRef = useRef<Record<string, unknown> | undefined>(undefined)
   if (ExtraRef.current == null) {
     const inst = instanceRef.current!
     ExtraRef.current = {
-      props:    Obj.props ?? {},
+      Configuration: Obj.Configuration ?? {},
       dispatch: (msg:string) => { void inst.dispatch(msg); onMessageRef.current?.(msg) },
     }
   }
@@ -4411,7 +4424,7 @@ function WidgetView ({
         break
       default:                                                       // 'generic'
         Object.assign(Widget, {
-          props:{},
+          Configuration:{},
           script:(
             "on('render', () => html`\n" +
             "  <div style=${{\n" +
@@ -4584,7 +4597,7 @@ function WidgetView ({
   }
 
 /**** EditorWindow — modal, draggable and resizable editor for multi-line ****/
-/****                properties such as "Text", "Script" or "props"       ****/
+/****                properties such as "Text", "Script" or "Configuration" ****/
 
   type BC_EditorState = {
     Title:   string
@@ -4973,13 +4986,28 @@ function WidgetView ({
       </div>`
     }
 
-    function commitPropsJSON (Value:string):void {
+    function commitConfigurationJSON (Value:string):void {
       try {
-        update('props', JSON.parse(Value))
+        update('Configuration', JSON.parse(Value))
       } catch (Signal) {
-        console.warn('[BrowserCard] invalid JSON for "props":', Signal)
-        window.alert('The given "props" are no valid JSON and were not applied.')
+        console.warn('[BrowserCard] invalid JSON for "Configuration":', Signal)
+        window.alert('The given configuration is no valid JSON and was not applied.')
       }
+    }
+
+    function ConfigurationRow () {
+      return html`<div class="bc-props-row column">
+        ${RowHeader(
+          'Configuration (JSON)',
+          () => JSON.stringify(Widget!.Configuration ?? {}, null, 2),
+          commitConfigurationJSON
+        )}
+        <textarea rows="5" spellcheck=${false}
+          defaultValue=${JSON.stringify(Widget!.Configuration ?? {}, null, 2)}
+          onChange=${(Event:Event) => commitConfigurationJSON((Event.target as HTMLTextAreaElement).value)}
+        ></textarea>
+        <div class="bc-props-hint">read in the script via the "Configuration" object · applied on blur</div>
+      </div>`
     }
 
     function ScriptRow () {
@@ -4991,21 +5019,6 @@ function WidgetView ({
         )}
         <textarea rows="8" spellcheck=${false} defaultValue=${Widget!.script ?? ''}
           onChange=${(Event:Event) => update('script', (Event.target as HTMLTextAreaElement).value)}
-        ></textarea>
-        <div class="bc-props-hint">applied when the field loses focus</div>
-      </div>`
-    }
-
-    function PropsRow () {
-      return html`<div class="bc-props-row column">
-        ${RowHeader(
-          'props (JSON)',
-          () => JSON.stringify(Widget!.props ?? {}, null, 2),
-          commitPropsJSON
-        )}
-        <textarea rows="5" spellcheck=${false}
-          defaultValue=${JSON.stringify(Widget!.props ?? {}, null, 2)}
-          onChange=${(Event:Event) => commitPropsJSON((Event.target as HTMLTextAreaElement).value)}
         ></textarea>
         <div class="bc-props-hint">applied when the field loses focus</div>
       </div>`
@@ -5058,7 +5071,7 @@ function WidgetView ({
         `
         break
       default:                                                       // 'generic'
-        TypeSection = PropsRow()
+        TypeSection = ConfigurationRow()
     }
 
     return html`
@@ -7079,7 +7092,7 @@ class BC_DeckElement extends HTMLElement {
 
   const global = (Function('return this'))()
   global.BC = {
-    render, html,
+    render, html, Preact,
     createContext, toChildArray, cloneElement,
     createPortal,
     useId, useRef, useState, useEffect, useCallback, useMemo, useContext,

@@ -36,7 +36,7 @@
             0,
             64
           ],
-          "props": {}
+          "Configuration": {}
         },
         {
           "id": "bc-widget-911",
@@ -188,7 +188,7 @@
             276,
             66
           ],
-          "props": {}
+          "Configuration": {}
         },
         {
           "id": "bc-widget-917",
@@ -361,7 +361,7 @@
             100,
             42
           ],
-          "props": {}
+          "Configuration": {}
         },
         {
           "id": "bc-widget-924",
@@ -381,7 +381,7 @@
             148,
             112
           ],
-          "props": {}
+          "Configuration": {}
         },
         {
           "id": "bc-widget-925",
@@ -441,7 +441,7 @@
           "number": 18,
           "zIndex": 18,
           "visible": true,
-          "script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => html`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${props.text ?? 'BrowserCard'}</div>\n  </div>\n`)",
+          "script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => html`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${Configuration.text ?? 'BrowserCard'}</div>\n  </div>\n`)",
           "Anchors": [
             "left-width",
             "top-height"
@@ -454,7 +454,7 @@
             412,
             28
           ],
-          "props": {
+          "Configuration": {
             "text": "+++ BrowserCard +++ decks, cards & widgets +++ scripted with plain JavaScript +++ reactive state via me.* +++ self-cleaning timers +++ dialogs that return values +++ persisted in IndexedDB +++ embeddable everywhere via <bc-deck> +++"
           }
         }

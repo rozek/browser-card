@@ -129,7 +129,31 @@ on('render', () => {                              // a custom widget: a counter
 
 Use `my.own` for *transient* script-private state: writes to `my.own.whatever` neither re-render nor persist.
 
-Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. Widgets additionally receive `props` (their read-only configuration, editable as JSON in the designer) and `dispatch(msg)` to send messages to themselves and their card.
+Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. A custom widget additionally receives `dispatch(msg)` (to send messages to itself and its card) and `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
+
+```javascript
+on('render', () => html`<div>Hello, ${Configuration.name ?? 'world'}!</div>`)
+```
+
+With `Configuration = { "name": "Andreas" }` this widget greets "Hello, Andreas!". Use `Configuration` for static, design-time settings; use `me.*` for mutable runtime state.
+
+### Using Preact — do not re-import it
+
+BrowserCard runs on a single, bundled Preact instance. If a script imports Preact again (e.g. `import { useState } from 'https://…/preact'`), it gets a *second*, unconnected copy whose hooks and rendering do not work together with BrowserCard's - widgets then misbehave in subtle ways.
+
+Therefore: never import Preact in a script. Everything you need is already provided. The `html` tag covers most cases; for the rest, use the injected `preact` object:
+
+```javascript
+on('render', () => {
+  const [open, setOpen] = preact.useState(false)        // NOT: import … from 'preact'
+  return html`
+    <button onClick=${() => setOpen(! open)}>${open ? 'hide' : 'show'}</button>
+    ${open && html`<div>now you see me</div>`}
+  `
+})
+```
+
+The `preact` object bundles the most important exports: `h`, `Fragment`, `render`, `createElement`, `cloneElement`, `createRef`, `createContext`, `toChildArray`, `createPortal`, `memo`, `forwardRef`, and the hooks `useId`, `useRef`, `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useCallback`, `useMemo`, `useContext`, `useErrorBoundary`. (The same object is also reachable as `BC.Preact` for external behaviors.)
 
 ### Timers that clean up after themselves
 
@@ -200,7 +224,8 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
 | `nextCard`, `prevCard`, `firstCard`, `lastCard` | card refs for `go()` |
 | `html` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
-| `props` | *(widgets only)* the widget's read-only configuration object |
+| `preact` | the most important Preact exports, bundled into one object (see below) - use these instead of importing Preact |
+| `Configuration` | *(custom widgets only)* the widget's read-only JSON configuration object (edited as "Configuration (JSON)" in the designer) |
 
 ### Geometry on `me` (widgets only)
 
@@ -221,7 +246,7 @@ A *behavior* is a reusable script, packaged as an ordinary ES module - the Brows
 
 ### Writing a behavior
 
-Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need (everything from the [Script API Reference](#script-api-reference) is available, incl. `on`, `me`, `html`, `after`, `every`, `props` and `dispatch`):
+Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need (everything from the [Script API Reference](#script-api-reference) is available, incl. `on`, `me`, `html`, `after`, `every`, `Configuration` and `dispatch`):
 
 ```javascript
 // Blinker.js - a behavior for "generic" widgets: makes its content blink

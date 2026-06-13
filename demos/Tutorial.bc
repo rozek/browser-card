@@ -36,7 +36,8 @@
             0,
             64
           ],
-          "props": {}
+          "props": {},
+          "_hue": 248
         },
         {
           "id": "bc-widget-7002",
@@ -209,7 +210,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "1 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -614,7 +615,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "2 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -885,7 +886,8 @@
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "text": "a checkbox - it toggles"
+          "text": "a checkbox - it toggles",
+          "hilite": true
         },
         {
           "id": "bc-widget-7032",
@@ -910,7 +912,8 @@
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "text": "a radio button"
+          "text": "a radio button",
+          "hilite": false
         },
         {
           "id": "bc-widget-7033",
@@ -938,7 +941,7 @@
           "sharedText": false,
           "fontSize": 10,
           "color": "#223",
-          "text": "(button clicks are reported here)"
+          "text": "you clicked the Radio button"
         },
         {
           "id": "bc-widget-7034",
@@ -1023,7 +1026,7 @@
           "sharedText": false,
           "fontSize": 10,
           "color": "#223",
-          "text": "this field is editable right here in browse mode - click and type!"
+          "text": "this field is editable right here in browse mode - click and type! Hello!"
         },
         {
           "id": "bc-widget-7037",
@@ -1100,7 +1103,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "3 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -1389,9 +1392,9 @@
           "name": "ArrowLine",
           "type": "shape",
           "Offsets": [
-            16,
+            20,
             130,
-            154,
+            160,
             40
           ],
           "variant": "line",
@@ -1413,9 +1416,9 @@
           "name": "ArcUp",
           "type": "shape",
           "Offsets": [
-            186,
+            190,
             130,
-            154,
+            160,
             40
           ],
           "variant": "arc",
@@ -1437,9 +1440,9 @@
           "name": "ArcDown",
           "type": "shape",
           "Offsets": [
-            356,
+            360,
             130,
-            154,
+            160,
             40
           ],
           "variant": "arc",
@@ -1461,9 +1464,9 @@
           "name": "Label3",
           "type": "field",
           "Offsets": [
-            16,
+            20,
             300,
-            184,
+            210,
             24
           ],
           "text": "pictures scale in five different modes:",
@@ -1490,9 +1493,9 @@
           "name": "PicFit",
           "type": "picture",
           "Offsets": [
-            16,
+            20,
             130,
-            210,
+            240,
             86
           ],
           "variant": "scale-aspect-fit",
@@ -1514,9 +1517,9 @@
           "name": "PicFill",
           "type": "picture",
           "Offsets": [
-            156,
+            160,
             130,
-            210,
+            240,
             86
           ],
           "variant": "scale-aspect-fill",
@@ -1538,9 +1541,9 @@
           "name": "PicActual",
           "type": "picture",
           "Offsets": [
-            296,
+            300,
             130,
-            210,
+            240,
             86
           ],
           "variant": "actual-size",
@@ -1562,9 +1565,9 @@
           "name": "PicNote",
           "type": "field",
           "Offsets": [
-            436,
+            430,
             148,
-            210,
+            240,
             86
           ],
           "text": "aspect-fit, aspect-fill and actual-size of the same 80x60 SVG",
@@ -1590,9 +1593,9 @@
           "name": "Label4",
           "type": "field",
           "Offsets": [
-            16,
+            20,
             568,
-            306,
+            340,
             36
           ],
           "text": "every widget is positioned with anchors + offsets, so layouts may also stretch with the card - and snap to a grid while editing",
@@ -1623,7 +1626,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "4 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -1845,9 +1848,9 @@
           "type": "field",
           "Offsets": [
             16,
-            272,
-            200,
-            62
+            270,
+            182,
+            100
           ],
           "variant": "rectangle",
           "lockText": true,
@@ -1873,9 +1876,9 @@
           "name": "Explain3",
           "type": "field",
           "Offsets": [
-            16,
+            20,
             272,
-            270,
+            290,
             40
           ],
           "text": "try them - the results appear on the right:",
@@ -2062,7 +2065,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "5 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -2227,9 +2230,9 @@
           "type": "field",
           "Offsets": [
             16,
-            272,
+            270,
             130,
-            118
+            150
           ],
           "variant": "rectangle",
           "lockText": true,
@@ -2240,7 +2243,7 @@
           "fontSize": 9,
           "color": "#0a3069",
           "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
-          "text": "on('render', () => {\n  const count = me.count ?? 0\n  return html`\n    <div>\n      <b>${count}</b>\n      <button onClick=${() => {\n        me.count = count+1\n      }}>+</button>\n    </div>`\n})"
+          "text": "on('render', () => {\n  const count = my.count ?? 0\n  return html`\n    <div>\n      <b>${count}</b>\n      <button onClick=${() => {\n        my.count = count+1\n      }}>+</button>\n    </div>`\n})"
         },
         {
           "id": "bc-widget-7082",
@@ -2255,12 +2258,12 @@
           "name": "Note",
           "type": "field",
           "Offsets": [
-            16,
-            272,
-            256,
-            56
+            20,
+            270,
+            290,
+            50
           ],
-          "text": "use me.own.* for private state that should neither re-render nor be persisted",
+          "text": "use my.own.* for private state that should neither re-render nor be persisted",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -2366,7 +2369,8 @@
             198,
             46
           ],
-          "props": {}
+          "props": {},
+          "_now": 1781327508018
         },
         {
           "id": "bc-widget-7087",
@@ -2414,7 +2418,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "6 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -2578,10 +2582,10 @@
           "name": "Code",
           "type": "field",
           "Offsets": [
-            16,
-            272,
-            112,
-            50
+            20,
+            270,
+            90,
+            80
           ],
           "variant": "rectangle",
           "lockText": true,
@@ -2607,9 +2611,9 @@
           "name": "Roll",
           "type": "button",
           "Offsets": [
-            16,
+            20,
             272,
-            174,
+            190,
             32
           ],
           "variant": "rounded-rect",
@@ -2632,9 +2636,9 @@
           "name": "Dice",
           "type": "generic",
           "Offsets": [
-            16,
+            20,
             272,
-            214,
+            240,
             70
           ],
           "props": {}
@@ -2686,7 +2690,8 @@
             94,
             74
           ],
-          "props": {}
+          "props": {},
+          "_ms": 48102
         },
         {
           "id": "bc-widget-7099",
@@ -2729,9 +2734,9 @@
           "name": "Note2",
           "type": "field",
           "Offsets": [
-            16,
+            20,
             272,
-            296,
+            320,
             56
           ],
           "text": "a click on a button also bubbles a touchUp message up to the script of its card",
@@ -2762,7 +2767,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "7 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -2978,9 +2983,9 @@
           "name": "PlayLabel",
           "type": "field",
           "Offsets": [
-            424,
+            420,
             150,
-            288,
+            280,
             40
           ],
           "text": "practice on me - enter edit mode and drag me around!",
@@ -3012,7 +3017,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "8 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -3206,7 +3211,7 @@
           "Offsets": [
             30,
             540,
-            252,
+            210,
             62
           ],
           "variant": "rectangle",
@@ -3235,7 +3240,7 @@
           "Offsets": [
             30,
             540,
-            324,
+            290,
             40
           ],
           "text": "that is the entire embedding code - the deck JSON goes into the src attribute. Try it: export THIS deck as a standalone app and open the file!",
@@ -3267,7 +3272,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "9 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -3408,7 +3413,8 @@
             56,
             64
           ],
-          "props": {}
+          "props": {},
+          "_hue": 96
         },
         {
           "id": "bc-widget-7127",
@@ -3536,7 +3542,7 @@
             410,
             22
           ],
-          "text": "",
+          "text": "10 / 10",
           "variant": "transparent",
           "lockText": true,
           "scrolling": false,

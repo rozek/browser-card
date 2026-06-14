@@ -4,7 +4,7 @@
 *                                                                              *
 *******************************************************************************/
 
-  const BC_Version = '0.0.34'
+  const BC_Version = '0.0.35'
 
   declare const download:Function
 
@@ -3659,26 +3659,6 @@ on('render', () => {
 
   export type BC_DeckInfo = { Key:string; Name:string }
 
-/**** one-time migration from the old "Stacks" store and key prefix ****/
-
-  async function migrateOldDecks ():Promise<void> {
-    try {
-      const oldDeckStore = createStore('BrowserCard','Stacks')
-      const KeyList      = await keys(oldDeckStore)
-      for (const Key of KeyList) {
-        if ((typeof Key === 'string') && Key.startsWith('bc-stack:')) {
-          const newKey   = DeckKeyPrefix + Key.slice('bc-stack:'.length)
-          const Value    = await get(Key, oldDeckStore)
-          const existing = await get(newKey, DeckStore)
-          if (existing == null) { await set(newKey, Value, DeckStore) }
-          await del(Key, oldDeckStore)
-        }
-      }
-    } catch { /* nothing to migrate */ }
-  }
-
-  const DeckMigration = migrateOldDecks()          // runs once at module load
-
 /**** ValueIsWidgetJSON/CardJSON/Deck — light structural checks ****/
 
   export function ValueIsWidgetJSON (Value:any):boolean {
@@ -6668,7 +6648,6 @@ class BC_Designer extends HTMLElement {
     this.#StorageKey = 'bc-deck:' + (this.getAttribute('name') ?? Deck.Name ?? 'default')
 
     try {                  // a persisted copy supersedes the original definition
-      await DeckMigration             // old persisted decks may need migration
       const persisted = await get(this.#StorageKey, DeckStore)
       if (MountId !== this.#MountId) { return }       // superseded by new mount
       if (ValueIsDeck(persisted)) {
@@ -6818,7 +6797,6 @@ class BC_Designer extends HTMLElement {
   async #listDecks ():Promise<BC_DeckInfo[]> {
     let InfoList:BC_DeckInfo[] = []
     try {
-      await DeckMigration             // old persisted decks may need migration
       const KeyList = await keys(DeckStore)
       InfoList = KeyList
         .filter((Key):Key is string => (

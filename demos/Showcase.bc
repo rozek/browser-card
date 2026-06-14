@@ -23,7 +23,7 @@
           "Number": 1,
           "zIndex": 1,
           "visible": true,
-          "Script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 210) + 2) % 360 }))\non('render', () => {\n  const hue = me._hue ?? 210\n  return html`\n    <div style=${{\n      width:'100%', height:'100%',\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      background:`linear-gradient(120deg, hsl(${hue},65%,28%), hsl(${(hue+70)%360},70%,45%))`,\n      color:'#fff', borderRadius:'0 0 14px 14px',\n    }}>\n      <div style=${{ fontSize:'26px', fontWeight:'bold', letterSpacing:'3px' }}>BrowserCard</div>\n      <div style=${{ fontSize:'11px', opacity:0.85, letterSpacing:'1px' }}>HyperCard, reborn in your browser - this whole card is just JSON + tiny scripts</div>\n    </div>\n  `\n})",
+          "Script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 210) + 2) % 360 }))\non('render', () => {\n  const hue = me._hue ?? 210\n  return HTML`\n    <div style=${{\n      width:'100%', height:'100%',\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      background:`linear-gradient(120deg, hsl(${hue},65%,28%), hsl(${(hue+70)%360},70%,45%))`,\n      color:'#fff', borderRadius:'0 0 14px 14px',\n    }}>\n      <div style=${{ fontSize:'26px', fontWeight:'bold', letterSpacing:'3px' }}>BrowserCard</div>\n      <div style=${{ fontSize:'11px', opacity:0.85, letterSpacing:'1px' }}>HyperCard, reborn in your browser - this whole card is just JSON + tiny scripts</div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -97,7 +97,7 @@
           "Number": 4,
           "zIndex": 4,
           "visible": true,
-          "Script": "on('click', () => { me.Card.color = (me.hilite ? '#1b2430' : '#f4f6fa') })",
+          "Script": "on('click', () => { me.Card.Color = (me.Hilite ? '#1b2430' : '#f4f6fa') })",
           "Anchors": [
             "left-width",
             "top-height"
@@ -175,7 +175,7 @@
           "Number": 7,
           "zIndex": 7,
           "visible": true,
-          "Script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center', gap:'14px',\n      width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{\n        display:'grid', gridTemplateColumns:'repeat(3,10px)', gridTemplateRows:'repeat(3,10px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa',\n        border:'1px solid #ccd', borderRadius:'8px',\n      }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => html`\n          <div key=${i} style=${{\n            width:'10px', height:'10px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent',\n          }}></div>\n        `)}\n      </div>\n      <div style=${{ fontSize:'11px', color:'#667' }}>\n        widgets receive<br/>messages via <b>send()</b>\n      </div>\n    </div>\n  `\n})",
+          "Script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return HTML`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center', gap:'14px',\n      width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{\n        display:'grid', gridTemplateColumns:'repeat(3,10px)', gridTemplateRows:'repeat(3,10px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa',\n        border:'1px solid #ccd', borderRadius:'8px',\n      }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => HTML`\n          <div key=${i} style=${{\n            width:'10px', height:'10px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent',\n          }}></div>\n        `)}\n      </div>\n      <div style=${{ fontSize:'11px', color:'#667' }}>\n        widgets receive<br/>messages via <b>send()</b>\n      </div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -348,7 +348,7 @@
           "Number": 14,
           "zIndex": 14,
           "visible": true,
-          "Script": "on('ready', () => every(1000, () => { me._now = Date.now() }))\non('render', () => {\n  const now = new Date(me._now ?? Date.now())\n  const pad = (n) => String(n).padStart(2,'0')\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center',\n      width:'100%', height:'100%', background:'#101418', color:'#7fdcff',\n      fontFamily:'ui-monospace, monospace', fontSize:'20px', letterSpacing:'3px',\n      borderRadius:'10px', border:'1px solid #2a3a4a',\n    }}>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</div>\n  `\n})",
+          "Script": "on('ready', () => every(1000, () => { me._now = Date.now() }))\non('render', () => {\n  const now = new Date(me._now ?? Date.now())\n  const pad = (n) => String(n).padStart(2,'0')\n  return HTML`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center',\n      width:'100%', height:'100%', background:'#101418', color:'#7fdcff',\n      fontFamily:'ui-monospace, monospace', fontSize:'20px', letterSpacing:'3px',\n      borderRadius:'10px', border:'1px solid #2a3a4a',\n    }}>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -368,7 +368,7 @@
           "Number": 15,
           "zIndex": 15,
           "visible": true,
-          "Script": "on('render', () => {\n  const count = me.count ?? 0\n  const Button = (Label,onClick) => html`\n    <button onClick=${onClick} style=${{\n      padding:'4px 12px', fontSize:'14px', cursor:'pointer',\n      borderRadius:'7px', border:'1px solid #ccd', background:'#f6f7fa',\n    }}>${Label}</button>\n  `\n  return html`\n    <div style=${{\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      gap:'8px', width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{ fontSize:'9px', color:'#889', textTransform:'uppercase', letterSpacing:'1px' }}>\n        reactive state: ${'me.count = ...'}\n      </div>\n      <div style=${{ fontSize:'34px', fontWeight:'bold', color:'#1d3461', lineHeight:1 }}>${count}</div>\n      <div style=${{ display:'flex', gap:'8px' }}>\n        ${Button('-', () => { me.count = count-1 })}\n        ${Button('+', () => { me.count = count+1 })}\n      </div>\n    </div>\n  `\n})",
+          "Script": "on('render', () => {\n  const count = me.count ?? 0\n  const Button = (Label,onClick) => HTML`\n    <button onClick=${onClick} style=${{\n      padding:'4px 12px', fontSize:'14px', cursor:'pointer',\n      borderRadius:'7px', border:'1px solid #ccd', background:'#f6f7fa',\n    }}>${Label}</button>\n  `\n  return HTML`\n    <div style=${{\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      gap:'8px', width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{ fontSize:'9px', color:'#889', textTransform:'uppercase', letterSpacing:'1px' }}>\n        reactive state: ${'me.count = ...'}\n      </div>\n      <div style=${{ fontSize:'34px', fontWeight:'bold', color:'#1d3461', lineHeight:1 }}>${count}</div>\n      <div style=${{ display:'flex', gap:'8px' }}>\n        ${Button('-', () => { me.count = count-1 })}\n        ${Button('+', () => { me.count = count+1 })}\n      </div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -441,7 +441,7 @@
           "Number": 18,
           "zIndex": 18,
           "visible": true,
-          "Script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => html`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${Configuration.text ?? 'BrowserCard'}</div>\n  </div>\n`)",
+          "Script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => HTML`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${Configuration.text ?? 'BrowserCard'}</div>\n  </div>\n`)",
           "Anchors": [
             "left-width",
             "top-height"

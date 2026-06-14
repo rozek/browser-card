@@ -684,7 +684,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Text = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  Widget('Out').Text = ''\n\n  const P = Widget('Progress')\n  if (P != null) { P.Text = CardNumber() + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7039",
@@ -941,7 +941,7 @@
           "sharedText": false,
           "FontSize": 10,
           "Color": "#223",
-          "Text": "you clicked the Radio button"
+          "Text": ""
         },
         {
           "Id": "bc-widget-7034",
@@ -1026,7 +1026,7 @@
           "sharedText": false,
           "FontSize": 10,
           "Color": "#223",
-          "Text": "this field is editable right here in browse mode - click and type! Hello!"
+          "Text": "this field is editable right here in browse mode - click and type! "
         },
         {
           "Id": "bc-widget-7037",
@@ -2320,7 +2320,8 @@
             74,
             90
           ],
-          "Configuration": {}
+          "Configuration": {},
+          "count": 0
         },
         {
           "Id": "bc-widget-7085",
@@ -2370,7 +2371,7 @@
             46
           ],
           "Configuration": {},
-          "_now": 1781327508018
+          "_now": 1781414473372
         },
         {
           "Id": "bc-widget-7087",
@@ -2596,7 +2597,7 @@
           "FontSize": 9,
           "Color": "#0a3069",
           "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
-          "Text": "// in the dice widget's script:\non('roll', () => {\n  me._value = 1 + Math.floor(Math.random()*6)\n})"
+          "Text": "// in the dice widget's script:\non('roll', () => {\n  my.Value = 1 + Math.floor(Math.random()*6)\n})"
         },
         {
           "Id": "bc-widget-7095",
@@ -2641,7 +2642,8 @@
             240,
             70
           ],
-          "Configuration": {}
+          "Configuration": {},
+          "_value": 1
         },
         {
           "Id": "bc-widget-7097",
@@ -2691,7 +2693,7 @@
             74
           ],
           "Configuration": {},
-          "_ms": 48102
+          "_ms": 36400
         },
         {
           "Id": "bc-widget-7099",
@@ -3414,7 +3416,7 @@
             64
           ],
           "Configuration": {},
-          "_hue": 96
+          "_hue": 42
         },
         {
           "Id": "bc-widget-7127",

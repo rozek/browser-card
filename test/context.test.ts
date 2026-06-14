@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { buildContext } from '../src/BrowserCard'
 
 function makeCtx (overrides:any = {}) {
-  const Cards = [{ name:'A' },{ name:'B' },{ name:'C' }] as any
+  const Cards = [{ Name:'A' },{ Name:'B' },{ Name:'C' }] as any
   const nav   = vi.fn()
   const Console = { print:vi.fn(), println:vi.fn(), clearConsole:vi.fn() }
   const CardIndexRef = { current: overrides.index ?? 1 }
@@ -18,22 +18,22 @@ function makeCtx (overrides:any = {}) {
 describe('buildContext - cards & navigation', () => {
   it('card() by name and 1-based index, else null', () => {
     const { ctx } = makeCtx()
-    expect(ctx.card('B')).toMatchObject({ __navType:'card-name', __name:'B' })
-    expect(ctx.card(1)).toMatchObject({ __navType:'card-index', __index:0 })
-    expect(ctx.card('nope')).toBeNull()
-    expect(ctx.card(99)).toBeNull()
+    expect(ctx.Card('B')).toMatchObject({ __navType:'card-name', __name:'B' })
+    expect(ctx.Card(1)).toMatchObject({ __navType:'card-index', __index:0 })
+    expect(ctx.Card('nope')).toBeNull()
+    expect(ctx.Card(99)).toBeNull()
   })
-  it('cardNumber()/cardCount()', () => {
+  it('CardNumber()/CardCount()', () => {
     const { ctx } = makeCtx({ index:2 })
-    expect(ctx.cardNumber()).toBe(3)     // 1-based
-    expect(ctx.cardCount()).toBe(3)
+    expect(ctx.CardNumber()).toBe(3)     // 1-based
+    expect(ctx.CardCount()).toBe(3)
   })
   it('go() resolves refs, names and numbers to nav targets', () => {
     const { ctx, nav } = makeCtx()
     ctx.go(ctx.nextCard);  expect(nav).toHaveBeenLastCalledWith({ type:'next' })
     ctx.go('B');           expect(nav).toHaveBeenLastCalledWith({ type:'card-name', name:'B' })
     ctx.go(2);             expect(nav).toHaveBeenLastCalledWith({ type:'card-index', index:1 })
-    ctx.go(ctx.card('C')); expect(nav).toHaveBeenLastCalledWith({ type:'card-name', name:'C' })
+    ctx.go(ctx.Card('C')); expect(nav).toHaveBeenLastCalledWith({ type:'card-name', name:'C' })
   })
 })
 
@@ -50,16 +50,16 @@ describe('buildContext - dialogs resolve with values', () => {
   })
 })
 
-describe('buildContext - widget() & send()', () => {
-  it('widget() finds a widget on the current card by name/index', () => {
-    const me:any = { Card:{ WidgetList:[ { name:'X' }, { name:'Y' } ] } }
+describe('buildContext - Widget() & send()', () => {
+  it('Widget() finds a widget on the current card by name/index', () => {
+    const me:any = { Card:{ WidgetList:[ { Name:'X' }, { Name:'Y' } ] } }
     const { ctx } = makeCtx({ me })
-    expect(ctx.widget('Y')).toMatchObject({ name:'Y' })
-    expect(ctx.widget(1)).toMatchObject({ name:'X' })
-    expect(ctx.widget('Z')).toBeNull()
+    expect(ctx.Widget('Y')).toMatchObject({ Name:'Y' })
+    expect(ctx.Widget(1)).toMatchObject({ Name:'X' })
+    expect(ctx.Widget('Z')).toBeNull()
   })
   it('send() resolves false when the target has no script instance', async () => {
-    const me:any = { Card:{ WidgetList:[ { name:'X' } ] } }
+    const me:any = { Card:{ WidgetList:[ { Name:'X' } ] } }
     const { ctx } = makeCtx({ me })
     expect(await ctx.send('X','click')).toBe(false)
     expect(await ctx.send('missing','click')).toBe(false)

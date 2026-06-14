@@ -2186,8 +2186,8 @@ const DefaultDeckHeight = 450
 /**** BC_Visual ****/
 
 interface BC_Visual {
-  name:   string
-  script: string
+  Name:   string
+  Script: string
   Value?: Serializable    // persistent, JSON-serializable per-Visual value
   // visual properties — converted to inline CSS at render time
   FontFamily?:        BC_Textline
@@ -2207,10 +2207,10 @@ interface BC_Visual {
 }
 
 interface BC_Deck extends BC_Visual {
-  id:                  string
+  Id:                  string
   readOnly:            boolean
   swipeToAdjacentCard: boolean
-  cards:               BC_Card[]
+  Cards:               BC_Card[]
   SnapToGrid?:         boolean         // snap dragging to grid points (editing)
   GridWidth?:          number                              // grid raster in px
   GridHeight?:         number                                          // dto.
@@ -2223,11 +2223,11 @@ interface BC_Deck extends BC_Visual {
 type BC_Grid = { isActive:boolean; Width:number; Height:number }
 
 interface BC_Card extends BC_Visual {
-  id:           string  // 'bc-card-1', 'bc-card-2', ...
-  color:        string | null
-  alpha:        number
+  Id:           string  // 'bc-card-1', 'bc-card-2', ...
+  Color:        string | null
+  Alpha:        number
   dontSearch:   boolean
-  objects:      BC_Widget[]
+  Widgets:      BC_Widget[]
 }
 
 type BC_WidgetType = 'generic' | 'button' | 'field' | 'shape' | 'picture'
@@ -2243,9 +2243,9 @@ type BC_WidgetVariant  = BC_ButtonVariant | BC_FieldVariant | BC_ShapeVariant | 
 // Subtype interfaces (BC_Button, BC_Field, BC_Shape, BC_Picture) are narrower views
 // of BC_Widget and are used only for type-safe access in internal behaviors.
 interface BC_Widget extends BC_Visual {
-  id:       string    // 'bc-widget-1', 'bc-widget-2', ...
-  number:   number
-  type:     BC_WidgetType
+  Id:       string    // 'bc-widget-1', 'bc-widget-2', ...
+  Number:   number
+  Type:     BC_WidgetType
   zIndex:   number
   Anchors:  BC_Anchors
   Offsets:  BC_Offsets
@@ -2260,36 +2260,36 @@ interface BC_Widget extends BC_Visual {
   Geometry?:        BC_Geometry
   changeGeometryTo?:(x?:BC_Location|null, y?:BC_Location|null, Width?:BC_Dimension|null, Height?:BC_Dimension|null) => BC_Offsets
   Configuration?: Record<string, unknown>   // custom-widget config (generic only)
-  variant?:   BC_WidgetVariant   // button/field/shape/picture visual style
+  Variant?:   BC_WidgetVariant   // button/field/shape/picture visual style
   // button fields:
   showName?:     boolean
   autoHilite?:   boolean
   enabled?:      boolean
   sharedHilite?: boolean
-  hilite?:       boolean
-  iconId?:       string | null
+  Hilite?:       boolean
+  IconId?:       string | null
   // field fields:
   lockText?:     boolean
   scrolling?:    boolean
   showLines?:    boolean
   dontSearch?:   boolean
   sharedText?:   boolean
-  text?:         string
-  fontSize?:     number
-  fontWeight?:   'normal' | 'bold'
-  textAlign?:    'left' | 'center' | 'right'
-  color?:        string
+  Text?:         string
+  FontSize?:     number
+  FontWeight?:   'normal' | 'bold'
+  TextAlign?:    'left' | 'center' | 'right'
+  Color?:        string
   // shape fields:
-  fillColor?:    string
-  borderColor?:  string
-  borderWidth?:  number
-  arrowStart?:   boolean    // arrowhead at the start point (line/arc only)
-  arrowEnd?:     boolean    // arrowhead at the end point (line/arc only)
-  curvature?:    number     // arc curvature, -1..1 (arc only, default: 0.4)
-  sides?:        number     // number of polygon sides (polygon only, default: 6)
-  cornerRadius?: number     // corner radius in px (rounded-rectangle only, default: 12)
+  FillColor?:    string
+  BorderColor?:  string
+  BorderWidth?:  number
+  ArrowStart?:   boolean    // arrowhead at the start point (line/arc only)
+  ArrowEnd?:     boolean    // arrowhead at the end point (line/arc only)
+  Curvature?:    number     // arc curvature, -1..1 (arc only, default: 0.4)
+  Sides?:        number     // number of polygon sides (polygon only, default: 6)
+  CornerRadius?: number     // corner radius in px (rounded-rectangle only, default: 12)
   // picture fields:
-  imageData?:    string
+  ImageData?:    string
   actualWidth?:  number
   actualHeight?: number
   // shared styling:
@@ -2301,10 +2301,10 @@ interface BC_Widget extends BC_Visual {
 }
 
 // narrow interfaces used only for type-safe access inside internal behaviors
-interface BC_Button extends BC_Widget { type: 'button'; variant: BC_ButtonVariant; showName: boolean; autoHilite: boolean; enabled: boolean; sharedHilite: boolean }
-interface BC_Field  extends BC_Widget { type: 'field';  variant: BC_FieldVariant;  lockText: boolean; scrolling: boolean; showLines: boolean; dontSearch: boolean; sharedText: boolean; text: string }
-interface BC_Shape  extends BC_Widget { type: 'shape';  variant: BC_ShapeVariant }
-interface BC_Picture extends BC_Widget { type: 'picture'; variant: BC_PictureVariant; autoHilite: boolean; imageData: string; actualWidth: number; actualHeight: number }
+interface BC_Button extends BC_Widget { Type: 'button'; Variant: BC_ButtonVariant; showName: boolean; autoHilite: boolean; enabled: boolean; sharedHilite: boolean }
+interface BC_Field  extends BC_Widget { Type: 'field';  Variant: BC_FieldVariant;  lockText: boolean; scrolling: boolean; showLines: boolean; dontSearch: boolean; sharedText: boolean; Text: string }
+interface BC_Shape  extends BC_Widget { Type: 'shape';  Variant: BC_ShapeVariant }
+interface BC_Picture extends BC_Widget { Type: 'picture'; Variant: BC_PictureVariant; autoHilite: boolean; ImageData: string; actualWidth: number; actualHeight: number }
 
 // Proxy types — ES6 Proxy wrappers, created temporarily for active Visuals.
 // Property writes trigger forceUpdate(); geometry (x/y/Width/Height) is computed live.
@@ -2922,10 +2922,10 @@ interface BC_ScriptContext {
   openURL:      (url:string) => void
   answer:       (message:string, ...buttons:string[]) => Promise<string>
   ask:          (prompt:string, defaultValue?:string) => Promise<string | null>
-  card:         (nameOrNum:string|number) => BC_CardRef | null
-  cardNumber:   () => number                        // 1-based index of the card
-  cardCount:    () => number
-  widget:       (nameOrIndex:string|number) => BC_WidgetProxy | null
+  Card:         (nameOrNum:string|number) => BC_CardRef | null
+  CardNumber:   () => number                        // 1-based index of the card
+  CardCount:    () => number
+  Widget:       (nameOrIndex:string|number) => BC_WidgetProxy | null
   send:         (Target:string|number|BC_WidgetProxy, msg:string, ...ArgList:unknown[]) => Promise<boolean>
   print:        (...ArgList:unknown[]) => void
   println:      (...ArgList:unknown[]) => void
@@ -2936,7 +2936,7 @@ interface BC_ScriptContext {
   prevCard:  BC_CardRef
   firstCard: BC_CardRef
   lastCard:  BC_CardRef
-  html:      typeof html    // htm/preact tagged template literal — do NOT re-import preact or htm
+  HTML:      typeof html    // htm/preact tagged template literal — do NOT re-import preact or htm
   preact:    typeof Preact  // the most important preact exports — do NOT re-import preact
 }
 
@@ -3087,7 +3087,7 @@ function buildScriptParams (
   const api:BehaviorAPI = {
     on:       boundOn,
     me:       Context.me as BC_WidgetProxy | null,
-    html:     Context.html,
+    html:     Context.HTML,
     dispatch: (Extra?.dispatch as (msg:string) => void) ?? (() => undefined),
   }
 
@@ -3159,7 +3159,7 @@ export function buildContext (
   function widgetLookup (nameOrIndex:string|number):BC_WidgetProxy | null {
     const WidgetList:BC_WidgetProxy[] = (me as Indexable)?.Card?.WidgetList ?? []
     if (typeof nameOrIndex === 'string') {
-      return WidgetList.find((Widget) => Widget.name === nameOrIndex) ?? null
+      return WidgetList.find((Widget) => Widget.Name === nameOrIndex) ?? null
     }
     if (typeof nameOrIndex === 'number') {            // 1-based, like card()
       return WidgetList[nameOrIndex-1] ?? null
@@ -3182,9 +3182,9 @@ export function buildContext (
       )
     },
 
-    card (nameOrNum) {
+    Card (nameOrNum) {
       if (typeof nameOrNum === 'string') {
-        return Cards.find((c) => c.name === nameOrNum)
+        return Cards.find((c) => c.Name === nameOrNum)
           ? makeRef('card-name', { __name:nameOrNum })
           : null
       }
@@ -3195,10 +3195,10 @@ export function buildContext (
       }
       return null
     },
-    cardNumber () { return CardIndexRef.current+1 },
-    cardCount ()  { return Cards.length },
+    CardNumber () { return CardIndexRef.current+1 },
+    CardCount ()  { return Cards.length },
 
-    widget: widgetLookup,
+    Widget: widgetLookup,
 
     async send (Target, msg, ...ArgList) {
       const Widget = (
@@ -3221,7 +3221,7 @@ export function buildContext (
     prevCard:  makeRef('prev'),
     firstCard: makeRef('first'),
     lastCard:  makeRef('last'),
-    html,
+    HTML: html,
     preact: Preact,
   }
 }
@@ -3233,310 +3233,310 @@ export function buildContext (
 const DemoDeck:BC_Deck = (() => {
   const deckId = newInternalId('deck')
   return {
-  id: deckId,
-  name: 'BrowserCard Demo',
+  Id: deckId,
+  Name: 'BrowserCard Demo',
   readOnly: false,
   swipeToAdjacentCard: true,
-  script: '',
+  Script: '',
 
-  cards: [
+  Cards: [
 
     // card 1: start
     {
-      id: newInternalId('card'), name: 'Start',
-      color: null, alpha: 1, dontSearch: false,
-      script: '',
-      objects: [
+      Id: newInternalId('card'), Name: 'Start',
+      Color: null, Alpha: 1, dontSearch: false,
+      Script: '',
+      Widgets: [
         {
-          id: newInternalId('widget'), name: 'Header', number: 1,
-          type: 'shape', zIndex: 1,
+          Id: newInternalId('widget'), Name: 'Header', Number: 1,
+          Type: 'shape', zIndex: 1,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, variant: 'rectangle',
-          fillColor: '#1d3461', borderColor: 'transparent', borderWidth: 0, script: '',
+          visible: true, Variant: 'rectangle',
+          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Title', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Title', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'BrowserCard',
-          fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: '#ffffff',
-          script: '',
+          Text: 'BrowserCard',
+          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff',
+          Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'WelcomeText', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'WelcomeText', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 165],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'Welcome to BrowserCard!\n\nBrowserCard is a browser-based reinterpretation of the classic HyperCard concept. Create interactive card decks with cards, buttons, fields, shapes and widgets.\n\nClick one of the buttons below to learn more.',
-          fontSize: 11, fontWeight: 'normal', textAlign: 'left', color: '#1d3461',
-          script: '',
+          Text: 'Welcome to BrowserCard!\n\nBrowserCard is a browser-based reinterpretation of the classic HyperCard concept. Create interactive card decks with cards, buttons, fields, shapes and widgets.\n\nClick one of the buttons below to learn more.',
+          FontSize: 11, FontWeight: 'normal', TextAlign: 'left', Color: '#1d3461',
+          Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Demo Widgets', number: 3,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'Demo Widgets', Number: 3,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 116, 263, 33],
-          visible: true, variant: 'rounded-rect',
+          visible: true, Variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => go(card('Demo Widgets')))`,
+          Script: `on('click', () => go(Card('Demo Widgets')))`,
         },
         {
-          id: newInternalId('widget'), name: 'Script Demo', number: 4,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'Script Demo', Number: 4,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [161, 116, 263, 33],
-          visible: true, variant: 'rounded-rect',
+          visible: true, Variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => go(card('Script Demo')))`,
+          Script: `on('click', () => go(Card('Script Demo')))`,
         },
         {
-          id: newInternalId('widget'), name: 'Widget Demo', number: 5,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'Widget Demo', Number: 5,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [293, 116, 263, 33],
-          visible: true, variant: 'rounded-rect',
+          visible: true, Variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => go(card('Widget Demo')))`,
+          Script: `on('click', () => go(Card('Widget Demo')))`,
         },
         {
-          id: newInternalId('widget'), name: 'About BrowserCard', number: 6,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'About BrowserCard', Number: 6,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [424, 146, 263, 33],
-          visible: true, variant: 'shadow',
+          visible: true, Variant: 'shadow',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => go(card('About BrowserCard')))`,
+          Script: `on('click', () => go(Card('About BrowserCard')))`,
         },
       ],
     },
 
     // card 2: demo objects
     {
-      id: newInternalId('card'), name: 'Demo Widgets',
-      color: null, alpha: 1, dontSearch: false,
-      script: '',
-      objects: [
+      Id: newInternalId('card'), Name: 'Demo Widgets',
+      Color: null, Alpha: 1, dontSearch: false,
+      Script: '',
+      Widgets: [
         {
-          id: newInternalId('widget'), name: 'Header', number: 1,
-          type: 'shape', zIndex: 1,
+          Id: newInternalId('widget'), Name: 'Header', Number: 1,
+          Type: 'shape', zIndex: 1,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, variant: 'rectangle',
-          fillColor: '#1d3461', borderColor: 'transparent', borderWidth: 0, script: '',
+          visible: true, Variant: 'rectangle',
+          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Title', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Title', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'Demo Widgets',
-          fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: '#ffffff',
-          script: '',
+          Text: 'Demo Widgets',
+          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff',
+          Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'BtnLabel', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'BtnLabel', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 225, 51, 20],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'Button styles:',
-          fontSize: 10, fontWeight: 'bold', color: '#1d3461', script: '',
+          Text: 'Button styles:',
+          FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
-        { id: newInternalId('widget'), name: 'Rounded Rect', number: 3, type: 'button', zIndex: 3,
+        { Id: newInternalId('widget'), Name: 'Rounded Rect', Number: 3, Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 98, 75, 27], visible: true,
-          variant: 'rounded-rect', showName: true, autoHilite: true, enabled: true, sharedHilite: false, script: '' },
-        { id: newInternalId('widget'), name: 'Rectangle', number: 4, type: 'button', zIndex: 3,
+          Variant: 'rounded-rect', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Rectangle', Number: 4, Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [140, 98, 75, 27], visible: true,
-          variant: 'rectangle', showName: true, autoHilite: true, enabled: true, sharedHilite: false, script: '' },
-        { id: newInternalId('widget'), name: 'Shadow', number: 5, type: 'button', zIndex: 3,
+          Variant: 'rectangle', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Shadow', Number: 5, Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [249, 98, 75, 27], visible: true,
-          variant: 'shadow', showName: true, autoHilite: true, enabled: true, sharedHilite: false, script: '' },
-        { id: newInternalId('widget'), name: 'Standard', number: 6, type: 'button', zIndex: 3,
+          Variant: 'shadow', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Standard', Number: 6, Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [359, 98, 75, 27], visible: true,
-          variant: 'standard', showName: true, autoHilite: true, enabled: true, sharedHilite: false, script: '' },
-        { id: newInternalId('widget'), name: 'Transparent', number: 7, type: 'button', zIndex: 3,
+          Variant: 'standard', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Transparent', Number: 7, Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [468, 98, 75, 27], visible: true,
-          variant: 'transparent', showName: true, autoHilite: true, enabled: true, sharedHilite: false, script: '' },
+          Variant: 'transparent', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
         {
-          id: newInternalId('widget'), name: 'ShapeLabel', number: 8,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'ShapeLabel', Number: 8,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 300, 117, 17],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'Shapes (filled):', fontSize: 10, fontWeight: 'bold', color: '#1d3461', script: '',
+          Text: 'Shapes (filled):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
-        { id: newInternalId('widget'), name: 'Rectangle', number: 9, type: 'shape', zIndex: 2,
+        { Id: newInternalId('widget'), Name: 'Rectangle', Number: 9, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 105, 140, 54], visible: true,
-          variant: 'rectangle', fillColor: '#dbeafe', borderColor: '#3b82f6', borderWidth: 2, script: '' },
-        { id: newInternalId('widget'), name: 'Oval', number: 10, type: 'shape', zIndex: 2,
+          Variant: 'rectangle', FillColor: '#dbeafe', BorderColor: '#3b82f6', BorderWidth: 2, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Oval', Number: 10, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [158, 105, 140, 54], visible: true,
-          variant: 'oval', fillColor: '#fce7f3', borderColor: '#ec4899', borderWidth: 2, script: '' },
-        { id: newInternalId('widget'), name: 'Rounded Rectangle', number: 11, type: 'shape', zIndex: 2,
+          Variant: 'oval', FillColor: '#fce7f3', BorderColor: '#ec4899', BorderWidth: 2, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Rounded Rectangle', Number: 11, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [285, 150, 140, 54], visible: true,
-          variant: 'rounded-rectangle', fillColor: '#dcfce7', borderColor: '#22c55e', borderWidth: 2, script: '' },
+          Variant: 'rounded-rectangle', FillColor: '#dcfce7', BorderColor: '#22c55e', BorderWidth: 2, Script: '' },
         {
-          id: newInternalId('widget'), name: 'ShapeLabel2', number: 12,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'ShapeLabel2', Number: 12,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 300, 203, 17],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'Shapes (lines & polygons):', fontSize: 10, fontWeight: 'bold', color: '#1d3461', script: '',
+          Text: 'Shapes (lines & polygons):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
-        { id: newInternalId('widget'), name: 'Line', number: 13, type: 'shape', zIndex: 2,
+        { Id: newInternalId('widget'), Name: 'Line', Number: 13, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 102, 225, 60], visible: true,
-          variant: 'line', borderColor: '#0284c7', borderWidth: 2, script: '' },
-        { id: newInternalId('widget'), name: 'Arrow', number: 14, type: 'shape', zIndex: 2,
+          Variant: 'line', BorderColor: '#0284c7', BorderWidth: 2, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Arrow', Number: 14, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [140, 102, 225, 60], visible: true,
-          variant: 'line', borderColor: '#0369a1', borderWidth: 2, arrowEnd: true, script: '' },
-        { id: newInternalId('widget'), name: 'Arc', number: 15, type: 'shape', zIndex: 2,
+          Variant: 'line', BorderColor: '#0369a1', BorderWidth: 2, ArrowEnd: true, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Arc', Number: 15, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [249, 102, 225, 60], visible: true,
-          variant: 'arc', borderColor: '#9333ea', borderWidth: 2, arrowEnd: true, curvature: 0.4, script: '' },
-        { id: newInternalId('widget'), name: 'Triangle', number: 16, type: 'shape', zIndex: 2,
+          Variant: 'arc', BorderColor: '#9333ea', BorderWidth: 2, ArrowEnd: true, Curvature: 0.4, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Triangle', Number: 16, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [359, 84, 225, 60], visible: true,
-          variant: 'polygon', sides: 3, fillColor: '#fef9c3', borderColor: '#ca8a04', borderWidth: 2, script: '' },
-        { id: newInternalId('widget'), name: 'Hexagon', number: 17, type: 'shape', zIndex: 2,
+          Variant: 'polygon', Sides: 3, FillColor: '#fef9c3', BorderColor: '#ca8a04', BorderWidth: 2, Script: '' },
+        { Id: newInternalId('widget'), Name: 'Hexagon', Number: 17, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [450, 90, 225, 60], visible: true,
-          variant: 'polygon', sides: 6, fillColor: '#ede9fe', borderColor: '#7c3aed', borderWidth: 2, script: '' },
+          Variant: 'polygon', Sides: 6, FillColor: '#ede9fe', BorderColor: '#7c3aed', BorderWidth: 2, Script: '' },
         {
-          id: newInternalId('widget'), name: 'FieldLabel', number: 18,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'FieldLabel', Number: 18,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 225, 297, 17],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'Text fields:', fontSize: 10, fontWeight: 'bold', color: '#1d3461', script: '',
+          Text: 'Text fields:', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
-        { id: newInternalId('widget'), name: 'OpaqueField', number: 19, type: 'field', zIndex: 2,
+        { Id: newInternalId('widget'), Name: 'OpaqueField', Number: 19, Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 165, 320, 54], visible: true,
-          variant: 'opaque', lockText: false, scrolling: true, showLines: true,
+          Variant: 'opaque', lockText: false, scrolling: true, showLines: true,
           dontSearch: false, sharedText: false,
-          text: 'Editable field\n(style: opaque, with lines)',
-          fontSize: 10, color: '#222', script: '' },
-        { id: newInternalId('widget'), name: 'ShadowField', number: 20, type: 'field', zIndex: 2,
+          Text: 'Editable field\n(style: opaque, with lines)',
+          FontSize: 10, Color: '#222', Script: '' },
+        { Id: newInternalId('widget'), Name: 'ShadowField', Number: 20, Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [218, 165, 320, 54], visible: true,
-          variant: 'shadow', lockText: true, scrolling: false, showLines: false,
+          Variant: 'shadow', lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'Locked text field\n(style: shadow)',
-          fontSize: 10, color: '#444', script: '' },
+          Text: 'Locked text field\n(style: shadow)',
+          FontSize: 10, Color: '#444', Script: '' },
       ],
     },
 
     // card 3: script demo
     {
-      id: newInternalId('card'), name: 'Script Demo',
-      color: null, alpha: 1, dontSearch: false,
-      script: '',
-      objects: [
+      Id: newInternalId('card'), Name: 'Script Demo',
+      Color: null, Alpha: 1, dontSearch: false,
+      Script: '',
+      Widgets: [
         {
-          id: newInternalId('widget'), name: 'Header', number: 1,
-          type: 'shape', zIndex: 1,
+          Id: newInternalId('widget'), Name: 'Header', Number: 1,
+          Type: 'shape', zIndex: 1,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, variant: 'rectangle',
-          fillColor: '#1d3461', borderColor: 'transparent', borderWidth: 0, script: '',
+          visible: true, Variant: 'rectangle',
+          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Title', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Title', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'Script Demo',
-          fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: '#ffffff', script: '',
+          Text: 'Script Demo',
+          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Info', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Info', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 75],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'This card demonstrates scripting. Each button has a script which runs when it is clicked.',
-          fontSize: 11, color: '#1d3461', script: '',
+          Text: 'This card demonstrates scripting. Each button has a script which runs when it is clicked.',
+          FontSize: 11, Color: '#1d3461', Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'AnswerBtn', number: 3,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'AnswerBtn', Number: 3,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [60, 143, 150, 33],
-          visible: true, variant: 'rounded-rect',
+          visible: true, Variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => answer('Hello from a script!', 'OK'))`,
+          Script: `on('click', () => answer('Hello from a script!', 'OK'))`,
         },
         {
-          id: newInternalId('widget'), name: 'InputBtn', number: 4,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'InputBtn', Number: 4,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [229, 143, 150, 33],
-          visible: true, variant: 'rounded-rect',
+          visible: true, Variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => ask('What is your name?', ''))`,
+          Script: `on('click', () => ask('What is your name?', ''))`,
         },
         {
-          id: newInternalId('widget'), name: 'Open URL', number: 5,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'Open URL', Number: 5,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [398, 143, 150, 33],
-          visible: true, variant: 'shadow',
+          visible: true, Variant: 'shadow',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => openURL('https://github.com/rozek/webapp-crafter'))`,
+          Script: `on('click', () => openURL('https://github.com/rozek/webapp-crafter'))`,
         },
         {
-          id: newInternalId('widget'), name: 'NextCardBtn', number: 6,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'NextCardBtn', Number: 6,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [229, 143, 210, 33],
-          visible: true, variant: 'standard',
+          visible: true, Variant: 'standard',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => go(nextCard))`,
+          Script: `on('click', () => go(nextCard))`,
         },
       ],
     },
 
     // card 4: widget demo
     {
-      id: newInternalId('card'), name: 'Widget Demo',
-      color: null, alpha: 1, dontSearch: false,
-      script: '',
-      objects: [
+      Id: newInternalId('card'), Name: 'Widget Demo',
+      Color: null, Alpha: 1, dontSearch: false,
+      Script: '',
+      Widgets: [
         {
-          id: newInternalId('widget'), name: 'Header', number: 1,
-          type: 'shape', zIndex: 1,
+          Id: newInternalId('widget'), Name: 'Header', Number: 1,
+          Type: 'shape', zIndex: 1,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, variant: 'rectangle',
-          fillColor: '#1d3461', borderColor: 'transparent', borderWidth: 0, script: '',
+          visible: true, Variant: 'rectangle',
+          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Title', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Title', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'Widget Demo',
-          fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: '#ffffff', script: '',
+          Text: 'Widget Demo',
+          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Info', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Info', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 45],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'BC_Widget: objects fully defined in Preact + htm with their own state.',
-          fontSize: 11, color: '#1d3461', script: '',
+          Text: 'BC_Widget: objects fully defined in Preact + htm with their own state.',
+          FontSize: 11, Color: '#1d3461', Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Counter', number: 3,
-          type: 'generic', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Counter', Number: 3,
+          Type: 'generic', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [150, 300, 113, 195],
           visible: true, Configuration: { label:'Clicks' },
-          script: `\
+          Script: `\
 on('render', () => {
   const count = me.count ?? 0
   const label = Configuration.label ?? 'Counter'
-  return html\`
+  return HTML\`
     <div style=\${{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: '20px', height: '100%',
@@ -3562,11 +3562,11 @@ on('render', () => {
 })`,
         },
         {
-          id: newInternalId('widget'), name: 'Clock', number: 4,
-          type: 'generic', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Clock', Number: 4,
+          Type: 'generic', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [60, 225, 330, 75],
           visible: true, Configuration: {},
-          script: `\
+          Script: `\
 let _timer = null
 on('ready', () => { _timer = setInterval(() => { me._time = Date.now() }, 1000) })
 on('obsolete', () => { if (_timer != null) { clearInterval(_timer) } })
@@ -3574,7 +3574,7 @@ on('render', () => {
   const now = new Date(me._time ?? Date.now())
   const pad = n => String(n).padStart(2, '0')
   const time = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds())
-  return html\`
+  return HTML\`
     <div style=\${{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       height: '100%', fontFamily: 'monospace', fontSize: '27px',
@@ -3585,56 +3585,56 @@ on('render', () => {
 })`,
         },
         {
-          id: newInternalId('widget'), name: 'StartBtn', number: 5,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'StartBtn', Number: 5,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [413, 128, 383, 33],
-          visible: true, variant: 'rounded-rect',
+          visible: true, Variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => go(card('Start')))`,
+          Script: `on('click', () => go(Card('Start')))`,
         },
       ],
     },
 
     // card 5: about BrowserCard
     {
-      id: newInternalId('card'), name: 'About BrowserCard',
-      color: null, alpha: 1, dontSearch: false,
-      script: '',
-      objects: [
+      Id: newInternalId('card'), Name: 'About BrowserCard',
+      Color: null, Alpha: 1, dontSearch: false,
+      Script: '',
+      Widgets: [
         {
-          id: newInternalId('widget'), name: 'Header', number: 1,
-          type: 'shape', zIndex: 1,
+          Id: newInternalId('widget'), Name: 'Header', Number: 1,
+          Type: 'shape', zIndex: 1,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, variant: 'rectangle',
-          fillColor: '#1d3461', borderColor: 'transparent', borderWidth: 0, script: '',
+          visible: true, Variant: 'rectangle',
+          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'Title', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'Title', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          text: 'About BrowserCard',
-          fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: '#ffffff', script: '',
+          Text: 'About BrowserCard',
+          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'InfoText', number: 2,
-          type: 'field', zIndex: 2,
+          Id: newInternalId('widget'), Name: 'InfoText', Number: 2,
+          Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 285],
-          visible: true, variant: 'transparent',
+          visible: true, Variant: 'transparent',
           lockText: true, scrolling: true, showLines: false,
           dontSearch: false, sharedText: false,
-          text: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting:\nScripts are plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full script context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
-          fontSize: 11, color: '#1d3461', script: '',
+          Text: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting:\nScripts are plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full script context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
+          FontSize: 11, Color: '#1d3461', Script: '',
         },
         {
-          id: newInternalId('widget'), name: 'StartBtn', number: 3,
-          type: 'button', zIndex: 3,
+          Id: newInternalId('widget'), Name: 'StartBtn', Number: 3,
+          Type: 'button', zIndex: 3,
           Anchors: ['left-width', 'top-height'], Offsets: [236, 128, 360, 33],
-          visible: true, variant: 'rounded-rect',
+          visible: true, Variant: 'rounded-rect',
           showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          script: `on('click', () => go(card('Start')))`,
+          Script: `on('click', () => go(Card('Start')))`,
         },
       ],
     },
@@ -3682,7 +3682,7 @@ on('render', () => {
   export function ValueIsWidgetJSON (Value:any):boolean {
     return (
       ValueIsPlainObject(Value) &&
-      ValueIsString(Value.id) && ValueIsString(Value.type) &&
+      ValueIsString(Value.Id) && ValueIsString(Value.Type) &&
       ValueIsAnchors(Value.Anchors) && ValueIsOffsets(Value.Offsets)
     )
   }
@@ -3690,18 +3690,18 @@ on('render', () => {
   export function ValueIsCardJSON (Value:any):boolean {
     return (
       ValueIsPlainObject(Value) &&
-      ValueIsString(Value.id) && ValueIsString(Value.name) &&
-      ValueIsArray(Value.objects) &&
-      (Value.objects as any[]).every(ValueIsWidgetJSON)
+      ValueIsString(Value.Id) && ValueIsString(Value.Name) &&
+      ValueIsArray(Value.Widgets) &&
+      (Value.Widgets as any[]).every(ValueIsWidgetJSON)
     )
   }
 
   export function ValueIsDeck (Value:any):boolean {
     return (
       ValueIsPlainObject(Value) &&
-      ValueIsString(Value.name) &&
-      ValueIsArray(Value.cards) &&
-      (Value.cards as any[]).every(ValueIsCardJSON)
+      ValueIsString(Value.Name) &&
+      ValueIsArray(Value.Cards) &&
+      (Value.Cards as any[]).every(ValueIsCardJSON)
     )
   }
 
@@ -3785,10 +3785,10 @@ on('render', () => {
       const Match = /-(\d+)$/.exec(Id)
       if (Match != null) { IdCounter = Math.max(IdCounter, parseInt(Match[1],10)) }
     }
-    consider(Deck.id)
-    Deck.cards.forEach((Card) => {
-      consider(Card.id)
-      Card.objects.forEach((Obj) => consider(Obj.id))
+    consider(Deck.Id)
+    Deck.Cards.forEach((Card) => {
+      consider(Card.Id)
+      Card.Widgets.forEach((Obj) => consider(Obj.Id))
     })
   }
 
@@ -4068,13 +4068,13 @@ function arrowheadPoints (
 /**** shapeContent — returns the inner content of a shape (no outer wrapper) ****/
 
 function shapeContent (Obj:BC_Shape, W:number, H:number):unknown {
-  const color = Obj.borderColor ?? '#333'      // W,H = resolved widget dimensions
-  const bw    = Obj.borderWidth ?? 2
-  const fill  = Obj.fillColor   ?? 'transparent'
+  const color = Obj.BorderColor ?? '#333'      // W,H = resolved widget dimensions
+  const bw    = Obj.BorderWidth ?? 2
+  const fill  = Obj.FillColor   ?? 'transparent'
 
-  if (Obj.variant === 'rectangle' || Obj.variant === 'rounded-rectangle' || Obj.variant === 'oval') {
-    const radius = Obj.variant === 'oval'              ? '50%'
-                 : Obj.variant === 'rounded-rectangle' ? `${Obj.cornerRadius ?? 12}px`
+  if (Obj.Variant === 'rectangle' || Obj.Variant === 'rounded-rectangle' || Obj.Variant === 'oval') {
+    const radius = Obj.Variant === 'oval'              ? '50%'
+                 : Obj.Variant === 'rounded-rectangle' ? `${Obj.CornerRadius ?? 12}px`
                  : undefined
     return html`
       <div style=${{ width:'100%', height:'100%', boxSizing:'border-box',
@@ -4083,8 +4083,8 @@ function shapeContent (Obj:BC_Shape, W:number, H:number):unknown {
     `
   }
 
-  if (Obj.variant === 'polygon') {
-    const n      = Math.max(3, Obj.sides ?? 6)
+  if (Obj.Variant === 'polygon') {
+    const n      = Math.max(3, Obj.Sides ?? 6)
     const cx     = W / 2
     const cy     = H / 2
     const rx     = W / 2 - bw
@@ -4102,8 +4102,8 @@ function shapeContent (Obj:BC_Shape, W:number, H:number):unknown {
   }
 
   // line / arc — arrowheads drawn as explicit polygons (shadow DOM safe)
-  const hasStart = Obj.arrowStart === true
-  const hasEnd   = Obj.arrowEnd   === true
+  const hasStart = Obj.ArrowStart === true
+  const hasEnd   = Obj.ArrowEnd   === true
   const ah       = Math.max(bw*4, 10)   // arrowhead length
   const aw       = ah * 0.5              // arrowhead half-width
 
@@ -4111,7 +4111,7 @@ function shapeContent (Obj:BC_Shape, W:number, H:number):unknown {
     stroke: color, strokeWidth: bw, fill: 'none', strokeLinecap: 'round',
   }
 
-  if (Obj.variant === 'line') {
+  if (Obj.Variant === 'line') {
     const startAH = hasStart ? html`<polygon
       points=${arrowheadPoints(0, 0, -W, -H, ah, aw)} fill=${color} stroke="none"/>` : null
     const endAH   = hasEnd   ? html`<polygon
@@ -4125,7 +4125,7 @@ function shapeContent (Obj:BC_Shape, W:number, H:number):unknown {
   }
 
   // arc: quadratic bezier from (0,0) to (W,H)
-  const curvature = Obj.curvature ?? 0.4
+  const curvature = Obj.Curvature ?? 0.4
   const cpx = W / 2 - curvature * H
   const cpy = H / 2 + curvature * W
   const startAH = hasStart ? html`<polygon
@@ -4147,21 +4147,21 @@ _InternalBehaviors.set('button', async ({ on, me, html, dispatch }) => {
   function onClick ():void {
     if (
       (O.autoHilite === true) &&
-      ((O.variant === 'checkbox') || (O.variant === 'radio'))
-    ) { O.hilite = ! O.hilite }              // a radio group is up to the script
+      ((O.Variant === 'checkbox') || (O.Variant === 'radio'))
+    ) { O.Hilite = ! O.Hilite }              // a radio group is up to the script
     dispatch('click')
   }
   on('render', () => {
-    const Label = (              // "text" takes precedence over the mere name
-      (O.text != null) && (O.text !== '') ? O.text : O.name
+    const Label = (              // "Text" takes precedence over the mere name
+      (O.Text != null) && (O.Text !== '') ? O.Text : O.Name
     )
     return html`
       <button
-        class=${`bc-btn s-${O.variant ?? 'default'}${O.hilite ? ' hilite' : ''}`}
+        class=${`bc-btn s-${O.Variant ?? 'default'}${O.Hilite ? ' hilite' : ''}`}
         disabled=${! O.enabled}
         style=${{ width:'100%', height:'100%' }}
         onClick=${O.enabled ? onClick : undefined}
-        title=${O.name}
+        title=${O.Name}
       >${O.showName ? Label : null}</button>
     `
   })
@@ -4172,25 +4172,25 @@ _InternalBehaviors.set('field', async ({ on, me, html }) => {
   on('render', () => {            // computed on every render to stay live while
     const scrollClass = O.scrolling ? ' scrollable' : ' no-scroll'   // designing
     const linesClass  = O.showLines  ? ' show-lines'  : ''
-    const styleClass  = `bc-field s-${O.variant ?? 'default'}${scrollClass}${linesClass}`
+    const styleClass  = `bc-field s-${O.Variant ?? 'default'}${scrollClass}${linesClass}`
     const textStyle   = {
-      fontSize:   O.fontSize   ?? 14,
-      fontWeight: O.fontWeight ?? 'normal',
-      textAlign:  O.textAlign  ?? 'left',
-      color:      O.color      ?? '#111',
+      fontSize:   O.FontSize   ?? 14,
+      fontWeight: O.FontWeight ?? 'normal',
+      textAlign:  O.TextAlign  ?? 'left',
+      color:      O.Color      ?? '#111',
     }
     return (O.lockText
       ? html`
-          <div class=${styleClass} style=${{ width:'100%', height:'100%', ...textStyle }}>${O.text}</div>
+          <div class=${styleClass} style=${{ width:'100%', height:'100%', ...textStyle }}>${O.Text}</div>
         `
       : html`
           <textarea
             class=${styleClass}
             style=${{ ...textStyle, width:'100%', height:'100%', padding:'4px 6px' }}
             onInput=${(Event:Event) => {       // write the text back into the
-              O.text = (Event.target as HTMLTextAreaElement).value    // widget
+              O.Text = (Event.target as HTMLTextAreaElement).value    // widget
             }}
-          >${O.text}</textarea>
+          >${O.Text}</textarea>
         `
     )
   })
@@ -4209,9 +4209,9 @@ _InternalBehaviors.set('picture', async ({ on, me, html }) => {
   const O = me as BC_Picture
   on('render', () => html`
     <img
-      class=${'bc-picture s-' + (O.variant ?? 'default')}
-      src=${O.imageData}
-      alt=${O.name}
+      class=${'bc-picture s-' + (O.Variant ?? 'default')}
+      src=${O.ImageData}
+      alt=${O.Name}
       draggable=${false}
     />
   `)
@@ -4273,8 +4273,8 @@ function WidgetView ({
 
   // for intrinsic types, prepend the matching behavior call before the user script
   const intrinsicTypes = new Set(['button', 'field', 'shape', 'picture'])
-  const behaviorPrefix = intrinsicTypes.has(Obj.type)
-    ? `await behaveLike(${JSON.stringify(Obj.type)})\n`
+  const behaviorPrefix = intrinsicTypes.has(Obj.Type)
+    ? `await behaveLike(${JSON.stringify(Obj.Type)})\n`
     : ''
 
   useEffect(() => {
@@ -4282,16 +4282,16 @@ function WidgetView ({
     const { Params, Args } = buildScriptParams(inst, ContextRef.current!, 'widget', ExtraRef.current)
 
     ;(proxy as Indexable)[$Script] = inst              // makes send() reach this widget
-    onWidgetProxy(Obj.id, proxy)
+    onWidgetProxy(Obj.Id, proxy)
 
   // syntax-check the user script first - a broken script must not prevent the
   // intrinsic behavior from running (the widget would disappear otherwise)
-    let userScript = Obj.script ?? ''
+    let userScript = Obj.Script ?? ''
     if (userScript.trim() !== '') {
       try {
         new Function(`return (async () => {\n${userScript}\n})()`)
       } catch (Signal) {
-        console.warn('[BrowserCard] syntax error in script of widget ' + quoted(Obj.name) + ':', Signal)
+        console.warn('[BrowserCard] syntax error in script of widget ' + quoted(Obj.Name) + ':', Signal)
         userScript = ''
       }
     }
@@ -4300,11 +4300,11 @@ function WidgetView ({
     inst.run(effectiveScript, Params, Args).then(async () => {
       forceUpdate()
       await inst.dispatch('ready')
-      onReadyRef.current(Obj.id)
+      onReadyRef.current(Obj.Id)
     })
 
     return () => { void inst.teardown() }
-  }, [Obj.script])
+  }, [Obj.Script])
 
   if (! Obj.visible) { return null }
 
@@ -4315,13 +4315,13 @@ function WidgetView ({
   // shapes and buttons must not clip: shapes draw SVG beyond their box
   // (arrowheads), buttons cast a box-shadow that lies outside their box
   const extraStyle = (
-    (Obj.type === 'shape') || (Obj.type === 'button')
+    (Obj.Type === 'shape') || (Obj.Type === 'button')
     ? { overflow:'visible' }
     : { overflow:'hidden' }
   )
   return html`
     <div
-      class=${`bc-obj${Obj.type === 'shape' ? ' bc-shape' : ''}`}
+      class=${`bc-obj${Obj.Type === 'shape' ? ' bc-shape' : ''}`}
       style=${{ ...RectStyle(Obj, containerW, containerH), ...extraStyle }}
     >
       ${renderSlot}
@@ -4380,53 +4380,53 @@ function WidgetView ({
     }
     const { BaseName, Width, Height } = Defaults[Type]
 
-    const existingNames = new Set(Card.objects.map((Obj) => Obj.name))
+    const existingNames = new Set(Card.Widgets.map((Obj) => Obj.Name))
     let Name = BaseName, Counter = 1
     while (existingNames.has(Name)) { Counter += 1; Name = `${BaseName}-${Counter}` }
 
-    const maxZIndex = Card.objects.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
+    const maxZIndex = Card.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
 
     const Widget:BC_Widget = {
-      id:newInternalId('widget'), name:Name,
-      number:maxZIndex+1, type:Type, zIndex:maxZIndex+1,
+      Id:newInternalId('widget'), Name:Name,
+      Number:maxZIndex+1, Type:Type, zIndex:maxZIndex+1,
       Anchors:[ 'left-width','top-height' ],
       Offsets:[
         Math.round((CanvasW-Width)/2), Width,
         Math.round((CanvasH-Height)/2), Height
       ],
-      visible:true, script:'',
+      visible:true, Script:'',
     }
 
     switch (Type) {
       case 'button':
         Object.assign(Widget, {
-          variant:'rounded-rect', showName:true, autoHilite:true,
-          enabled:true, sharedHilite:false, text:'',
+          Variant:'rounded-rect', showName:true, autoHilite:true,
+          enabled:true, sharedHilite:false, Text:'',
         })
         break
       case 'field':
         Object.assign(Widget, {
-          variant:'opaque', lockText:false, scrolling:false, showLines:false,
-          dontSearch:false, sharedText:false, text:'Text', fontSize:14,
+          Variant:'opaque', lockText:false, scrolling:false, showLines:false,
+          dontSearch:false, sharedText:false, Text:'Text', FontSize:14,
         })
         break
       case 'shape':
         Object.assign(Widget, {
-          variant:'rectangle', fillColor:'#dbeafe', borderColor:'#3b82f6',
-          borderWidth:2,
+          Variant:'rectangle', FillColor:'#dbeafe', BorderColor:'#3b82f6',
+          BorderWidth:2,
         })
         break
       case 'picture':
         Object.assign(Widget, {
-          variant:'scale-aspect-fit', autoHilite:false,
-          imageData:PicturePlaceholder, actualWidth:Width, actualHeight:Height,
+          Variant:'scale-aspect-fit', autoHilite:false,
+          ImageData:PicturePlaceholder, actualWidth:Width, actualHeight:Height,
         })
         break
       default:                                                       // 'generic'
         Object.assign(Widget, {
           Configuration:{},
-          script:(
-            "on('render', () => html`\n" +
+          Script:(
+            "on('render', () => HTML`\n" +
             "  <div style=${{\n" +
             "    display:'flex', alignItems:'center', justifyContent:'center',\n" +
             "    width:'100%', height:'100%', background:'#fff',\n" +
@@ -4543,7 +4543,7 @@ function WidgetView ({
 
   /**** selection frame with eight resize handles ****/
 
-    const selectedObj = Objects.find((Obj) => Obj.id === selectedId)
+    const selectedObj = Objects.find((Obj) => Obj.Id === selectedId)
     const HandleSize  = Math.max(6, 8/Scale)
     const HandleDirs  = [ 'nw','n','ne','e','se','s','sw','w' ]
 
@@ -4568,10 +4568,10 @@ function WidgetView ({
         ${Objects.map((Obj) => {
           const R = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
           return html`
-            <div key=${Obj.id}
+            <div key=${Obj.Id}
               class=${`bc-edit-hit${Obj.visible ? '' : ' invisible'}`}
               style=${{ left:R.left, top:R.top, width:R.width, height:R.height, zIndex:Obj.zIndex }}
-              onPointerDown=${(Event:PointerEvent) => { onSelect(Obj.id); beginDrag(Event, Obj, 'move') }}
+              onPointerDown=${(Event:PointerEvent) => { onSelect(Obj.Id); beginDrag(Event, Obj, 'move') }}
               onPointerMove=${applyDrag}
               onPointerUp=${endDrag}
             ></div>
@@ -4755,7 +4755,7 @@ function WidgetView ({
     /**** without a selection, the panel shows the card's own properties ****/
 
       function updateCard (Key:string, Value:unknown):void {
-        onBeforeEdit?.(`card:${Card!.id}:${Key}`)
+        onBeforeEdit?.(`card:${Card!.Id}:${Key}`)
         ;(Card as Indexable)[Key] = Value
         onEdited()
       }
@@ -4767,13 +4767,13 @@ function WidgetView ({
         onEdited()
       }
 
-      const cardColor    = Card.color ?? '#ffffff'
+      const cardColor    = Card.Color ?? '#ffffff'
       const colorPickable = /^#[0-9a-f]{6}$/i.test(cardColor)
 
       return html`
         <div class="bc-props-panel">
-          <div class="bc-props-title">${Card.name}</div>
-          <div class="bc-props-subtitle">card · ${Card.id}</div>
+          <div class="bc-props-title">${Card.Name}</div>
+          <div class="bc-props-subtitle">card · ${Card.Id}</div>
           <div class="bc-props-hint">
             no widget selected - these are the properties of the card itself
           </div>
@@ -4781,15 +4781,15 @@ function WidgetView ({
           <div class="bc-props-section">General</div>
           <div class="bc-props-row">
             <label>Name</label>
-            <input type="text" value=${Card.name}
-              onInput=${(Event:Event) => updateCard('name', (Event.target as HTMLInputElement).value)}/>
+            <input type="text" value=${Card.Name}
+              onInput=${(Event:Event) => updateCard('Name', (Event.target as HTMLInputElement).value)}/>
           </div>
           <div class="bc-props-row">
             <label>Color</label>
             <input type="color" value=${colorPickable ? cardColor : '#ffffff'}
-              onInput=${(Event:Event) => updateCard('color', (Event.target as HTMLInputElement).value)}/>
+              onInput=${(Event:Event) => updateCard('Color', (Event.target as HTMLInputElement).value)}/>
             <input type="text" value=${cardColor}
-              onInput=${(Event:Event) => updateCard('color', (Event.target as HTMLInputElement).value)}/>
+              onInput=${(Event:Event) => updateCard('Color', (Event.target as HTMLInputElement).value)}/>
           </div>
           <div class="bc-props-row">
             <label>searchable</label>
@@ -4838,6 +4838,24 @@ function WidgetView ({
                   if (isFinite(newValue) && (newValue >= 1)) { updateDeck('GridHeight', newValue) }
                 }}/>
             </div>
+
+            <div class="bc-props-section">Script (Deck)</div>
+            <div class="bc-props-row column">
+              <div class="bc-props-rowheader">
+                <label>Script</label>
+                ${(onOpenEditor != null) && html`
+                  <button class="bc-props-expand" title="open in editor window"
+                    onClick=${() => onOpenEditor(
+                      `Deck "${Deck!.Name}" - Script`, Deck!.Script ?? '',
+                      (Value) => updateDeck('Script',Value)
+                    )}>⤢</button>
+                `}
+              </div>
+              <textarea rows="10" spellcheck=${false} defaultValue=${Deck!.Script ?? ''}
+                onChange=${(Event:Event) => updateDeck('Script', (Event.target as HTMLTextAreaElement).value)}
+              ></textarea>
+              <div class="bc-props-hint">applied when the field loses focus</div>
+            </div>
           `}
 
           <div class="bc-props-section">Script</div>
@@ -4847,13 +4865,13 @@ function WidgetView ({
               ${(onOpenEditor != null) && html`
                 <button class="bc-props-expand" title="open in editor window"
                   onClick=${() => onOpenEditor(
-                    `Card "${Card.name}" - Script`, Card.script ?? '',
-                    (Value) => updateCard('script',Value)
+                    `Card "${Card.Name}" - Script`, Card.Script ?? '',
+                    (Value) => updateCard('Script',Value)
                   )}>⤢</button>
               `}
             </div>
-            <textarea rows="10" spellcheck=${false} defaultValue=${Card.script ?? ''}
-              onChange=${(Event:Event) => updateCard('script', (Event.target as HTMLTextAreaElement).value)}
+            <textarea rows="10" spellcheck=${false} defaultValue=${Card.Script ?? ''}
+              onChange=${(Event:Event) => updateCard('Script', (Event.target as HTMLTextAreaElement).value)}
             ></textarea>
             <div class="bc-props-hint">applied when the field loses focus</div>
           </div>
@@ -4866,7 +4884,7 @@ function WidgetView ({
   /**** update — writes a property and triggers a re-render ****/
 
     function update (Key:string, Value:unknown):void {
-      onBeforeEdit?.(`prop:${Widget!.id}:${Key}`)
+      onBeforeEdit?.(`prop:${Widget!.Id}:${Key}`)
       ;(Widget as Indexable)[Key] = Value
       onEdited()
     }
@@ -4876,7 +4894,7 @@ function WidgetView ({
     function updateGeometry (
       x?:number, y?:number, Width?:number, Height?:number
     ):void {
-      onBeforeEdit?.(`geo:${Widget!.id}`)
+      onBeforeEdit?.(`geo:${Widget!.Id}`)
       Widget!.Offsets = computeOffsets(
         x ?? Geometry.left, y ?? Geometry.top,
         Width ?? Geometry.width, Height ?? Geometry.height,
@@ -4888,7 +4906,7 @@ function WidgetView ({
   /**** updateAnchors — switches anchors but keeps the pixel geometry ****/
 
     function updateAnchors (Index:0|1, Value:string):void {
-      onBeforeEdit?.(`anchors:${Widget!.id}`)
+      onBeforeEdit?.(`anchors:${Widget!.Id}`)
       const newAnchors = [ ...Widget!.Anchors ] as BC_Anchors
         newAnchors[Index] = Value as BC_horizontalAnchors & BC_verticalAnchors
       Widget!.Anchors = newAnchors
@@ -4958,7 +4976,7 @@ function WidgetView ({
     }
 
     const TypeLabel = (              // user-facing name of the widget's type
-      Widget.type === 'generic' ? 'custom widget' : Widget.type
+      Widget.Type === 'generic' ? 'custom widget' : Widget.Type
     )
 
     function RowHeader (Label:string, currentValue:() => string, onCommit:(Value:string) => void) {
@@ -4967,7 +4985,7 @@ function WidgetView ({
         ${(onOpenEditor != null) && html`
           <button class="bc-props-expand" title="open in editor window"
             onClick=${() => onOpenEditor(
-              `${TypeLabel} "${Widget!.name}" - ${Label}`, currentValue(), onCommit
+              `${TypeLabel} "${Widget!.Name}" - ${Label}`, currentValue(), onCommit
             )}>⤢</button>
         `}
       </div>`
@@ -5014,11 +5032,11 @@ function WidgetView ({
       return html`<div class="bc-props-row column">
         ${RowHeader(
           'Script',
-          () => Widget!.script ?? '',
-          (Value) => update('script',Value)
+          () => Widget!.Script ?? '',
+          (Value) => update('Script',Value)
         )}
-        <textarea rows="8" spellcheck=${false} defaultValue=${Widget!.script ?? ''}
-          onChange=${(Event:Event) => update('script', (Event.target as HTMLTextAreaElement).value)}
+        <textarea rows="8" spellcheck=${false} defaultValue=${Widget!.Script ?? ''}
+          onChange=${(Event:Event) => update('Script', (Event.target as HTMLTextAreaElement).value)}
         ></textarea>
         <div class="bc-props-hint">applied when the field loses focus</div>
       </div>`
@@ -5027,47 +5045,47 @@ function WidgetView ({
   /**** type-specific property rows ****/
 
     let TypeSection:unknown = null
-    switch (Widget.type) {
+    switch (Widget.Type) {
       case 'button':
         TypeSection = html`
-          ${DropDownRow('Style','variant',[ 'rounded-rect','rectangle','oval','shadow','checkbox','radio','standard','transparent' ])}
-          ${TextlineRow('Text','text')}
+          ${DropDownRow('Style','Variant',[ 'rounded-rect','rectangle','oval','shadow','checkbox','radio','standard','transparent' ])}
+          ${TextlineRow('Text','Text')}
           ${CheckboxRow('show label','showName')}
           ${CheckboxRow('enabled','enabled')}
           ${CheckboxRow('auto-hilite','autoHilite')}
-          ${CheckboxRow('hilite','hilite')}
+          ${CheckboxRow('hilite','Hilite')}
         `
         break
       case 'field':
         TypeSection = html`
-          ${DropDownRow('Style','variant',[ 'opaque','transparent','shadow','rectangle' ])}
-          ${TextRow('Text','text')}
+          ${DropDownRow('Style','Variant',[ 'opaque','transparent','shadow','rectangle' ])}
+          ${TextRow('Text','Text')}
           ${CheckboxRow('locked','lockText')}
           ${CheckboxRow('scrolling','scrolling')}
           ${CheckboxRow('show lines','showLines')}
-          ${NumberRow('Font Size','fontSize',14)}
-          ${DropDownRow('Font Weight','fontWeight',[ 'normal','bold' ])}
-          ${DropDownRow('Alignment','textAlign',[ 'left','center','right' ])}
-          ${ColorRow('Color','color','#111111')}
+          ${NumberRow('Font Size','FontSize',14)}
+          ${DropDownRow('Font Weight','FontWeight',[ 'normal','bold' ])}
+          ${DropDownRow('Alignment','TextAlign',[ 'left','center','right' ])}
+          ${ColorRow('Color','Color','#111111')}
         `
         break
       case 'shape':
         TypeSection = html`
-          ${DropDownRow('Style','variant',[ 'rectangle','rounded-rectangle','oval','line','arc','polygon' ])}
-          ${ColorRow('Fill Color','fillColor','transparent')}
-          ${ColorRow('Border Color','borderColor','#333333')}
-          ${NumberRow('Border Width','borderWidth',2)}
-          ${CheckboxRow('arrow at start','arrowStart')}
-          ${CheckboxRow('arrow at end','arrowEnd')}
-          ${NumberRow('Curvature','curvature',0.4)}
-          ${NumberRow('Sides','sides',6)}
-          ${NumberRow('Corner Radius','cornerRadius',12)}
+          ${DropDownRow('Style','Variant',[ 'rectangle','rounded-rectangle','oval','line','arc','polygon' ])}
+          ${ColorRow('Fill Color','FillColor','transparent')}
+          ${ColorRow('Border Color','BorderColor','#333333')}
+          ${NumberRow('Border Width','BorderWidth',2)}
+          ${CheckboxRow('arrow at start','ArrowStart')}
+          ${CheckboxRow('arrow at end','ArrowEnd')}
+          ${NumberRow('Curvature','Curvature',0.4)}
+          ${NumberRow('Sides','Sides',6)}
+          ${NumberRow('Corner Radius','CornerRadius',12)}
         `
         break
       case 'picture':
         TypeSection = html`
-          ${DropDownRow('Style','variant',[ 'scale-aspect-fill','scale-aspect-fit','scale-to-fill','actual-size','center' ])}
-          ${TextlineRow('Image URL','imageData')}
+          ${DropDownRow('Style','Variant',[ 'scale-aspect-fill','scale-aspect-fit','scale-to-fill','actual-size','center' ])}
+          ${TextlineRow('Image URL','ImageData')}
         `
         break
       default:                                                       // 'generic'
@@ -5076,11 +5094,11 @@ function WidgetView ({
 
     return html`
       <div class="bc-props-panel">
-        <div class="bc-props-title">${Widget.name}</div>
-        <div class="bc-props-subtitle">${TypeLabel} · ${Widget.id}</div>
+        <div class="bc-props-title">${Widget.Name}</div>
+        <div class="bc-props-subtitle">${TypeLabel} · ${Widget.Id}</div>
 
         <div class="bc-props-section">General</div>
-        ${TextlineRow('Name','name')}
+        ${TextlineRow('Name','Name')}
         ${CheckboxRow('visible','visible')}
         ${NumberRow('z-Index','zIndex',0)}
 
@@ -5126,7 +5144,7 @@ function WidgetView ({
           </select>
         </div>
 
-        <div class="bc-props-section">${Widget.type === 'generic' ? 'Custom Widget' : 'Appearance'}</div>
+        <div class="bc-props-section">${Widget.Type === 'generic' ? 'Custom Widget' : 'Appearance'}</div>
         ${TypeSection}
 
         <div class="bc-props-section">Script</div>
@@ -5193,7 +5211,7 @@ function CardView ({
   onMessageRef.current   = onMessage
 
   const allObjects = useMemo(
-    () => Card.objects,
+    () => Card.Widgets,
     [Card],
   )
 
@@ -5229,7 +5247,7 @@ function CardView ({
   function onWidgetProxy (id:string, proxy:BC_WidgetProxy) {
     widgetProxyMap.current.set(id, proxy)
     widgetListRef.current = allObjects
-      .map((obj) => widgetProxyMap.current.get((obj as BC_Widget).id))
+      .map((obj) => widgetProxyMap.current.get((obj as BC_Widget).Id))
       .filter((p): p is BC_WidgetProxy => p != null)
   }
 
@@ -5249,14 +5267,14 @@ function CardView ({
     readyFiredRef.current = false
     childReadySet.current.clear()
 
-    inst.run(Card.script ?? '', Params, Args).then(() => {
+    inst.run(Card.Script ?? '', Params, Args).then(() => {
       scriptDoneRef.current = true
       forceUpdate()
       checkAllReady()
     })
 
     return () => { void inst.teardown() }
-  }, [Card.script])
+  }, [Card.Script])
 
   const inst       = instanceRef.current!
   const renderSlot = inst.renderResult() ?? null
@@ -5266,7 +5284,7 @@ function CardView ({
     height:          CanvasH,
     transform:       `scale(${Scale})`,
     transformOrigin: 'top left',
-    background:      Card.color ?? '#fff',
+    background:      Card.Color ?? '#fff',
   }
   const WrapperStyle = {
     width:CanvasW*Scale, height:CanvasH*Scale, position:'relative', flexShrink:0,
@@ -5278,7 +5296,7 @@ function CardView ({
         ${renderSlot}
         ${allObjects.map((obj) => html`
           <${WidgetView}
-            key=${(obj as BC_Widget).id}
+            key=${(obj as BC_Widget).Id}
             Obj=${obj as BC_Widget}
             containerW=${CanvasW}
             containerH=${CanvasH}
@@ -5326,18 +5344,18 @@ function CardThumbnail ({
 
   return html`
     <div class="bc-card-thumb"
-      style=${{ width:ThumbW, height:ThumbH, background:Card.color ?? '#fff' }}>
-      ${Card.objects.filter((Obj) => Obj.visible).map((Obj) => {
+      style=${{ width:ThumbW, height:ThumbH, background:Card.Color ?? '#fff' }}>
+      ${Card.Widgets.filter((Obj) => Obj.visible).map((Obj) => {
         const R     = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
         const Color = (
-          Obj.type === 'shape'   ? (Obj.fillColor ?? '#9ca3af') :
-          Obj.type === 'button'  ? '#1d6fd8' :
-          Obj.type === 'field'   ? 'rgba(0,0,0,0.15)' :
-          Obj.type === 'picture' ? '#9ca3af' :
+          Obj.Type === 'shape'   ? (Obj.FillColor ?? '#9ca3af') :
+          Obj.Type === 'button'  ? '#1d6fd8' :
+          Obj.Type === 'field'   ? 'rgba(0,0,0,0.15)' :
+          Obj.Type === 'picture' ? '#9ca3af' :
                                    '#7c3aed'                       // 'generic'
         )
         return html`
-          <div key=${Obj.id} style=${{
+          <div key=${Obj.Id} style=${{
             position:'absolute',
             left:R.left*Scale, top:R.top*Scale,
             width:Math.max(1,R.width*Scale), height:Math.max(1,R.height*Scale),
@@ -5734,92 +5752,92 @@ function DeckView ({
   async function addCardViaDialog ():Promise<void> {
     const Name = (await askUser('Name of the new card:',''))?.trim()
     if ((Name == null) || (Name === '')) { return }
-    if (Deck.cards.some((Card) => Card.name === Name)) {
+    if (Deck.Cards.some((Card) => Card.Name === Name)) {
       await confirmWith(`A card named "${Name}" already exists.`,'OK')
       return
     }
 
     const newCard:BC_Card = {
-      id:newInternalId('card'), name:Name,
-      color:null, alpha:1, dontSearch:false, script:'', objects:[],
+      Id:newInternalId('card'), Name:Name,
+      Color:null, Alpha:1, dontSearch:false, Script:'', Widgets:[],
     }
     captureUndo()
-    Deck.cards.splice(CardIndex+1, 0, newCard)
+    Deck.Cards.splice(CardIndex+1, 0, newCard)
     navigate({ type:'card-index', index:CardIndex+1 })
     deckForceUpdate()
   }
 
   function indexOfCard (Id:string):number {
-    return Deck.cards.findIndex((Card) => Card.id === Id)
+    return Deck.Cards.findIndex((Card) => Card.Id === Id)
   }
 
   function duplicateCardAt (Index:number):void {
-    const Original = Deck.cards[Index]
+    const Original = Deck.Cards[Index]
     if (Original == null) { return }
 
     const Clone = JSON.parse(JSON.stringify(Original)) as BC_Card
-      Clone.id = newInternalId('card')
-      Clone.objects.forEach((Obj) => { Obj.id = newInternalId('widget') })
+      Clone.Id = newInternalId('card')
+      Clone.Widgets.forEach((Obj) => { Obj.Id = newInternalId('widget') })
 
-      let Name = Original.name + ' Copy', Counter = 1
-      while (Deck.cards.some((Card) => Card.name === Name)) {
-        Counter += 1; Name = Original.name + ' Copy ' + Counter
+      let Name = Original.Name + ' Copy', Counter = 1
+      while (Deck.Cards.some((Card) => Card.Name === Name)) {
+        Counter += 1; Name = Original.Name + ' Copy ' + Counter
       }
-      Clone.name = Name
+      Clone.Name = Name
     captureUndo()
-    Deck.cards.splice(Index+1, 0, Clone)
+    Deck.Cards.splice(Index+1, 0, Clone)
     navigate({ type:'card-index', index:Index+1 })
     deckForceUpdate()
   }
 
   async function renameCardAt (Index:number):Promise<void> {
-    const Card = Deck.cards[Index]
+    const Card = Deck.Cards[Index]
     if (Card == null) { return }
 
-    const newName = (await askUser('New name for this card:',Card.name))?.trim()
-    if ((newName == null) || (newName === '') || (newName === Card.name)) { return }
-    if (Deck.cards.some((otherCard) => otherCard.name === newName)) {
+    const newName = (await askUser('New name for this card:',Card.Name))?.trim()
+    if ((newName == null) || (newName === '') || (newName === Card.Name)) { return }
+    if (Deck.Cards.some((otherCard) => otherCard.Name === newName)) {
       await confirmWith(`A card named "${newName}" already exists.`,'OK')
       return
     }
     captureUndo()
-    Card.name = newName
+    Card.Name = newName
     deckForceUpdate()
   }
 
   async function deleteCardAt (Index:number):Promise<void> {
-    const Card = Deck.cards[Index]
+    const Card = Deck.Cards[Index]
     if (Card == null) { return }
 
-    if (Deck.cards.length <= 1) {
+    if (Deck.Cards.length <= 1) {
       await confirmWith('The last remaining card cannot be deleted.','OK')
       return
     }
 
     const Choice = await confirmWith(
-      `Really delete card "${Card.name}" and all its widgets?`, 'Delete','Cancel'
+      `Really delete card "${Card.Name}" and all its widgets?`, 'Delete','Cancel'
     )
     if (Choice !== 'Delete') { return }
 
     captureUndo()
-    const currentId = Deck.cards[CardIndex].id
-    Deck.cards.splice(Index,1)
+    const currentId = Deck.Cards[CardIndex].Id
+    Deck.Cards.splice(Index,1)
     setHistory([])             // card indices in the history are no longer valid
     setSelectedId(null)
 
     const newIndex = indexOfCard(currentId)     // the current card may have moved
-    setCardIndex(newIndex >= 0 ? newIndex : clamp(Index, 0, Deck.cards.length-1))
+    setCardIndex(newIndex >= 0 ? newIndex : clamp(Index, 0, Deck.Cards.length-1))
     deckForceUpdate()
   }
 
   function moveCardAt (Index:number, Delta:number):void {
     const newIndex = Index+Delta
-    if ((newIndex < 0) || (newIndex >= Deck.cards.length)) { return }
+    if ((newIndex < 0) || (newIndex >= Deck.Cards.length)) { return }
 
     captureUndo()
-    const currentId = Deck.cards[CardIndex].id
-    const [ Card ]  = Deck.cards.splice(Index,1)
-    Deck.cards.splice(newIndex, 0, Card)
+    const currentId = Deck.Cards[CardIndex].Id
+    const [ Card ]  = Deck.Cards.splice(Index,1)
+    Deck.Cards.splice(newIndex, 0, Card)
     setHistory([])             // card indices in the history are no longer valid
     setCardIndex(Math.max(0, indexOfCard(currentId)))
     deckForceUpdate()
@@ -5846,7 +5864,7 @@ function DeckView ({
 
   async function copyCardToClipboard ():Promise<void> {
     const successful = await writeToClipboard(
-      CardMIMEType, JSON.stringify(Deck.cards[CardIndex])
+      CardMIMEType, JSON.stringify(Deck.Cards[CardIndex])
     )
     if (! successful) {
       await confirmWith('BrowserCard could not write to the clipboard.','OK')
@@ -5856,7 +5874,7 @@ function DeckView ({
   async function copySelectionToClipboard ():Promise<void> {
     if (selectedId == null) { await copyCardToClipboard(); return }
 
-    const Obj = Deck.cards[CardIndex].objects.find((Obj) => Obj.id === selectedId)
+    const Obj = Deck.Cards[CardIndex].Widgets.find((Obj) => Obj.Id === selectedId)
     if (Obj == null) { return }
 
     const successful = await writeToClipboard(WidgetMIMEType, JSON.stringify(Obj))
@@ -5890,33 +5908,33 @@ function DeckView ({
       Candidate = JSON.parse(Payload.Serialization)
     } catch { return }
 
-    const Card = Deck.cards[CardIndex]
+    const Card = Deck.Cards[CardIndex]
     if (Payload.Kind === 'card') {
       if (! ValueIsCardJSON(Candidate)) { return }
 
       const newCard = Candidate as BC_Card
-        newCard.id = newInternalId('card')
-        newCard.objects.forEach((Obj) => { Obj.id = newInternalId('widget') })
-        newCard.name = uniqueNameIn(
-          newCard.name, new Set(Deck.cards.map((Card) => Card.name))
+        newCard.Id = newInternalId('card')
+        newCard.Widgets.forEach((Obj) => { Obj.Id = newInternalId('widget') })
+        newCard.Name = uniqueNameIn(
+          newCard.Name, new Set(Deck.Cards.map((Card) => Card.Name))
         )
       captureUndo()
-      Deck.cards.splice(CardIndex+1, 0, newCard)
+      Deck.Cards.splice(CardIndex+1, 0, newCard)
       navigate({ type:'card-index', index:CardIndex+1 })
     } else {
       if (! ValueIsWidgetJSON(Candidate)) { return }
 
-      const maxZIndex = Card.objects.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
+      const maxZIndex = Card.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
       const newWidget = Candidate as BC_Widget
-        newWidget.id = newInternalId('widget')
-        newWidget.name = uniqueNameIn(
-          newWidget.name ?? 'Widget', new Set(Card.objects.map((Obj) => Obj.name))
+        newWidget.Id = newInternalId('widget')
+        newWidget.Name = uniqueNameIn(
+          newWidget.Name ?? 'Widget', new Set(Card.Widgets.map((Obj) => Obj.Name))
         )
         newWidget.zIndex = maxZIndex+1
-        newWidget.number = maxZIndex+1
+        newWidget.Number = maxZIndex+1
       captureUndo()
-      Card.objects.push(newWidget)
-      setSelectedId(newWidget.id)
+      Card.Widgets.push(newWidget)
+      setSelectedId(newWidget.Id)
     }
     deckForceUpdate()
   }
@@ -5942,10 +5960,10 @@ function DeckView ({
         ),
       })
 
-      const currentCard = Deck.cards[CardIndex]
+      const currentCard = Deck.Cards[CardIndex]
       const Anchor = document.createElement('a')
         Anchor.href     = DataURL
-        Anchor.download = `${Deck.name ?? 'Deck'} - ${currentCard.name ?? 'Card'}.png`
+        Anchor.download = `${Deck.Name ?? 'Deck'} - ${currentCard.Name ?? 'Card'}.png`
       Anchor.click()
     } catch (Signal) {
       console.warn('[BrowserCard] could not create a screenshot:', Signal)
@@ -6006,7 +6024,7 @@ function DeckView ({
     lastUndoKeyRef.current = ''
     setSelectedId(null)
     setHistory([])
-    setCardIndex((prev) => clamp(prev, 0, Deck.cards.length-1))
+    setCardIndex((prev) => clamp(prev, 0, Deck.Cards.length-1))
     setEditGeneration((n) => n+1)  // remounts CardView with fresh descriptors
     setPanelGeneration((n) => n+1)
     deckForceUpdate()
@@ -6029,28 +6047,28 @@ function DeckView ({
 /**** widget insertion, deletion and arrangement (edit mode only) ****/
 
   function addWidget (Type:BC_WidgetType):void {
-    const Card      = Deck.cards[CardIndex]
+    const Card      = Deck.Cards[CardIndex]
     const newWidget = newWidgetOfType(Type, Card, CanvasW, CanvasH)
     captureUndo()
-    Card.objects.push(newWidget)
-    setSelectedId(newWidget.id)
+    Card.Widgets.push(newWidget)
+    setSelectedId(newWidget.Id)
     deckForceUpdate()
   }
 
   function deleteSelection ():void {
     if (selectedId == null) { return }
-    const Card  = Deck.cards[CardIndex]
-    const Index = Card.objects.findIndex((Obj) => Obj.id === selectedId)
-    if (Index >= 0) { captureUndo(); Card.objects.splice(Index,1) }
+    const Card  = Deck.Cards[CardIndex]
+    const Index = Card.Widgets.findIndex((Obj) => Obj.Id === selectedId)
+    if (Index >= 0) { captureUndo(); Card.Widgets.splice(Index,1) }
     setSelectedId(null)
     deckForceUpdate()
   }
 
   function reorderSelection (Direction:BC_ArrangeDirection):void {
     if (selectedId == null) { return }
-    const Card    = Deck.cards[CardIndex]
-    const ordered = [ ...Card.objects ].sort((a,b) => a.zIndex-b.zIndex)
-    const Index   = ordered.findIndex((Obj) => Obj.id === selectedId)
+    const Card    = Deck.Cards[CardIndex]
+    const ordered = [ ...Card.Widgets ].sort((a,b) => a.zIndex-b.zIndex)
+    const Index   = ordered.findIndex((Obj) => Obj.Id === selectedId)
     if (Index < 0) { return }
 
     captureUndo()
@@ -6061,22 +6079,22 @@ function DeckView ({
       case 'forward':  ordered.splice(Index+1, 0, Obj);   break
       case 'backward': ordered.splice(Math.max(Index-1,0), 0, Obj); break
     }
-    ordered.forEach((Obj,i) => { Obj.zIndex = i+1; Obj.number = i+1 })
+    ordered.forEach((Obj,i) => { Obj.zIndex = i+1; Obj.Number = i+1 })
     deckForceUpdate()
   }
 
   function moveSelectionToCard (targetIndex:number):void {
     if ((selectedId == null) || (targetIndex === CardIndex)) { return }
-    const Card   = Deck.cards[CardIndex]
-    const Target = Deck.cards[targetIndex]
+    const Card   = Deck.Cards[CardIndex]
+    const Target = Deck.Cards[targetIndex]
     if (Target == null) { return }
 
-    const Index = Card.objects.findIndex((Obj) => Obj.id === selectedId)
+    const Index = Card.Widgets.findIndex((Obj) => Obj.Id === selectedId)
     if (Index < 0) { return }
 
     captureUndo()
-    const [ Obj ] = Card.objects.splice(Index,1)
-    Target.objects.push(Obj)
+    const [ Obj ] = Card.Widgets.splice(Index,1)
+    Target.Widgets.push(Obj)
     setSelectedId(null)
     deckForceUpdate()
   }
@@ -6133,7 +6151,7 @@ function DeckView ({
 /**** navigate ****/
 
   const navigate = useCallback((Target:BC_NavTarget) => {
-    const Cards = Deck.cards
+    const Cards = Deck.Cards
     setCardIndex((prev) => {
       const addHistory = (next:number) => {
         if (next !== prev) {
@@ -6149,11 +6167,11 @@ function DeckView ({
         case 'last':       return addHistory(Cards.length-1)
         case 'card-index': return addHistory(clamp(Target.index, 0, Cards.length-1))
         case 'card-name': {
-          const Idx = Cards.findIndex((c) => c.name === Target.name)
+          const Idx = Cards.findIndex((c) => c.Name === Target.name)
           return (Idx >= 0) ? addHistory(Idx) : prev
         }
         case 'card-id': {
-          const Idx = Cards.findIndex((c) => c.id === Target.id)
+          const Idx = Cards.findIndex((c) => c.Id === Target.id)
           return (Idx >= 0) ? addHistory(Idx) : prev
         }
         default: return prev
@@ -6177,7 +6195,7 @@ function DeckView ({
 
   const makeBaseContext = useCallback((me:BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null):BC_ScriptContext => {
     return buildContext(
-      Deck, Deck.cards, me,
+      Deck, Deck.Cards, me,
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
@@ -6207,7 +6225,7 @@ function DeckView ({
   useEffect(() => {
     const inst = deckInstanceRef.current!
     const ctx  = buildContext(
-      Deck, Deck.cards, deckProxy,
+      Deck, Deck.Cards, deckProxy,
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
@@ -6218,14 +6236,14 @@ function DeckView ({
     deckScriptDoneRef.current  = false
     cardReadyDoneRef.current   = false
 
-    inst.run(Deck.script ?? '', Params, Args).then(() => {
+    inst.run(Deck.Script ?? '', Params, Args).then(() => {
       deckScriptDoneRef.current = true
       deckForceUpdate()
       checkDeckReady()
     })
 
     return () => { void inst.teardown() }
-  }, [Deck.script])
+  }, [Deck.Script])
 
 /**** keyboard handling — nudges the selection in edit mode, navigates else ****/
 
@@ -6270,7 +6288,7 @@ function DeckView ({
           return
         }
 
-        const Obj = Deck.cards[CardIndex].objects.find((Obj) => Obj.id === selectedId)
+        const Obj = Deck.Cards[CardIndex].Widgets.find((Obj) => Obj.Id === selectedId)
         if (Obj == null) { return }
 
         const Delta = e.shiftKey ? 10 : 1
@@ -6310,12 +6328,12 @@ function DeckView ({
 
 /**** render ****/
 
-  const Card           = Deck.cards[CardIndex]
+  const Card           = Deck.Cards[CardIndex]
   const deckRenderSlot = deckInstanceRef.current!.renderResult() ?? null
 
   const selectedWidget = (
     isEditing && (selectedId != null)
-    ? Card.objects.find((Obj) => Obj.id === selectedId) ?? null
+    ? Card.Widgets.find((Obj) => Obj.Id === selectedId) ?? null
     : null
   )
 
@@ -6330,9 +6348,9 @@ function DeckView ({
       <div class="bc-app">
         ${deckRenderSlot}
         ${withChrome && html`<${MenuBar}
-          DeckName=${Deck.name}
+          DeckName=${Deck.Name}
           CardIndex=${CardIndex}
-          CardCount=${Deck.cards.length}
+          CardCount=${Deck.Cards.length}
           activeOverlay=${activeOverlay}
           onOverlayToggle=${setActiveOverlay}
           onGoFirst=${() => navigate({ type:'first' })}
@@ -6366,7 +6384,7 @@ function DeckView ({
         <div class="bc-main-area">
           <div class="bc-card-area" ref=${CardAreaRef}>
             <${CardView}
-              key=${Card.id + ':' + EditGeneration}
+              key=${Card.Id + ':' + EditGeneration}
               Card=${Card}
               Scale=${Scale}
               CanvasW=${CanvasW}
@@ -6386,12 +6404,12 @@ function DeckView ({
           </div>
           ${isEditing && html`
             <${PropertiesPanel}
-              key=${(selectedId ?? 'card:'+Card.id) + ':' + PanelGeneration}
+              key=${(selectedId ?? 'card:'+Card.Id) + ':' + PanelGeneration}
               Widget=${selectedWidget}
               CanvasW=${CanvasW}
               CanvasH=${CanvasH}
               onEdited=${deckForceUpdate}
-              CardNames=${Deck.cards.map((Card) => Card.name)}
+              CardNames=${Deck.Cards.map((Card) => Card.Name)}
               CardIndex=${CardIndex}
               onDelete=${deleteSelection}
               onReorder=${reorderSelection}
@@ -6451,8 +6469,8 @@ function DeckView ({
               <button class="bc-decks-new" onClick=${() => void addCardViaDialog()}>+ New Card</button>
             `}
             <div class="bc-decks-list">
-              ${Deck.cards.map((listedCard,i) => html`
-                <div key=${listedCard.id}
+              ${Deck.Cards.map((listedCard,i) => html`
+                <div key=${listedCard.Id}
                   class=${`bc-cards-item${i === CardIndex ? ' active' : ''}`}>
                   <div class="bc-cards-main"
                     onClick=${() => {
@@ -6462,10 +6480,10 @@ function DeckView ({
                       Card=${listedCard} CanvasW=${CanvasW} CanvasH=${CanvasH}
                     />
                     <div class="bc-cards-info">
-                      <div class="bc-cards-name" title=${listedCard.name}>${listedCard.name}</div>
+                      <div class="bc-cards-name" title=${listedCard.Name}>${listedCard.Name}</div>
                       <div class="bc-cards-sub">
-                        #${i+1} · ${listedCard.objects.length}${' '}
-                        ${listedCard.objects.length === 1 ? 'widget' : 'widgets'}
+                        #${i+1} · ${listedCard.Widgets.length}${' '}
+                        ${listedCard.Widgets.length === 1 ? 'widget' : 'widgets'}
                       </div>
                     </div>
                   </div>
@@ -6475,14 +6493,14 @@ function DeckView ({
                         disabled=${i === 0}
                         onClick=${() => moveCardAt(i,-1)}>↑</button>
                       <button class="bc-console-btn" title="move this card forward"
-                        disabled=${i === Deck.cards.length-1}
+                        disabled=${i === Deck.Cards.length-1}
                         onClick=${() => moveCardAt(i,1)}>↓</button>
                       <button class="bc-console-btn" title="duplicate this card"
                         onClick=${() => duplicateCardAt(i)}>⧉</button>
                       <button class="bc-console-btn" title="rename this card"
                         onClick=${() => void renameCardAt(i)}>✎</button>
                       <button class="bc-console-btn" title="delete this card"
-                        disabled=${Deck.cards.length <= 1}
+                        disabled=${Deck.Cards.length <= 1}
                         onClick=${() => void deleteCardAt(i)}>×</button>
                     </div>
                   `}
@@ -6505,7 +6523,7 @@ function DeckView ({
         `}
         ${withChrome && html`<${BottomBar}
           CardIndex=${CardIndex}
-          CardCount=${Deck.cards.length}
+          CardCount=${Deck.Cards.length}
           onFirst=${() => navigate({ type:'first' })}
           onPrev=${ () => navigate({ type:'prev'  })}
           onNext=${ () => navigate({ type:'next'  })}
@@ -6645,7 +6663,7 @@ class BC_Designer extends HTMLElement {
     }
     if (Deck == null) { Deck = JSON.parse(pristineDemoDeckJSON) as BC_Deck }
 
-    this.#StorageKey = 'bc-deck:' + (this.getAttribute('name') ?? Deck.name ?? 'default')
+    this.#StorageKey = 'bc-deck:' + (this.getAttribute('name') ?? Deck.Name ?? 'default')
 
     try {                  // a persisted copy supersedes the original definition
       await DeckMigration             // old persisted decks may need migration
@@ -6663,7 +6681,7 @@ class BC_Designer extends HTMLElement {
     }
 
     adjustIdCounterFor(Deck)
-    if ((Deck as Indexable).id == null) { (Deck as Indexable).id = newInternalId('deck') }
+    if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
 
     this.#Deck      = Deck
     this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
@@ -6715,7 +6733,7 @@ class BC_Designer extends HTMLElement {
 
       const Deck = Candidate as BC_Deck
       adjustIdCounterFor(Deck)
-      if ((Deck as Indexable).id == null) { (Deck as Indexable).id = newInternalId('deck') }
+      if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
 
       this.#Deck      = Deck
       this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
@@ -6732,7 +6750,7 @@ class BC_Designer extends HTMLElement {
   #exportEmbeddable ():void {
     if (this.#Deck == null) { return }
 
-    const DeckName  = this.#Deck.name ?? 'Deck'
+    const DeckName  = this.#Deck.Name ?? 'Deck'
     const escapedSrc = escapedForHTML(JSON.stringify(this.#Deck))
     const ModuleURL  = BC_ModuleURL
     const Width      = this.#Deck.CardWidth  ?? DefaultDeckWidth
@@ -6769,7 +6787,7 @@ class BC_Designer extends HTMLElement {
   #exportStandalone ():void {
     if (this.#Deck == null) { return }
 
-    const DeckName  = this.#Deck.name ?? 'Deck'
+    const DeckName  = this.#Deck.Name ?? 'Deck'
     const escapedSrc = escapedForHTML(JSON.stringify(this.#Deck))
 
     const Page = (
@@ -6857,11 +6875,11 @@ class BC_Designer extends HTMLElement {
     }
 
     const Deck:BC_Deck = {
-      id:newInternalId('deck'), name:Name, readOnly:false,
-      swipeToAdjacentCard:true, script:'',
-      cards:[{
-        id:newInternalId('card'), name:'Card 1',
-        color:null, alpha:1, dontSearch:false, script:'', objects:[],
+      Id:newInternalId('deck'), Name:Name, readOnly:false,
+      swipeToAdjacentCard:true, Script:'',
+      Cards:[{
+        Id:newInternalId('card'), Name:'Card 1',
+        Color:null, Alpha:1, dontSearch:false, Script:'', Widgets:[],
       }],
     }
 
@@ -6907,7 +6925,7 @@ class BC_Designer extends HTMLElement {
       }
 
       if (Key === this.#StorageKey) {              // renames the current deck
-        this.#Deck!.name = newName
+        this.#Deck!.Name = newName
         this.#StorageKey  = newKey
         await this.#saveDeck()
         await del(Key, DeckStore)
@@ -6915,7 +6933,7 @@ class BC_Designer extends HTMLElement {
       } else {                                    // renames a persisted deck
         const persisted = await get(Key, DeckStore)
         if (! ValueIsDeck(persisted)) { return }
-        ;(persisted as BC_Deck).name = newName
+        ;(persisted as BC_Deck).Name = newName
         await set(newKey, persisted, DeckStore)
         await del(Key, DeckStore)
       }
@@ -6974,7 +6992,7 @@ class BC_Designer extends HTMLElement {
   #exportDeck ():void {
     if (this.#Deck == null) { return }
     downloadFile(
-      (this.#Deck.name ?? 'Deck') + '.json',
+      (this.#Deck.Name ?? 'Deck') + '.json',
       JSON.stringify(this.#Deck,null,2), 'application/json'
     )
   }
@@ -6997,7 +7015,7 @@ class BC_Designer extends HTMLElement {
           }
           const Deck = Candidate as BC_Deck
           adjustIdCounterFor(Deck)
-          if ((Deck as Indexable).id == null) { (Deck as Indexable).id = newInternalId('deck') }
+          if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
           this.#Deck      = Deck
           this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
           await this.#saveDeck()

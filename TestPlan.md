@@ -73,7 +73,7 @@ Suggested scripts (add to `package.json`):
 
 | Test | Expectation |
 |------|-------------|
-| `ValueIsDeck` / `ValueIsCardJSON` / `ValueIsWidgetJSON` | accept valid structures; reject missing `id`/`type`/`Anchors`/`Offsets`, wrong nesting |
+| `ValueIsDeck` / `ValueIsCardJSON` / `ValueIsWidgetJSON` | accept valid structures; reject missing `Id`/`Type`/`Anchors`/`Offsets`, wrong nesting |
 | import safety | invalid `src` JSON / non-deck object is rejected (no throw, returns a notice path) |
 | JSON round-trip | `deck → JSON.stringify → JSON.parse → ValueIsDeck` stays valid |
 
@@ -119,10 +119,10 @@ Suggested scripts (add to `package.json`):
 
 | Test | Expectation |
 |------|-------------|
-| `card(nameOrNumber)` | returns a ref for valid name/1-based index, else `null` |
-| `cardNumber()` / `cardCount()` | reflect current index (live) and total |
+| `Card(nameOrNumber)` | returns a ref for valid name/1-based index, else `null` |
+| `CardNumber()` / `CardCount()` | reflect current index (live) and total |
 | `go(target)` | resolves card ref / name / 1-based number / `nextCard` etc. to the right `BC_NavTarget` |
-| `widget(nameOrIndex)` | finds a widget proxy on the current card |
+| `Widget(nameOrIndex)` | finds a widget proxy on the current card |
 | `await send(target, msg, …)` | delivers to the target widget's instance; resolves `false` if missing |
 | `await answer(...)` / `await ask(...)` | resolve with the chosen button / entered text / `null` on cancel (drive the dialog callback) |
 | `print`/`println`/`clearConsole` | mutate the deck console buffer |
@@ -177,7 +177,7 @@ Suggested scripts (add to `package.json`):
 | Test | Expectation |
 |------|-------------|
 | widget rendering per type | button (8 variants), field (locked/editable, lines), shape (rect/oval/poly/line/arc, arrowheads as `<polygon>`), picture (object-fit per variant), custom widget |
-| field write-back | typing into an editable field updates `me.text` |
+| field write-back | typing into an editable field updates `me.Text` |
 | button/checkbox/radio | click dispatches `click`; `autoHilite` checkbox toggles `hilite` |
 | edit mode | selection frame + 8 handles appear; pointer drag/resize updates offsets (simulate pointer events); arrow-key nudge |
 | properties panel | editing a field updates the descriptor; anchor switch preserves geometry; "Configuration (JSON)" edits `me.Configuration` |

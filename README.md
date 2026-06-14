@@ -14,7 +14,7 @@ Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.h
 
 **Build decks visually.** A deck is a document made of cards, and cards carry widgets: buttons (8 styles, incl. checkboxes and radio buttons), text fields (editable or locked, with or without ruled lines), shapes (rectangles, ovals, lines, arcs and polygons - with arrowheads, if you like), pictures, and fully custom widgets. Switch the designer into edit mode and place widgets by dragging, resize them with eight handles, nudge them pixel-wise with the arrow keys, or let them snap to a configurable grid. A properties panel lets you inspect and edit every detail - including an anchor-based geometry system that keeps widgets in place (or lets them stretch) when a deck is shown at a different size.
 
-**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.count` and the widget re-renders.
+**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `Widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.count` and the widget re-renders.
 
 **Stay organized.** The decks panel lists every deck stored in your browser - create, open, rename or delete them there. The card browser shows live wireframe thumbnails of all cards in the current deck and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
 
@@ -118,7 +118,7 @@ Inside a script, `me` (synonym: `my`) is a reactive proxy of the visual itself. 
 ```javascript
 on('render', () => {                              // a custom widget: a counter
   const count = my.count ?? 0
-  return html`
+  return HTML`
     <div style=${{ textAlign:'center' }}>
       <b>${count}</b>
       <button onClick=${() => { my.count = count+1 }}>+</button>
@@ -129,10 +129,10 @@ on('render', () => {                              // a custom widget: a counter
 
 Use `my.own` for *transient* script-private state: writes to `my.own.whatever` neither re-render nor persist.
 
-Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. A custom widget additionally receives `dispatch(msg)` (to send messages to itself and its card) and `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
+Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`HTML\`...\``) - Preact takes care of efficient updates. A custom widget additionally receives `dispatch(msg)` (to send messages to itself and its card) and `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
 
 ```javascript
-on('render', () => html`<div>Hello, ${Configuration.name ?? 'world'}!</div>`)
+on('render', () => HTML`<div>Hello, ${Configuration.name ?? 'world'}!</div>`)
 ```
 
 With `Configuration = { "name": "Andreas" }` this widget greets "Hello, Andreas!". Use `Configuration` for static, design-time settings; use `me.*` for mutable runtime state.
@@ -141,14 +141,14 @@ With `Configuration = { "name": "Andreas" }` this widget greets "Hello, Andreas!
 
 BrowserCard runs on a single, bundled Preact instance. If a script imports Preact again (e.g. `import { useState } from 'https://…/preact'`), it gets a *second*, unconnected copy whose hooks and rendering do not work together with BrowserCard's - widgets then misbehave in subtle ways.
 
-Therefore: never import Preact in a script. Everything you need is already provided. The `html` tag covers most cases; for the rest, use the injected `preact` object:
+Therefore: never import Preact in a script. Everything you need is already provided. The `HTML` tag covers most cases; for the rest, use the injected `preact` object:
 
 ```javascript
 on('render', () => {
   const [open, setOpen] = preact.useState(false)        // NOT: import … from 'preact'
-  return html`
+  return HTML`
     <button onClick=${() => setOpen(! open)}>${open ? 'hide' : 'show'}</button>
-    ${open && html`<div>now you see me</div>`}
+    ${open && HTML`<div>now you see me</div>`}
   `
 })
 ```
@@ -161,12 +161,12 @@ The `preact` object bundles the most important exports: `h`, `Fragment`, `render
 
 ```javascript
 on('ready', () => every(1000, () => { my.time = Date.now() }))
-on('render', () => html`<div>${new Date(my.time ?? Date.now()).toLocaleTimeString()}</div>`)
+on('render', () => HTML`<div>${new Date(my.time ?? Date.now()).toLocaleTimeString()}</div>`)
 ```
 
 ### Talking to other widgets
 
-`widget(nameOrIndex)` returns the reactive proxy of another widget on the current card; `send(target, msg, ...args)` delivers a message to its script:
+`Widget(nameOrIndex)` returns the reactive proxy of another widget on the current card; `send(target, msg, ...args)` delivers a message to its script:
 
 ```javascript
 // in the script of widget "Sender":
@@ -186,7 +186,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 
 | Message | When | Notes |
 |---------|------|-------|
-| `render` | on every (re-)render of the visual | must return `html\`...\`` **synchronously**; the result is rendered first inside the visual's DOM element |
+| `render` | on every (re-)render of the visual | must return `HTML\`...\`` **synchronously**; the result is rendered first inside the visual's DOM element |
 | `ready` | once all inner visuals have been instantiated and initialized | fires inside-out: widgets → card → deck |
 | `obsolete` | right before the visual is removed (navigation, deletion, script change) | for cleanup; `after()`/`every()` timers are cancelled automatically afterwards |
 | `click` | a button (or auto-hiliting picture) was clicked | bubbles up the hierarchy: the widget's script, then its card's, then the deck's |
@@ -197,11 +197,11 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | Function | Description |
 |----------|-------------|
 | `on(msg, fn)` | registers a handler for a message (one handler per message; later calls replace earlier ones) |
-| `go(target)` | navigates to a card: a card ref (`nextCard`, `card(...)`, ...), a card name, or a 1-based number |
-| `card(nameOrNumber)` | returns a card ref by name or 1-based index (or `null`) |
-| `cardNumber()` | 1-based number of the current card (live) |
-| `cardCount()` | number of cards in the deck |
-| `widget(nameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
+| `go(target)` | navigates to a card: a card ref (`nextCard`, `Card(...)`, ...), a card name, or a 1-based number |
+| `Card(nameOrNumber)` | returns a card ref by name or 1-based index (or `null`) |
+| `CardNumber()` | 1-based number of the current card (live) |
+| `CardCount()` | number of cards in the deck |
+| `Widget(nameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
 | `await send(target, msg, ...args)` | sends a message to another widget's script (name, index or proxy); resolves with `false` if no handler exists |
 | `dispatch(msg)` | *(widgets only)* sends a message up the hierarchy: the widget's own script, then its card's, then the deck's |
 | `await answer(message, ...buttons)` | shows a dialog; resolves with the label of the clicked button |
@@ -223,7 +223,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `my.Card.WidgetList` | proxies of all widgets on the current card, in drawing order |
 | `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
 | `nextCard`, `prevCard`, `firstCard`, `lastCard` | card refs for `go()` |
-| `html` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
+| `HTML` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
 | `preact` | the most important Preact exports, bundled into one object (see below) - use these instead of importing Preact |
 | `Configuration` | *(custom widgets only)* the widget's read-only JSON configuration object (edited as "Configuration (JSON)" in the designer) |
 
@@ -246,19 +246,19 @@ A *behavior* is a reusable script, packaged as an ordinary ES module - the Brows
 
 ### Writing a behavior
 
-Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need (everything from the [Script API Reference](#script-api-reference) is available, incl. `on`, `me`, `html`, `after`, `every`, `Configuration` and `dispatch`):
+Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need (everything from the [Script API Reference](#script-api-reference) is available, incl. `on`, `me`, `HTML`, `after`, `every`, `Configuration` and `dispatch`):
 
 ```javascript
 // Blinker.js - a behavior for "generic" widgets: makes its content blink
 
-export default async function ({ on, me, every, html }) {
+export default async function ({ on, me, every, HTML }) {
   on('ready',  () => every(500, () => { me.shown = ! me.shown }))
-  on('render', () => html`
+  on('render', () => HTML`
     <div style=${{
       display:'flex', alignItems:'center', justifyContent:'center',
       width:'100%', height:'100%',
       visibility:(me.shown === false ? 'hidden' : 'visible'),
-    }}>${my.text ?? 'blink!'}</div>
+    }}>${my.Text ?? 'blink!'}</div>
   `)
 }
 ```

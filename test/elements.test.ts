@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest'
 import '../src/BrowserCard'
 
 const Deck = {
-  id:'bc-deck-1', name:'T', readOnly:false, swipeToAdjacentCard:true, script:'',
+  Id:'bc-deck-1', Name:'T', readOnly:false, swipeToAdjacentCard:true, Script:'',
   CardWidth:600, CardHeight:450,
-  cards:[{ id:'bc-card-1', name:'C', color:null, alpha:1, dontSearch:false, script:'',
-    objects:[{ id:'bc-widget-1', name:'B', number:1, type:'button', zIndex:1,
+  Cards:[{ Id:'bc-card-1', Name:'C', Color:null, Alpha:1, dontSearch:false, Script:'',
+    Widgets:[{ Id:'bc-widget-1', Name:'B', Number:1, Type:'button', zIndex:1,
       Anchors:['left-width','top-height'], Offsets:[10,100,10,30], visible:true,
-      variant:'rounded-rect', showName:true, autoHilite:true, enabled:true, sharedHilite:false,
-      text:'Hi', script:'' }] }],
+      Variant:'rounded-rect', showName:true, autoHilite:true, enabled:true, sharedHilite:false,
+      Text:'Hi', Script:'' }] }],
 }
 
 describe('custom elements', () => {

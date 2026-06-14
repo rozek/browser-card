@@ -3,8 +3,8 @@ import { makeWidgetProxy } from '../src/BrowserCard'
 
 function setup () {
   const Obj:any = {
-    id:'bc-widget-1', name:'W', number:1, type:'shape', zIndex:1,
-    Anchors:['left-width','top-height'], Offsets:[10,100,20,50], visible:true, script:'',
+    Id:'bc-widget-1', Name:'W', Number:1, Type:'shape', zIndex:1,
+    Anchors:['left-width','top-height'], Offsets:[10,100,20,50], visible:true, Script:'',
   }
   const SizeRef = { current:{ W:600, H:450 } }
   const forceUpdate = vi.fn()

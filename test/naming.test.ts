@@ -18,10 +18,10 @@ describe('newInternalId', () => {
 describe('adjustIdCounterFor', () => {
   it('lifts the counter above the highest existing numeric id', () => {
     const Deck:any = {
-      id:'bc-deck-9000', name:'X', readOnly:false, swipeToAdjacentCard:true, script:'',
-      cards:[{ id:'bc-card-9100', name:'C', color:null, alpha:1, dontSearch:false, script:'',
-        objects:[{ id:'bc-widget-9999', name:'W', number:1, type:'button', zIndex:1,
-          Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, script:'' }] }],
+      Id:'bc-deck-9000', Name:'X', readOnly:false, swipeToAdjacentCard:true, Script:'',
+      Cards:[{ Id:'bc-card-9100', Name:'C', Color:null, Alpha:1, dontSearch:false, Script:'',
+        Widgets:[{ Id:'bc-widget-9999', Name:'W', Number:1, Type:'button', zIndex:1,
+          Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'' }] }],
     }
     adjustIdCounterFor(Deck)
     const next = Number(newInternalId('widget').split('-').at(-1))

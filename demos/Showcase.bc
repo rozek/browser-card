@@ -1,35 +1,35 @@
 {
-  "id": "bc-deck-900",
-  "name": "Showcase",
+  "Id": "bc-deck-900",
+  "Name": "Showcase",
   "readOnly": false,
   "swipeToAdjacentCard": true,
-  "script": "",
+  "Script": "",
   "CardWidth": 600,
   "CardHeight": 450,
   "SnapToGrid": false,
   "GridWidth": 10,
   "GridHeight": 10,
-  "cards": [
+  "Cards": [
     {
-      "id": "bc-card-901",
-      "name": "Showcase",
-      "color": "#f4f6fa",
-      "alpha": 1,
+      "Id": "bc-card-901",
+      "Name": "Showcase",
+      "Color": "#f4f6fa",
+      "Alpha": 1,
       "dontSearch": false,
-      "script": "",
-      "objects": [
+      "Script": "",
+      "Widgets": [
         {
-          "id": "bc-widget-910",
-          "number": 1,
+          "Id": "bc-widget-910",
+          "Number": 1,
           "zIndex": 1,
           "visible": true,
-          "script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 210) + 2) % 360 }))\non('render', () => {\n  const hue = me._hue ?? 210\n  return html`\n    <div style=${{\n      width:'100%', height:'100%',\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      background:`linear-gradient(120deg, hsl(${hue},65%,28%), hsl(${(hue+70)%360},70%,45%))`,\n      color:'#fff', borderRadius:'0 0 14px 14px',\n    }}>\n      <div style=${{ fontSize:'26px', fontWeight:'bold', letterSpacing:'3px' }}>BrowserCard</div>\n      <div style=${{ fontSize:'11px', opacity:0.85, letterSpacing:'1px' }}>HyperCard, reborn in your browser - this whole card is just JSON + tiny scripts</div>\n    </div>\n  `\n})",
+          "Script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 210) + 2) % 360 }))\non('render', () => {\n  const hue = me._hue ?? 210\n  return html`\n    <div style=${{\n      width:'100%', height:'100%',\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      background:`linear-gradient(120deg, hsl(${hue},65%,28%), hsl(${(hue+70)%360},70%,45%))`,\n      color:'#fff', borderRadius:'0 0 14px 14px',\n    }}>\n      <div style=${{ fontSize:'26px', fontWeight:'bold', letterSpacing:'3px' }}>BrowserCard</div>\n      <div style=${{ fontSize:'11px', opacity:0.85, letterSpacing:'1px' }}>HyperCard, reborn in your browser - this whole card is just JSON + tiny scripts</div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Header",
-          "type": "generic",
+          "Name": "Header",
+          "Type": "generic",
           "Offsets": [
             0,
             600,
@@ -39,149 +39,149 @@
           "Configuration": {}
         },
         {
-          "id": "bc-widget-911",
-          "number": 2,
+          "Id": "bc-widget-911",
+          "Number": 2,
           "zIndex": 2,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "ScriptsLabel",
-          "type": "field",
+          "Name": "ScriptsLabel",
+          "Type": "field",
           "Offsets": [
             16,
             180,
             74,
             22
           ],
-          "text": "SCRIPTS & BUTTONS",
-          "variant": "transparent",
+          "Text": "SCRIPTS & BUTTONS",
+          "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
           "showLines": false,
           "dontSearch": true,
           "sharedText": false,
-          "fontSize": 9,
-          "color": "#8892a6",
-          "fontWeight": "bold"
+          "FontSize": 9,
+          "Color": "#8892a6",
+          "FontWeight": "bold"
         },
         {
-          "id": "bc-widget-912",
-          "number": 3,
+          "Id": "bc-widget-912",
+          "Number": 3,
           "zIndex": 3,
           "visible": true,
-          "script": "on('click', async () => { const Name = await ask('What is your name?','') ; if (Name != null) { await answer('Hello, ' + (Name || 'stranger') + '!','Nice to meet you') } })",
+          "Script": "on('click', async () => { const Name = await ask('What is your name?','') ; if (Name != null) { await answer('Hello, ' + (Name || 'stranger') + '!','Nice to meet you') } })",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Say hello",
-          "type": "button",
+          "Name": "Say hello",
+          "Type": "button",
           "Offsets": [
             16,
             180,
             100,
             32
           ],
-          "variant": "rounded-rect",
+          "Variant": "rounded-rect",
           "showName": true,
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "text": "Say hello"
+          "Text": "Say hello"
         },
         {
-          "id": "bc-widget-913",
-          "number": 4,
+          "Id": "bc-widget-913",
+          "Number": 4,
           "zIndex": 4,
           "visible": true,
-          "script": "on('click', () => { me.Card.color = (me.hilite ? '#1b2430' : '#f4f6fa') })",
+          "Script": "on('click', () => { me.Card.color = (me.hilite ? '#1b2430' : '#f4f6fa') })",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Dark Card",
-          "type": "button",
+          "Name": "Dark Card",
+          "Type": "button",
           "Offsets": [
             16,
             180,
             138,
             22
           ],
-          "variant": "checkbox",
+          "Variant": "checkbox",
           "showName": true,
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "text": "dark card background"
+          "Text": "dark card background"
         },
         {
-          "id": "bc-widget-914",
-          "number": 5,
+          "Id": "bc-widget-914",
+          "Number": 5,
           "zIndex": 5,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "EditField",
-          "type": "field",
+          "Name": "EditField",
+          "Type": "field",
           "Offsets": [
             16,
             180,
             166,
             62
           ],
-          "variant": "opaque",
+          "Variant": "opaque",
           "lockText": false,
           "scrolling": true,
           "showLines": true,
           "dontSearch": false,
           "sharedText": false,
-          "fontSize": 10,
-          "color": "#223",
-          "text": "fields are editable right in browse mode - try me!"
+          "FontSize": 10,
+          "Color": "#223",
+          "Text": "fields are editable right in browse mode - try me!"
         },
         {
-          "id": "bc-widget-915",
-          "number": 6,
+          "Id": "bc-widget-915",
+          "Number": 6,
           "zIndex": 6,
           "visible": true,
-          "script": "on('click', () => send('Dice','roll'))",
+          "Script": "on('click', () => send('Dice','roll'))",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Roll the dice",
-          "type": "button",
+          "Name": "Roll the dice",
+          "Type": "button",
           "Offsets": [
             16,
             180,
             240,
             30
           ],
-          "variant": "standard",
+          "Variant": "standard",
           "showName": true,
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "text": "Roll the dice ▶"
+          "Text": "Roll the dice ▶"
         },
         {
-          "id": "bc-widget-916",
-          "number": 7,
+          "Id": "bc-widget-916",
+          "Number": 7,
           "zIndex": 7,
           "visible": true,
-          "script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center', gap:'14px',\n      width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{\n        display:'grid', gridTemplateColumns:'repeat(3,10px)', gridTemplateRows:'repeat(3,10px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa',\n        border:'1px solid #ccd', borderRadius:'8px',\n      }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => html`\n          <div key=${i} style=${{\n            width:'10px', height:'10px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent',\n          }}></div>\n        `)}\n      </div>\n      <div style=${{ fontSize:'11px', color:'#667' }}>\n        widgets receive<br/>messages via <b>send()</b>\n      </div>\n    </div>\n  `\n})",
+          "Script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center', gap:'14px',\n      width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{\n        display:'grid', gridTemplateColumns:'repeat(3,10px)', gridTemplateRows:'repeat(3,10px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa',\n        border:'1px solid #ccd', borderRadius:'8px',\n      }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => html`\n          <div key=${i} style=${{\n            width:'10px', height:'10px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent',\n          }}></div>\n        `)}\n      </div>\n      <div style=${{ fontSize:'11px', color:'#667' }}>\n        widgets receive<br/>messages via <b>send()</b>\n      </div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Dice",
-          "type": "generic",
+          "Name": "Dice",
+          "Type": "generic",
           "Offsets": [
             16,
             180,
@@ -191,170 +191,170 @@
           "Configuration": {}
         },
         {
-          "id": "bc-widget-917",
-          "number": 8,
+          "Id": "bc-widget-917",
+          "Number": 8,
           "zIndex": 8,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "ShapesLabel",
-          "type": "field",
+          "Name": "ShapesLabel",
+          "Type": "field",
           "Offsets": [
             218,
             156,
             74,
             22
           ],
-          "text": "SHAPES",
-          "variant": "transparent",
+          "Text": "SHAPES",
+          "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
           "showLines": false,
           "dontSearch": true,
           "sharedText": false,
-          "fontSize": 9,
-          "color": "#8892a6",
-          "fontWeight": "bold"
+          "FontSize": 9,
+          "Color": "#8892a6",
+          "FontWeight": "bold"
         },
         {
-          "id": "bc-widget-918",
-          "number": 9,
+          "Id": "bc-widget-918",
+          "Number": 9,
           "zIndex": 9,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Hexagon",
-          "type": "shape",
+          "Name": "Hexagon",
+          "Type": "shape",
           "Offsets": [
             218,
             156,
             100,
             72
           ],
-          "variant": "polygon",
-          "sides": 6,
-          "fillColor": "#ede9fe",
-          "borderColor": "#7c3aed",
-          "borderWidth": 2
+          "Variant": "polygon",
+          "Sides": 6,
+          "FillColor": "#ede9fe",
+          "BorderColor": "#7c3aed",
+          "BorderWidth": 2
         },
         {
-          "id": "bc-widget-919",
-          "number": 10,
+          "Id": "bc-widget-919",
+          "Number": 10,
           "zIndex": 10,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Oval",
-          "type": "shape",
+          "Name": "Oval",
+          "Type": "shape",
           "Offsets": [
             218,
             156,
             180,
             52
           ],
-          "variant": "oval",
-          "fillColor": "#fce7f3",
-          "borderColor": "#ec4899",
-          "borderWidth": 2
+          "Variant": "oval",
+          "FillColor": "#fce7f3",
+          "BorderColor": "#ec4899",
+          "BorderWidth": 2
         },
         {
-          "id": "bc-widget-920",
-          "number": 11,
+          "Id": "bc-widget-920",
+          "Number": 11,
           "zIndex": 11,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "RoundedRect",
-          "type": "shape",
+          "Name": "RoundedRect",
+          "Type": "shape",
           "Offsets": [
             218,
             156,
             240,
             48
           ],
-          "variant": "rounded-rectangle",
-          "cornerRadius": 14,
-          "fillColor": "#dcfce7",
-          "borderColor": "#22c55e",
-          "borderWidth": 2
+          "Variant": "rounded-rectangle",
+          "CornerRadius": 14,
+          "FillColor": "#dcfce7",
+          "BorderColor": "#22c55e",
+          "BorderWidth": 2
         },
         {
-          "id": "bc-widget-921",
-          "number": 12,
+          "Id": "bc-widget-921",
+          "Number": 12,
           "zIndex": 12,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Arrow",
-          "type": "shape",
+          "Name": "Arrow",
+          "Type": "shape",
           "Offsets": [
             218,
             156,
             296,
             50
           ],
-          "variant": "arc",
-          "curvature": 0.35,
-          "arrowEnd": true,
-          "borderColor": "#0369a1",
-          "borderWidth": 2
+          "Variant": "arc",
+          "Curvature": 0.35,
+          "ArrowEnd": true,
+          "BorderColor": "#0369a1",
+          "BorderWidth": 2
         },
         {
-          "id": "bc-widget-922",
-          "number": 13,
+          "Id": "bc-widget-922",
+          "Number": 13,
           "zIndex": 13,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "WidgetsLabel",
-          "type": "field",
+          "Name": "WidgetsLabel",
+          "Type": "field",
           "Offsets": [
             392,
             192,
             74,
             22
           ],
-          "text": "LIVE WIDGETS",
-          "variant": "transparent",
+          "Text": "LIVE WIDGETS",
+          "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
           "showLines": false,
           "dontSearch": true,
           "sharedText": false,
-          "fontSize": 9,
-          "color": "#8892a6",
-          "fontWeight": "bold"
+          "FontSize": 9,
+          "Color": "#8892a6",
+          "FontWeight": "bold"
         },
         {
-          "id": "bc-widget-923",
-          "number": 14,
+          "Id": "bc-widget-923",
+          "Number": 14,
           "zIndex": 14,
           "visible": true,
-          "script": "on('ready', () => every(1000, () => { me._now = Date.now() }))\non('render', () => {\n  const now = new Date(me._now ?? Date.now())\n  const pad = (n) => String(n).padStart(2,'0')\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center',\n      width:'100%', height:'100%', background:'#101418', color:'#7fdcff',\n      fontFamily:'ui-monospace, monospace', fontSize:'20px', letterSpacing:'3px',\n      borderRadius:'10px', border:'1px solid #2a3a4a',\n    }}>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</div>\n  `\n})",
+          "Script": "on('ready', () => every(1000, () => { me._now = Date.now() }))\non('render', () => {\n  const now = new Date(me._now ?? Date.now())\n  const pad = (n) => String(n).padStart(2,'0')\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center',\n      width:'100%', height:'100%', background:'#101418', color:'#7fdcff',\n      fontFamily:'ui-monospace, monospace', fontSize:'20px', letterSpacing:'3px',\n      borderRadius:'10px', border:'1px solid #2a3a4a',\n    }}>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Clock",
-          "type": "generic",
+          "Name": "Clock",
+          "Type": "generic",
           "Offsets": [
             392,
             192,
@@ -364,17 +364,17 @@
           "Configuration": {}
         },
         {
-          "id": "bc-widget-924",
-          "number": 15,
+          "Id": "bc-widget-924",
+          "Number": 15,
           "zIndex": 15,
           "visible": true,
-          "script": "on('render', () => {\n  const count = me.count ?? 0\n  const Button = (Label,onClick) => html`\n    <button onClick=${onClick} style=${{\n      padding:'4px 12px', fontSize:'14px', cursor:'pointer',\n      borderRadius:'7px', border:'1px solid #ccd', background:'#f6f7fa',\n    }}>${Label}</button>\n  `\n  return html`\n    <div style=${{\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      gap:'8px', width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{ fontSize:'9px', color:'#889', textTransform:'uppercase', letterSpacing:'1px' }}>\n        reactive state: ${'me.count = ...'}\n      </div>\n      <div style=${{ fontSize:'34px', fontWeight:'bold', color:'#1d3461', lineHeight:1 }}>${count}</div>\n      <div style=${{ display:'flex', gap:'8px' }}>\n        ${Button('-', () => { me.count = count-1 })}\n        ${Button('+', () => { me.count = count+1 })}\n      </div>\n    </div>\n  `\n})",
+          "Script": "on('render', () => {\n  const count = me.count ?? 0\n  const Button = (Label,onClick) => html`\n    <button onClick=${onClick} style=${{\n      padding:'4px 12px', fontSize:'14px', cursor:'pointer',\n      borderRadius:'7px', border:'1px solid #ccd', background:'#f6f7fa',\n    }}>${Label}</button>\n  `\n  return html`\n    <div style=${{\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      gap:'8px', width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{ fontSize:'9px', color:'#889', textTransform:'uppercase', letterSpacing:'1px' }}>\n        reactive state: ${'me.count = ...'}\n      </div>\n      <div style=${{ fontSize:'34px', fontWeight:'bold', color:'#1d3461', lineHeight:1 }}>${count}</div>\n      <div style=${{ display:'flex', gap:'8px' }}>\n        ${Button('-', () => { me.count = count-1 })}\n        ${Button('+', () => { me.count = count+1 })}\n      </div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Counter",
-          "type": "generic",
+          "Name": "Counter",
+          "Type": "generic",
           "Offsets": [
             392,
             192,
@@ -384,70 +384,70 @@
           "Configuration": {}
         },
         {
-          "id": "bc-widget-925",
-          "number": 16,
+          "Id": "bc-widget-925",
+          "Number": 16,
           "zIndex": 16,
           "visible": true,
-          "script": "on('click', () => openURL('https://github.com/rozek/browser-card'))",
+          "Script": "on('click', () => openURL('https://github.com/rozek/browser-card'))",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Learn more",
-          "type": "button",
+          "Name": "Learn more",
+          "Type": "button",
           "Offsets": [
             392,
             192,
             268,
             30
           ],
-          "variant": "shadow",
+          "Variant": "shadow",
           "showName": true,
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "text": "Learn more ↗"
+          "Text": "Learn more ↗"
         },
         {
-          "id": "bc-widget-926",
-          "number": 17,
+          "Id": "bc-widget-926",
+          "Number": 17,
           "zIndex": 17,
           "visible": true,
-          "script": "",
+          "Script": "",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Footnote",
-          "type": "field",
+          "Name": "Footnote",
+          "Type": "field",
           "Offsets": [
             392,
             192,
             304,
             44
           ],
-          "text": "open the designer, hit ✎ Edit -\nand take this card apart!",
-          "variant": "transparent",
+          "Text": "open the designer, hit ✎ Edit -\nand take this card apart!",
+          "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
           "showLines": false,
           "dontSearch": true,
           "sharedText": false,
-          "fontSize": 9,
-          "color": "#667"
+          "FontSize": 9,
+          "Color": "#667"
         },
         {
-          "id": "bc-widget-927",
-          "number": 18,
+          "Id": "bc-widget-927",
+          "Number": 18,
           "zIndex": 18,
           "visible": true,
-          "script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => html`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${Configuration.text ?? 'BrowserCard'}</div>\n  </div>\n`)",
+          "Script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => html`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${Configuration.text ?? 'BrowserCard'}</div>\n  </div>\n`)",
           "Anchors": [
             "left-width",
             "top-height"
           ],
-          "name": "Ticker",
-          "type": "generic",
+          "Name": "Ticker",
+          "Type": "generic",
           "Offsets": [
             12,
             576,
@@ -455,7 +455,7 @@
             28
           ],
           "Configuration": {
-            "text": "+++ BrowserCard +++ decks, cards & widgets +++ scripted with plain JavaScript +++ reactive state via me.* +++ self-cleaning timers +++ dialogs that return values +++ persisted in IndexedDB +++ embeddable everywhere via <bc-deck> +++"
+            "Text": "+++ BrowserCard +++ decks, cards & widgets +++ scripted with plain JavaScript +++ reactive state via me.* +++ self-cleaning timers +++ dialogs that return values +++ persisted in IndexedDB +++ embeddable everywhere via <bc-deck> +++"
           }
         }
       ]

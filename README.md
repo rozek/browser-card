@@ -117,11 +117,11 @@ Inside a script, `me` (synonym: `my`) is a reactive proxy of the visual itself. 
 
 ```javascript
 on('render', () => {                              // a custom widget: a counter
-  const count = my.count ?? 0
+  const Count = my.Count ?? 0
   return HTML`
     <div style=${{ textAlign:'center' }}>
-      <b>${count}</b>
-      <button onClick=${() => { my.count = count+1 }}>+</button>
+      <b>${Count}</b>
+      <button onClick=${() => { my.Count = Count+1 }}>+</button>
     </div>
   `
 })
@@ -132,16 +132,16 @@ Use `my.own` for *transient* script-private state: writes to `my.own.whatever` n
 Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`HTML\`...\``) - Preact takes care of efficient updates. A custom widget additionally receives `dispatch(msg)` (to send messages to itself and its card) and `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
 
 ```javascript
-on('render', () => HTML`<div>Hello, ${Configuration.name ?? 'world'}!</div>`)
+on('render', () => HTML`<div>Hello, ${Configuration.Name ?? 'world'}!</div>`)
 ```
 
-With `Configuration = { "name": "Andreas" }` this widget greets "Hello, Andreas!". Use `Configuration` for static, design-time settings; use `me.*` for mutable runtime state.
+With `Configuration = { "Name":"World" }` this widget greets "Hello, World!". Use `Configuration` for static, design-time settings; use `me.*` for mutable runtime state.
 
 ### Using Preact — do not re-import it
 
 BrowserCard runs on a single, bundled Preact instance. If a script imports Preact again (e.g. `import { useState } from 'https://…/preact'`), it gets a *second*, unconnected copy whose hooks and rendering do not work together with BrowserCard's - widgets then misbehave in subtle ways.
 
-Therefore: never import Preact in a script. Everything you need is already provided. The `HTML` tag covers most cases; for the rest, use the injected `preact` object:
+Therefore: **never import preact in a script**. Everything you need is already provided. The `HTML` tag covers most cases; for the rest, **use the injected `preact` object**:
 
 ```javascript
 on('render', () => {
@@ -160,8 +160,8 @@ The `preact` object bundles the most important exports: `h`, `Fragment`, `render
 `after(ms, fn)` and `every(ms, fn)` register timers on the script instance - they are cancelled automatically when the visual disappears (card change, script change, deletion). No `clearInterval` bookkeeping needed:
 
 ```javascript
-on('ready', () => every(1000, () => { my.time = Date.now() }))
-on('render', () => HTML`<div>${new Date(my.time ?? Date.now()).toLocaleTimeString()}</div>`)
+on('ready', () => every(1000, () => { my.Time = Date.now() }))
+on('render', () => HTML`<div>${new Date(my.Time ?? Date.now()).toLocaleTimeString()}</div>`)
 ```
 
 ### Talking to other widgets
@@ -196,22 +196,22 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 
 | Function | Description |
 |----------|-------------|
-| `on(msg, fn)` | registers a handler for a message (one handler per message; later calls replace earlier ones) |
-| `go(target)` | navigates to a card: a card ref (`nextCard`, `Card(...)`, ...), a card name, or a 1-based number |
-| `Card(nameOrNumber)` | returns a card ref by name or 1-based index (or `null`) |
+| `on(Msg, Fn)` | registers a handler for a message (one handler per message; later calls replace earlier ones) |
+| `go(Target)` | navigates to a card: a card ref (`nextCard`, `Card(...)`, ...), a card name, or a 1-based number |
+| `Card(NameOrNumber)` | returns a card ref by name or 1-based index (or `null`) |
 | `CardNumber()` | 1-based number of the current card (live) |
 | `CardCount()` | number of cards in the deck |
-| `Widget(nameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
-| `await send(target, msg, ...args)` | sends a message to another widget's script (name, index or proxy); resolves with `false` if no handler exists |
-| `dispatch(msg)` | *(widgets only)* sends a message up the hierarchy: the widget's own script, then its card's, then the deck's |
-| `await answer(message, ...buttons)` | shows a dialog; resolves with the label of the clicked button |
-| `await ask(prompt, default?)` | shows an input dialog; resolves with the input or `null` on cancel |
-| `openURL(url)` | opens a URL in a new tab |
+| `Widget(NameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
+| `await send(Target, Msg, ...Args)` | sends a message to another widget's script (name, index or proxy); resolves with `false` if no handler exists |
+| `dispatch(Msg)` | *(widgets only)* sends a message up the hierarchy: the widget's own script, then its card's, then the deck's |
+| `await answer(Message, ...Buttons)` | shows a dialog; resolves with the label of the clicked button |
+| `await ask(Prompt, Default?)` | shows an input dialog; resolves with the input or `null` on cancel |
+| `openURL(URL)` | opens a URL in a new tab |
 | `print(...)` / `println(...)` | writes to the built-in console (which pops up automatically) |
 | `clearConsole()` | clears the built-in console |
-| `after(ms, fn)` | one-shot timer, cancelled automatically on teardown |
-| `every(ms, fn)` | repeating timer, cancelled automatically on teardown |
-| `await behaveLike(name)` | loads and runs a behavior (one per visual) |
+| `after(ms, Fn)` | one-shot timer, cancelled automatically on teardown |
+| `every(ms, Fn)` | repeating timer, cancelled automatically on teardown |
+| `await behaveLike(Name)` | loads and runs a behavior (one per visual) |
 
 ### Values
 

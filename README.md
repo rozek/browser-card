@@ -14,7 +14,7 @@ Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.h
 
 **Build decks visually.** A deck is a document made of cards, and cards carry widgets: buttons (8 styles, incl. checkboxes and radio buttons), text fields (editable or locked, with or without ruled lines), shapes (rectangles, ovals, lines, arcs and polygons - with arrowheads, if you like), pictures, and fully custom widgets. Switch the designer into edit mode and place widgets by dragging, resize them with eight handles, nudge them pixel-wise with the arrow keys, or let them snap to a configurable grid. A properties panel lets you inspect and edit every detail - including an anchor-based geometry system that keeps widgets in place (or lets them stretch) when a deck is shown at a different size.
 
-**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `Widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.count` and the widget re-renders.
+**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `Widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.Count` and the widget re-renders.
 
 **Stay organized.** The decks panel lists every deck stored in your browser - create, open, rename or delete them there. The card browser shows live wireframe thumbnails of all cards in the current deck and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
 
@@ -111,9 +111,9 @@ on('click', async () => {
 })
 ```
 
-### Reactive state with `me` and `my`
+### Reactive state with `me` / `my` / `I`
 
-Inside a script, `me` (synonym: `my`) is a reactive proxy of the visual itself. Reading gives you its current properties (including live geometry), writing re-renders it immediately - and since assignments become part of the deck data, they are persisted together with the deck when you edit in the designer:
+Inside a script, `me` is a reactive proxy of the visual itself (`my` and `I` are exact synonyms - use whichever reads best). Reading gives you its current properties (including live geometry), writing re-renders it immediately - and since assignments become part of the deck data, they are persisted together with the deck when you edit in the designer:
 
 ```javascript
 on('render', () => {                              // a custom widget: a counter
@@ -153,7 +153,7 @@ on('render', () => {
 })
 ```
 
-The `preact` object bundles the most important exports: `h`, `Fragment`, `render`, `createElement`, `cloneElement`, `createRef`, `createContext`, `toChildArray`, `createPortal`, `memo`, `forwardRef`, and the hooks `useId`, `useRef`, `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useCallback`, `useMemo`, `useContext`, `useErrorBoundary`. (The same object is also reachable as `BC.Preact` for external behaviors.)
+The `preact` object bundles the most important exports: `h`, `Fragment`, `render`, `createElement`, `cloneElement`, `createRef`, `createContext`, `toChildArray`, `createPortal`, `memo`, `forwardRef`, and the hooks `useId`, `useRef`, `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useCallback`, `useMemo`, `useContext`, `useErrorBoundary`. (The same object is also reachable as `BC.preact` for external behaviors.)
 
 ### Timers that clean up after themselves
 
@@ -217,7 +217,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 
 | Value | Description |
 |-------|-------------|
-| `me` / `my` | reactive proxy of the visual running the script |
+| `me` / `my` / `I` | reactive proxy of the visual running the script (three synonyms) |
 | `my.Applet` | proxy of the surrounding deck |
 | `my.Card` | proxy of the current card |
 | `my.Card.WidgetList` | proxies of all widgets on the current card, in drawing order |
@@ -233,11 +233,11 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 |----------|-------------|
 | `my.x`, `my.y`, `my.Width`, `my.Height` | live pixel geometry, computed from the anchor system |
 | `my.Anchors`, `my.Offsets` | the underlying anchor-based geometry (writable) |
-| `my.changeGeometryTo(x?, y?, w?, h?)` | computes and applies new offsets from pixel values; omitted arguments keep their current value |
+| `I.changeGeometryTo(x?, y?, w?, h?)` | computes and applies new offsets from pixel values; omitted arguments keep their current value |
 
 ```javascript
-my.changeGeometryTo(my.x + 20)               // move 20px to the right
-my.changeGeometryTo(null, null, 300)         // set width to 300px, keep position
+I.changeGeometryTo(my.x + 20)               // move 20px to the right
+I.changeGeometryTo(null, null, 300)         // set width to 300px, keep position
 ```
 
 ## Behaviors
@@ -246,18 +246,18 @@ A *behavior* is a reusable script, packaged as an ordinary ES module - the Brows
 
 ### Writing a behavior
 
-Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need (everything from the [Script API Reference](#script-api-reference) is available, incl. `on`, `me`, `HTML`, `after`, `every`, `Configuration` and `dispatch`):
+Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need. Everything from the [Script API Reference](#script-api-reference) is available, including `on`, the visual proxy as `me` / `my` / `I` (three synonyms - pick one), `HTML`, `after`, `every`, `Configuration` and `dispatch`:
 
 ```javascript
 // Blinker.js - a behavior for "generic" widgets: makes its content blink
 
-export default async function ({ on, me, every, HTML }) {
-  on('ready',  () => every(500, () => { me.shown = ! me.shown }))
+export default async function ({ on, my, every, HTML }) {
+  on('ready',  () => every(500, () => { my.shown = ! my.shown }))
   on('render', () => HTML`
     <div style=${{
       display:'flex', alignItems:'center', justifyContent:'center',
       width:'100%', height:'100%',
-      visibility:(me.shown === false ? 'hidden' : 'visible'),
+      visibility:(my.shown === false ? 'hidden' : 'visible'),
     }}>${my.Text ?? 'blink!'}</div>
   `)
 }

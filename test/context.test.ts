@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { buildContext } from '../src/BrowserCard'
+import { buildContext, ScriptInstance } from '../src/BrowserCard'
 
 function makeCtx (overrides:any = {}) {
   const Cards = [{ Name:'A' },{ Name:'B' },{ Name:'C' }] as any
@@ -63,6 +63,31 @@ describe('buildContext - Widget() & send()', () => {
     const { ctx } = makeCtx({ me })
     expect(await ctx.send('X','click')).toBe(false)
     expect(await ctx.send('missing','click')).toBe(false)
+  })
+})
+
+describe('buildContext - me / my / I are synonyms', () => {
+  it('all three reference the same proxy', () => {
+    const me:any = { Name:'Self' }
+    const { ctx } = makeCtx({ me })
+    expect(ctx.me).toBe(me)
+    expect(ctx.my).toBe(me)
+    expect((ctx as any).I).toBe(me)
+  })
+
+  it('all three are actually injected as script arguments (usable in code)', async () => {
+    const me:any = { Name:'Self' }
+    const { ctx } = makeCtx({ me })
+    // mirror buildScriptParams: context keys become function parameters
+    const Params = ['on', ...Object.keys(ctx), 'seen']
+    const inst   = new ScriptInstance()
+    const seen:any = {}
+    const Args   = [inst.on.bind(inst), ...Object.values(ctx), seen]
+    await inst.run("on('t', () => { seen.me = me; seen.my = my; seen.I = I })", Params, Args)
+    await inst.dispatch('t')
+    expect(seen.me).toBe(me)
+    expect(seen.my).toBe(me)
+    expect(seen.I).toBe(me)
   })
 })
 

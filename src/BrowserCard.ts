@@ -4,7 +4,7 @@
 *                                                                              *
 *******************************************************************************/
 
-  const BC_Version = '0.0.33'
+  const BC_Version = '0.0.34'
 
   declare const download:Function
 
@@ -2931,7 +2931,8 @@ interface BC_ScriptContext {
   println:      (...ArgList:unknown[]) => void
   clearConsole: () => void
   me:        BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null
-  my:        BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null
+  my:        BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null   // synonym for "me"
+  I:         BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null   // synonym for "me"
   nextCard:  BC_CardRef
   prevCard:  BC_CardRef
   firstCard: BC_CardRef
@@ -3216,7 +3217,8 @@ export function buildContext (
     clearConsole: ConsoleFns.clearConsole,
 
     me,
-    my: me,
+    my: me,                                  // "me", "my" and "I" are synonyms
+    I:  me,
     nextCard:  makeRef('next'),
     prevCard:  makeRef('prev'),
     firstCard: makeRef('first'),

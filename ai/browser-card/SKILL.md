@@ -57,8 +57,13 @@ If an existing deck file is to be changed:
 Write meaningful scripts for interactive elements:
 - Buttons: navigation, dialogs, messages to other widgets
 - Fields: text updates, shared text
-- Deck/card level: initialization, global logic
-- Use `on('click', ...)`, `on('ready', ...)` and the API from the SystemPrompt
+- Cards: initialization via `on('open', ...)`, global card logic
+- Deck/card level: initialization via `on('ready', ...)`, global logic
+- Use `on('click', ...)`, `on('open', ...)`, `on('ready', ...)`, `on('update', ...)`, `on('render', ...)` and the full API from the SystemPrompt
+- `dispatch(msg, ...args)` passes arguments to handlers — use for event-driven value propagation
+- Access the current card from a widget script via `my.Card`, the deck via `my.Applet`
+- **Do not** use `Card()` without arguments — it returns `null`. `Card('Name')` / `Card(N)` is navigation only
+- **Widget behavior pattern:** custom input widgets use `on('update', ...)` to pull state from `my.Card` before render, and `dispatch('change', value)` to notify the card of user input — see the "Widget Behavior Pattern" section in the SystemPrompt for a full `NumberInput` example
 
 ### Step 5 — Output
 

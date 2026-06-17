@@ -23,7 +23,7 @@
           "Number": 1,
           "zIndex": 1,
           "visible": true,
-          "Script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 210) + 2) % 360 }))\non('render', () => {\n  const hue = me._hue ?? 210\n  return HTML`\n    <div style=${{\n      width:'100%', height:'100%',\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      background:`linear-gradient(120deg, hsl(${hue},65%,28%), hsl(${(hue+70)%360},70%,45%))`,\n      color:'#fff', borderRadius:'0 0 14px 14px',\n    }}>\n      <div style=${{ fontSize:'24px', fontWeight:'bold', letterSpacing:'3px' }}>BrowserCard Tutorial</div>\n      <div style=${{ fontSize:'11px', opacity:0.85 }}>an interactive tour - and itself just an ordinary deck</div>\n    </div>\n  `\n})",
+          "Script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 210) + 2) % 360 }))\non('render', () => {\n  const hue = me._hue ?? 210\n  return html`\n    <div style=${{\n      width:'100%', height:'100%',\n      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n      background:`linear-gradient(120deg, hsl(${hue},65%,28%), hsl(${(hue+70)%360},70%,45%))`,\n      color:'#fff', borderRadius:'0 0 14px 14px',\n    }}>\n      <div style=${{ fontSize:'24px', fontWeight:'bold', letterSpacing:'3px' }}>BrowserCard Tutorial</div>\n      <div style=${{ fontSize:'11px', opacity:0.85 }}>an interactive tour - and itself just an ordinary deck</div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -37,7 +37,7 @@
             64
           ],
           "Configuration": {},
-          "_hue": 248
+          "_hue": 116
         },
         {
           "Id": "bc-widget-7002",
@@ -2017,7 +2017,7 @@
           "sharedText": false,
           "FontSize": 10,
           "Color": "#223",
-          "Text": "(dialog results appear here)"
+          "Text": "ask(...) returned: \"stranger\""
         },
         {
           "Id": "bc-widget-7074",
@@ -2243,7 +2243,7 @@
           "FontSize": 9,
           "Color": "#0a3069",
           "FontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
-          "Text": "on('render', () => {\n  const count = my.count ?? 0\n  return HTML`\n    <div>\n      <b>${count}</b>\n      <button onClick=${() => {\n        my.count = count+1\n      }}>+</button>\n    </div>`\n})"
+          "Text": "on('render', () => {\n  const count = my.count ?? 0\n  return html`\n    <div>\n      <b>${count}</b>\n      <button onClick=${() => {\n        my.count = count+1\n      }}>+</button>\n    </div>`\n})"
         },
         {
           "Id": "bc-widget-7082",
@@ -2307,7 +2307,7 @@
           "Number": 84,
           "zIndex": 84,
           "visible": true,
-          "Script": "on('render', () => {\n  const count = me.count ?? 0\n  return HTML`\n    <div style=${{ display:'flex', flexDirection:'column', alignItems:'center',\n      justifyContent:'center', gap:'6px', width:'100%', height:'100%',\n      background:'#fff', border:'2px solid #1d3461', borderRadius:'10px' }}>\n      <div style=${{ fontSize:'30px', fontWeight:'bold', color:'#1d3461', lineHeight:1 }}>${count}</div>\n      <div>\n        <button style=${{ padding:'3px 12px', marginRight:'6px' }} onClick=${() => { me.count = count-1 }}>-</button>\n        <button style=${{ padding:'3px 12px' }} onClick=${() => { me.count = count+1 }}>+</button>\n      </div>\n    </div>`\n})",
+          "Script": "on('render', () => {\n  const count = me.count ?? 0\n  return html`\n    <div style=${{ display:'flex', flexDirection:'column', alignItems:'center',\n      justifyContent:'center', gap:'6px', width:'100%', height:'100%',\n      background:'#fff', border:'2px solid #1d3461', borderRadius:'10px' }}>\n      <div style=${{ fontSize:'30px', fontWeight:'bold', color:'#1d3461', lineHeight:1 }}>${count}</div>\n      <div>\n        <button style=${{ padding:'3px 12px', marginRight:'6px' }} onClick=${() => { me.count = count-1 }}>-</button>\n        <button style=${{ padding:'3px 12px' }} onClick=${() => { me.count = count+1 }}>+</button>\n      </div>\n    </div>`\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2357,7 +2357,7 @@
           "Number": 86,
           "zIndex": 86,
           "visible": true,
-          "Script": "on('ready', () => every(1000, () => { me._now = Date.now() }))\non('render', () => {\n  const now = new Date(me._now ?? Date.now())\n  const pad = (n) => String(n).padStart(2,'0')\n  return HTML`\n    <div style=${{ display:'flex', alignItems:'center', justifyContent:'center',\n      width:'100%', height:'100%', background:'#101418', color:'#7fdcff',\n      fontFamily:'ui-monospace, monospace', fontSize:'18px', letterSpacing:'2px',\n      borderRadius:'10px' }}>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</div>`\n})",
+          "Script": "on('ready', () => every(1000, () => { me._now = Date.now() }))\non('render', () => {\n  const now = new Date(me._now ?? Date.now())\n  const pad = (n) => String(n).padStart(2,'0')\n  return html`\n    <div style=${{ display:'flex', alignItems:'center', justifyContent:'center',\n      width:'100%', height:'100%', background:'#101418', color:'#7fdcff',\n      fontFamily:'ui-monospace, monospace', fontSize:'18px', letterSpacing:'2px',\n      borderRadius:'10px' }}>${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}</div>`\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2629,7 +2629,7 @@
           "Number": 96,
           "zIndex": 96,
           "visible": true,
-          "Script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return HTML`\n    <div style=${{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px',\n      width:'100%', height:'100%', background:'#fff', border:'2px solid #1d3461', borderRadius:'10px' }}>\n      <div style=${{ display:'grid', gridTemplateColumns:'repeat(3,9px)', gridTemplateRows:'repeat(3,9px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa', border:'1px solid #ccd', borderRadius:'8px' }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => HTML`\n          <div key=${i} style=${{ width:'9px', height:'9px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent' }}></div>`)}\n      </div>\n      <div style=${{ fontSize:'24px', fontWeight:'bold', color:'#1d3461' }}>${value}</div>\n    </div>`\n})",
+          "Script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return html`\n    <div style=${{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px',\n      width:'100%', height:'100%', background:'#fff', border:'2px solid #1d3461', borderRadius:'10px' }}>\n      <div style=${{ display:'grid', gridTemplateColumns:'repeat(3,9px)', gridTemplateRows:'repeat(3,9px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa', border:'1px solid #ccd', borderRadius:'8px' }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => html`\n          <div key=${i} style=${{ width:'9px', height:'9px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent' }}></div>`)}\n      </div>\n      <div style=${{ fontSize:'24px', fontWeight:'bold', color:'#1d3461' }}>${value}</div>\n    </div>`\n})",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2679,7 +2679,7 @@
           "Number": 98,
           "zIndex": 98,
           "visible": true,
-          "Script": "on('ready', () => {\n  me.own.t0 = Date.now()\n  every(100, () => { me._ms = Date.now()-me.own.t0 })\n})\non('render', () => HTML`\n  <div style=${{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n    width:'100%', height:'100%', background:'#101418', color:'#7fdcff', borderRadius:'10px' }}>\n    <div style=${{ fontSize:'22px', fontFamily:'ui-monospace, monospace' }}>${((me._ms ?? 0)/1000).toFixed(1)}s</div>\n    <div style=${{ fontSize:'9px', opacity:0.7 }}>since you arrived on this card</div>\n  </div>`)",
+          "Script": "on('ready', () => {\n  me.own.t0 = Date.now()\n  every(100, () => { me._ms = Date.now()-me.own.t0 })\n})\non('render', () => html`\n  <div style=${{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',\n    width:'100%', height:'100%', background:'#101418', color:'#7fdcff', borderRadius:'10px' }}>\n    <div style=${{ fontSize:'22px', fontFamily:'ui-monospace, monospace' }}>${((me._ms ?? 0)/1000).toFixed(1)}s</div>\n    <div style=${{ fontSize:'9px', opacity:0.7 }}>since you arrived on this card</div>\n  </div>`)",
           "Anchors": [
             "left-width",
             "top-height"
@@ -3402,7 +3402,7 @@
           "Number": 126,
           "zIndex": 126,
           "visible": true,
-          "Script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 120) + 3) % 360 }))\non('render', () => HTML`\n  <div style=${{ display:'flex', alignItems:'center', justifyContent:'center',\n    width:'100%', height:'100%', borderRadius:'12px',\n    background:`linear-gradient(120deg, hsl(${me._hue ?? 120},65%,35%), hsl(${((me._hue ?? 120)+80)%360},70%,45%))`,\n    color:'#fff', fontSize:'22px', fontWeight:'bold', letterSpacing:'2px' }}>\n    🎉 you made it!\n  </div>`)",
+          "Script": "on('ready', () => every(100, () => { me._hue = ((me._hue ?? 120) + 3) % 360 }))\non('render', () => html`\n  <div style=${{ display:'flex', alignItems:'center', justifyContent:'center',\n    width:'100%', height:'100%', borderRadius:'12px',\n    background:`linear-gradient(120deg, hsl(${me._hue ?? 120},65%,35%), hsl(${((me._hue ?? 120)+80)%360},70%,45%))`,\n    color:'#fff', fontSize:'22px', fontWeight:'bold', letterSpacing:'2px' }}>\n    🎉 you made it!\n  </div>`)",
           "Anchors": [
             "left-width",
             "top-height"

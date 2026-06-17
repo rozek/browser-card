@@ -315,7 +315,7 @@ Every Deck, Card, and Widget can have a JavaScript `script`. Scripts run asynchr
 | `'ready'` | System | After all children are initialized (fires inside-out) |
 | `'obsolete'` | System | Before deletion or navigation away |
 | `'click'` | Widget | Button was clicked (bubbles: widget → card → deck) |
-| `'render'` | Widget | On every re-render (generic widgets only, must return `HTML\`...\``) |
+| `'render'` | Widget | On every re-render (generic widgets only, must return `html\`...\``) |
 
 ### Key API Functions
 
@@ -413,7 +413,7 @@ on('showValue', (Value) => { my.Text = String(Value) })
 
 // Generic widget: custom render
 on('render', () => {
-  return HTML`<div style=${{ padding: '8px', color: Configuration.color }}>
+  return html`<div style=${{ padding: '8px', color: Configuration.color }}>
     ${me.label ?? Configuration.label}
   </div>`
 })

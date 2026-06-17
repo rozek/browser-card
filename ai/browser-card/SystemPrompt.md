@@ -314,8 +314,10 @@ Every Deck, Card, and Widget can have a JavaScript `script`. Scripts run asynchr
 |---|---|---|
 | `'ready'` | System | After all children are initialized (fires inside-out) |
 | `'obsolete'` | System | Before deletion or navigation away |
+| `'open'` | System | When a card becomes active (card scripts only) |
 | `'click'` | Widget | Button was clicked (bubbles: widget → card → deck) |
-| `'render'` | Widget | On every re-render (generic widgets only, must return `HTML\`...\``) |
+| `'update'` | System | Synchronously before every `'render'` — use to compute derived state |
+| `'render'` | System | On every re-render — must return `html\`...\`` (generic widgets and picture widgets with custom script) |
 
 ### Key API Functions
 
@@ -343,8 +345,9 @@ Widget(2)               // Get widget by 1-based index
 
 **Inter-widget messaging:**
 ```javascript
-await send('DisplayWidget', 'showValue', 42)  // Send message to named widget
+await send('DisplayWidget', 'showValue', 42)  // Send message to named widget with args
 dispatch('myEvent')                            // Send message up to card/deck (widgets only)
+dispatch('valueChanged', newValue)             // dispatch now passes args to the handler
 ```
 
 **Card info:**
@@ -353,13 +356,18 @@ CardNumber()   // 1-based index of current card
 CardCount()    // Total number of cards
 ```
 
-**Reactive state (`me` / `my`):**
+**Reactive state (`me` / `my` / `I`):**
 ```javascript
-my.Text = 'Hello'           // Update property → triggers re-render + persistence
-my.Width = 200              // Update geometry → triggers layout
-my.own.counter = 0          // Transient (private) state - no re-render, no persistence
-I.changeGeometryTo(x, y, w, h)  // Update position/size from pixel values
+my.Text = 'Hello'              // Update property → triggers re-render + persistence
+my.Width = 200                 // Update geometry → triggers layout
+my.own.counter = 0             // Transient (private) state - no re-render, no persistence
+I.changeGeometryTo(x, y, w, h) // Update position/size from pixel values
+my.Card                        // Proxy of the widget's own card (read/write properties)
+my.Applet                      // Proxy of the deck (read/write properties)
 ```
+
+> **Note:** `Card('Name')` and `Card(index)` are for **navigation only** (used with `go()`).
+> To access the current card's properties, use `my.Card.someProperty`.
 
 **Timers (auto-cancelled on `obsolete`):**
 ```javascript
@@ -385,6 +393,53 @@ print('no newline')
 clearConsole()
 ```
 
+### Widget Behavior Pattern
+
+Well-designed custom widget behaviors decouple internal rendering from external (Card/Deck) state using two conventions:
+
+- **`on('update', ...)`** — called synchronously before every render. Pull the current external value into the widget's local state so it always reflects the latest `my.Card` or `my.Applet` property.
+- **`dispatch('change', value)`** — dispatch after user input. The card or deck script listens for this event and saves the value to its own state.
+
+This way the widget behavior doesn't need to know who owns the value. Example — a `NumberInput` behavior:
+
+```javascript
+// NumberInput widget script (or behavior file):
+on('update', () => {
+  my.Value = my.Card.Temperature   // pull card state into widget before render
+})
+
+on('change', (Value) => {
+  my.Card.Temperature = Value      // push user input back to card
+})
+
+on('render', () => {
+  const Value = my.Value ?? 0
+  return html`
+    <input
+      type="number"
+      value=${Value}
+      style=${{ width:'100%', height:'100%', boxSizing:'border-box',
+                padding:'4px 6px', fontSize:'inherit' }}
+      onInput=${(e) => {
+        const n = e.target.valueAsNumber
+        if (!isNaN(n)) { my.Value = n; dispatch('change', n) }
+      }}
+    />
+  `
+})
+```
+
+The card script only sets the initial value — it doesn't need to know how the widget renders:
+
+```javascript
+// Card script:
+on('open', () => { my.Card.Temperature = 20 })
+```
+
+If several widgets on the same card read the same `my.Card` property in their `update` handler, changing one automatically keeps all others in sync on the next render cycle.
+
+---
+
 ### Script Examples
 
 ```javascript
@@ -408,15 +463,43 @@ on('click', async () => {
   }
 })
 
-// Field: update text from another widget
+// Field: update text from another widget (args from dispatch work)
 on('showValue', (Value) => { my.Text = String(Value) })
 
-// Generic widget: custom render
+// Widget: dispatch with argument → handler receives it
+on('click', () => {
+  my.Value = my.Value + 1
+  dispatch('valueChanged', my.Value)   // arg is passed to the handler
+})
+on('valueChanged', (newValue) => { my.Card.total = newValue })
+
+// Card: initialize when card opens
+on('open', () => {
+  Widget('UUIDView').Text = crypto.randomUUID()
+})
+
+// Generic widget: compute derived state before render
+on('update', () => {
+  my.displayText = (my.Value ?? 0).toFixed(2) + ' €'
+})
+on('render', () => html`<div>${my.displayText}</div>`)
+
+// Generic widget: full custom render
 on('render', () => {
-  return HTML`<div style=${{ padding: '8px', color: Configuration.color }}>
+  return html`<div style=${{ padding: '8px', color: Configuration.color }}>
     ${me.label ?? Configuration.label}
   </div>`
 })
+
+// Picture widget: clickable icon via custom render
+on('render', () => html`
+  <div style=${{ cursor:'pointer', width:'100%', height:'100%',
+                 display:'flex', alignItems:'center', justifyContent:'center' }}
+       onClick=${() => dispatch('click')}>
+    <img src=${my.ImageData} style=${{ width:'24px', height:'24px' }} />
+  </div>
+`)
+on('click', () => { navigator.clipboard.writeText(Widget('UUIDView').Text) })
 
 // Deck: initialize on load
 on('ready', () => {
@@ -426,7 +509,7 @@ on('ready', () => {
 // Timer: animate or update periodically
 on('ready', () => {
   every(1000, () => {
-    me.Text = new Date().toLocaleTimeString()
+    my.Text = new Date().toLocaleTimeString()
   })
 })
 ```

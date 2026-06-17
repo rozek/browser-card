@@ -77,6 +77,8 @@
   const  { fromLocalTo, fromViewportTo, fromDocumentTo } = Conversion
   export { fromLocalTo, fromViewportTo, fromDocumentTo }
 
+  import { MCPConnector, type BCMCPContext } from './MCPConnector.js'
+
 /**** for MarkdownView ****/
 
   import { Marked }          from 'marked'
@@ -2206,7 +2208,7 @@ interface BC_Visual {
   Cursor?:            BC_Cursor
 }
 
-interface BC_Deck extends BC_Visual {
+export interface BC_Deck extends BC_Visual {
   Id:                  string
   readOnly:            boolean
   swipeToAdjacentCard: boolean
@@ -2222,7 +2224,7 @@ interface BC_Deck extends BC_Visual {
 
 type BC_Grid = { isActive:boolean; Width:number; Height:number }
 
-interface BC_Card extends BC_Visual {
+export interface BC_Card extends BC_Visual {
   Id:           string  // 'bc-card-1', 'bc-card-2', ...
   Color:        string | null
   Alpha:        number
@@ -2242,7 +2244,7 @@ type BC_WidgetVariant  = BC_ButtonVariant | BC_FieldVariant | BC_ShapeVariant | 
 // The rendering behavior is determined by the 'type' field and loaded via behaveLike().
 // Subtype interfaces (BC_Button, BC_Field, BC_Shape, BC_Picture) are narrower views
 // of BC_Widget and are used only for type-safe access in internal behaviors.
-interface BC_Widget extends BC_Visual {
+export interface BC_Widget extends BC_Visual {
   Id:       string    // 'bc-widget-1', 'bc-widget-2', ...
   Number:   number
   Type:     BC_WidgetType
@@ -2453,6 +2455,21 @@ const Styles = `
   .bc-dropdown-item .bc-checkmark         { color: #0A84FF; font-size: 15px; }
   .bc-dropdown-separator               { height: 1px; background: rgba(255,255,255,0.10); margin: 4px 0; }
 
+  .bc-dropdown-submenu { position: relative; }
+  .bc-submenu {
+    position: absolute;
+    left: 100%; top: -5px;
+    background: #2c2c2e;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px;
+    padding: 5px;
+    min-width: 190px;
+    z-index: var(--bc-z-dropdown);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  }
+  .bc-dropdown-item.has-submenu::after { content: '▸'; margin-left: auto; opacity: 0.6; }
+  .bc-dropdown-item.has-submenu.open   { background: rgba(255,255,255,0.10); }
+
   /* ---- card area ------------------------------------------------------- */
 
   .bc-card-area {
@@ -2610,6 +2627,14 @@ const Styles = `
   }
   .bc-dialog-btn.primary   { background: #1d6fd8; color: #fff; }
   .bc-dialog-btn.secondary { background: rgba(255,255,255,0.12); color: #fff; }
+  .bc-dialog.bc-dialog-wide { min-width: 480px; max-width: 680px; width: 90%; }
+  .bc-dialog-textarea {
+    width: 100%; height: 280px; background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 8px;
+    padding: 10px 12px; color: #fff; font-size: 12px; font-family: monospace;
+    outline: none; margin-bottom: 14px; resize: vertical; box-sizing: border-box;
+  }
+  .bc-dialog-textarea:focus { border-color: rgba(255,255,255,0.35); }
 
   /* ---- edit mode ------------------------------------------------------- */
 
@@ -2631,7 +2656,9 @@ const Styles = `
     position: absolute;
     cursor: move;
     background: transparent;
-    touch-action: none;     /* let pointer drags work on touch devices */
+    touch-action: none;              /* let pointer drags work on touch devices */
+    -webkit-touch-callout: none;     /* suppress iOS long-press callout */
+    user-select: none;
   }
   .bc-edit-hit.invisible { outline: 1px dashed rgba(0,0,0,0.30); }
 
@@ -2647,7 +2674,9 @@ const Styles = `
     border: 1px solid #0A84FF;
     border-radius: 2px;
     pointer-events: auto;
-    touch-action: none;     /* let pointer drags work on touch devices */
+    touch-action: none;              /* let pointer drags work on touch devices */
+    -webkit-touch-callout: none;     /* suppress iOS long-press callout */
+    user-select: none;
   }
 
   .bc-props-panel {
@@ -2937,7 +2966,7 @@ interface BC_ScriptContext {
   prevCard:  BC_CardRef
   firstCard: BC_CardRef
   lastCard:  BC_CardRef
-  HTML:      typeof html    // htm/preact tagged template literal — do NOT re-import preact or htm
+  html:      typeof html    // htm/preact tagged template literal — intentionally lowercase, an exception to the otherwise Capitalized scripting-API bindings; do NOT re-import preact or htm
   preact:    typeof Preact  // the most important preact exports — do NOT re-import preact
 }
 
@@ -2999,6 +3028,12 @@ export class ScriptInstance {
 /**** renderResult — synchronously invokes the 'render' handler ****/
 
   renderResult ():unknown {
+    const updateHandler = this.#handlers.get('update')
+    if (updateHandler != null) {
+      try { (updateHandler as () => void)() } catch (Signal) {
+        console.warn('[BrowserCard] update handler error:', Signal)
+      }
+    }
     const Handler = this.#handlers.get('render')
     if (Handler == null) { return null }
     try { return Handler() } catch (Signal) {
@@ -3052,7 +3087,7 @@ interface BehaviorAPI {
   on:       ScriptInstance['on']
   me:       BC_WidgetProxy | null
   html:     typeof html
-  dispatch: (msg:string) => void
+  dispatch: (msg:string, ...args:unknown[]) => void
 }
 
 type InternalBehaviorFn = (api:BehaviorAPI) => Promise<void>
@@ -3073,7 +3108,7 @@ export function resolveBehaviorUrl (nameOrUrl:string, visualType:'deck'|'card'|'
 
 /**** buildScriptParams — constructs Params/Args arrays for new Function ****/
 
-function buildScriptParams (
+export function buildScriptParams (
   Instance:   ScriptInstance,
   Context:    BC_ScriptContext,
   VisualType: 'deck' | 'card' | 'widget',
@@ -3088,7 +3123,7 @@ function buildScriptParams (
   const api:BehaviorAPI = {
     on:       boundOn,
     me:       Context.me as BC_WidgetProxy | null,
-    html:     Context.HTML,
+    html:     Context.html,
     dispatch: (Extra?.dispatch as (msg:string) => void) ?? (() => undefined),
   }
 
@@ -3223,7 +3258,7 @@ export function buildContext (
     prevCard:  makeRef('prev'),
     firstCard: makeRef('first'),
     lastCard:  makeRef('last'),
-    HTML: html,
+    html,                                    // intentionally lowercase (see BC_ScriptContext)
     preact: Preact,
   }
 }
@@ -3538,7 +3573,7 @@ const DemoDeck:BC_Deck = (() => {
 on('render', () => {
   const count = me.count ?? 0
   const label = Configuration.label ?? 'Counter'
-  return HTML\`
+  return html\`
     <div style=\${{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: '20px', height: '100%',
@@ -3576,7 +3611,7 @@ on('render', () => {
   const now = new Date(me._time ?? Date.now())
   const pad = n => String(n).padStart(2, '0')
   const time = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds())
-  return HTML\`
+  return html\`
     <div style=\${{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       height: '100%', fontFamily: 'monospace', fontSize: '27px',
@@ -3941,6 +3976,7 @@ export function makeWidgetProxy (
     set (target, key, value) {
       if (key === $Script) { _Script = value; return true }
       if (key === 'own')   { _own = value as Record<string,unknown>; return true }
+      if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
       forceUpdate()
       return true
@@ -3970,6 +4006,7 @@ export function makeCardProxy (
     },
     set (target, key, value) {
       if (key === 'own') { _own = value as Record<string,unknown>; return true }
+      if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
       forceUpdate()
       return true
@@ -4010,6 +4047,7 @@ export function makeDeckProxy (
       if (key === $Console)         { _console          = value as string; return true }
       if (key === $Console_LineCount) { _consoleLineCount = value as number; return true }
       if (key === $Console_CharCount) { _consoleCharCount = value as number; return true }
+      if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
       forceUpdate()
       return true
@@ -4219,7 +4257,8 @@ function WidgetView ({
   onMessage?:    (msg:string) => void
 }) {
   const [, setTick]      = useState(0)
-  const forceUpdate      = useCallback(() => setTick((n) => n+1), [])
+  const isRenderingRef   = useRef(false)
+  const forceUpdate      = useCallback(() => { if (!isRenderingRef.current) { setTick((n) => n+1) } }, [])
   const instanceRef      = useRef<ScriptInstance | null>(null)
   if (instanceRef.current == null) { instanceRef.current = new ScriptInstance() }
 
@@ -4249,7 +4288,7 @@ function WidgetView ({
     const inst = instanceRef.current!
     ExtraRef.current = {
       Configuration: Obj.Configuration ?? {},
-      dispatch: (msg:string) => { void inst.dispatch(msg); onMessageRef.current?.(msg) },
+      dispatch: (msg:string, ...args:unknown[]) => { void inst.dispatch(msg, ...args); onMessageRef.current?.(msg) },
     }
   }
 
@@ -4290,8 +4329,10 @@ function WidgetView ({
 
   if (! Obj.visible) { return null }
 
-  const inst       = instanceRef.current!
-  const renderSlot = inst.renderResult() ?? null
+  const inst = instanceRef.current!
+  isRenderingRef.current = true
+  let renderSlot: unknown
+  try { renderSlot = inst.renderResult() ?? null } finally { isRenderingRef.current = false }
 
   // shapes need overflow:visible for SVG content that extends beyond bounds
   // shapes and buttons must not clip: shapes draw SVG beyond their box
@@ -4408,7 +4449,7 @@ function WidgetView ({
         Object.assign(Widget, {
           Configuration:{},
           Script:(
-            "on('render', () => HTML`\n" +
+            "on('render', () => html`\n" +
             "  <div style=${{\n" +
             "    display:'flex', alignItems:'center', justifyContent:'center',\n" +
             "    width:'100%', height:'100%', background:'#fff',\n" +
@@ -4546,7 +4587,7 @@ function WidgetView ({
     )
 
     return html`
-      <div class="bc-edit-layer" style=${GridStyle} onPointerDown=${() => onSelect(null)}>
+      <div class="bc-edit-layer" style=${GridStyle} onPointerDown=${() => onSelect(null)} onContextMenu=${(e:Event) => e.preventDefault()}>
         ${Objects.map((Obj) => {
           const R = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
           return html`
@@ -4556,6 +4597,7 @@ function WidgetView ({
               onPointerDown=${(Event:PointerEvent) => { onSelect(Obj.Id); beginDrag(Event, Obj, 'move') }}
               onPointerMove=${applyDrag}
               onPointerUp=${endDrag}
+              onContextMenu=${(e:Event) => e.preventDefault()}
             ></div>
           `
         })}
@@ -4569,6 +4611,7 @@ function WidgetView ({
                   onPointerDown=${(Event:PointerEvent) => beginDrag(Event, selectedObj, 'resize', Direction)}
                   onPointerMove=${applyDrag}
                   onPointerUp=${endDrag}
+                  onContextMenu=${(e:Event) => e.preventDefault()}
                 ></div>
               `)}
             </div>
@@ -4673,6 +4716,7 @@ function WidgetView ({
           onPointerDown=${(Event:PointerEvent) => beginDrag(Event,'move')}
           onPointerMove=${applyDrag}
           onPointerUp=${endDrag}
+          onContextMenu=${(e:Event) => e.preventDefault()}
         >${State.Title}</div>
         <textarea class="bc-editor-textarea" spellcheck=${false}
           ref=${(el:HTMLTextAreaElement | null) => {
@@ -4694,6 +4738,7 @@ function WidgetView ({
           onPointerDown=${(Event:PointerEvent) => beginDrag(Event,'resize')}
           onPointerMove=${applyDrag}
           onPointerUp=${endDrag}
+          onContextMenu=${(e:Event) => e.preventDefault()}
         ></div>
       </div>
     `
@@ -5144,8 +5189,10 @@ function WidgetView ({
 
 type DialogState =
   | null
-  | { kind:'answer'; message:string; buttons:string[]; resolve?:(Result:string) => void }
-  | { kind:'ask';    prompt:string; defaultValue:string; resolve?:(Result:string | null) => void }
+  | { kind:'answer';      message:string; buttons:string[]; resolve?:(Result:string) => void }
+  | { kind:'ask';         prompt:string; defaultValue:string; resolve?:(Result:string | null) => void }
+  | { kind:'export-json'; json:string }
+  | { kind:'import-json'; resolve:(Result:string | null) => void }
 
 type Overlay = null | 'go-menu' | 'decks-panel' | 'insert-menu' | 'deck-menu' | 'card-menu' | 'cards-panel'
 
@@ -5183,7 +5230,8 @@ function CardView ({
   onBeforeEdit?:() => void
 }) {
   const [, setTick]      = useState(0)
-  const forceUpdate      = useCallback(() => setTick((n) => n+1), [])
+  const isRenderingRef   = useRef(false)
+  const forceUpdate      = useCallback(() => { if (!isRenderingRef.current) { setTick((n) => n+1) } }, [])
   const instanceRef      = useRef<ScriptInstance | null>(null)
   if (instanceRef.current == null) { instanceRef.current = new ScriptInstance() }
 
@@ -5213,25 +5261,38 @@ function CardView ({
   const scriptDoneRef   = useRef(false)
   const readyFiredRef   = useRef(false)  // 'ready' must not fire again when new
                                          // widgets are inserted in edit mode
-  function checkAllReady () {
+
+  // allObjectsRef: always current, used inside stable callbacks
+  const allObjectsRef = useRef(allObjects)
+  allObjectsRef.current = allObjects
+
+  // checkAllReadyRef: stable ref to always-current checkAllReady logic
+  const checkAllReadyRef = useRef<() => void>(() => {})
+  checkAllReadyRef.current = () => {
     if (readyFiredRef.current) { return }
-    if (scriptDoneRef.current && (childReadySet.current.size >= allObjects.length)) {
+    if (scriptDoneRef.current && (childReadySet.current.size >= allObjectsRef.current.length)) {
       readyFiredRef.current = true
       void instanceRef.current!.dispatch('ready').then(() => onCardReadyRef.current())
     }
   }
 
-  function onChildReady (id:string) {
+  // stable callbacks — prevent WidgetView from re-rendering when CardView re-renders
+  const onChildReady = useCallback((id:string) => {
     childReadySet.current.add(id)
-    checkAllReady()
-  }
+    checkAllReadyRef.current()
+  }, [])
 
-  function onWidgetProxy (id:string, proxy:BC_WidgetProxy) {
+  const onWidgetProxy = useCallback((id:string, proxy:BC_WidgetProxy) => {
     widgetProxyMap.current.set(id, proxy)
-    widgetListRef.current = allObjects
+    widgetListRef.current = allObjectsRef.current
       .map((obj) => widgetProxyMap.current.get((obj as BC_Widget).Id))
       .filter((p): p is BC_WidgetProxy => p != null)
-  }
+  }, [])
+
+  const onWidgetMessage = useCallback((msg:string) => {
+    void instanceRef.current!.dispatch(msg)
+    onMessageRef.current?.(msg)
+  }, [])
 
   // card script context: me = cardProxy
   const CardContextRef = useRef<BC_ScriptContext | null>(null)
@@ -5252,14 +5313,16 @@ function CardView ({
     inst.run(Card.Script ?? '', Params, Args).then(() => {
       scriptDoneRef.current = true
       forceUpdate()
-      checkAllReady()
+      checkAllReadyRef.current()
     })
 
     return () => { void inst.teardown() }
   }, [Card.Script])
 
-  const inst       = instanceRef.current!
-  const renderSlot = inst.renderResult() ?? null
+  const inst = instanceRef.current!
+  isRenderingRef.current = true
+  let renderSlot: unknown
+  try { renderSlot = inst.renderResult() ?? null } finally { isRenderingRef.current = false }
 
   const CanvasStyle = {
     width:           CanvasW,
@@ -5287,10 +5350,7 @@ function CardView ({
             cardProxy=${cardProxy}
             onWidgetProxy=${onWidgetProxy}
             onReady=${onChildReady}
-            onMessage=${(msg:string) => {     // widget message → card, then deck
-              void inst.dispatch(msg)
-              onMessageRef.current?.(msg)
-            }}
+            onMessage=${onWidgetMessage}
           />
         `)}
         ${isEditing && html`
@@ -5357,7 +5417,8 @@ function MenuBar ({
   onGoFirst, onGoPrev, onGoNext, onGoLast,
   isReadOnly = true, isEditing = false, onEditToggle, onInsert,
   onDeckSave, onDeckRevert, onDeckReset, onDeckExport, onDeckImport,
-  onDeckEmbed, onDeckStandalone, onDeckImportURL,
+  onDeckExportText, onDeckImportText,
+  onDeckEmbed, onDeckStandalone, onDeckImportURL, onMCPSettings,
   onCardAdd, onCardDuplicate, onCardRename, onCardDelete, onCardMove,
   onCardCopy, onPaste,
   canUndo = false, canRedo = false, onUndo, onRedo,
@@ -5378,11 +5439,14 @@ function MenuBar ({
   onDeckSave?:   () => void
   onDeckRevert?: () => void
   onDeckReset?:  () => void
-  onDeckExport?: () => void
-  onDeckImport?: () => void
+  onDeckExport?:     () => void
+  onDeckImport?:     () => void
+  onDeckExportText?: () => void
+  onDeckImportText?: () => void
   onDeckEmbed?:      () => void
   onDeckStandalone?: () => void
   onDeckImportURL?:  () => void
+  onMCPSettings?:    () => void
   onCardAdd?:       () => void
   onCardDuplicate?: () => void
   onCardRename?:    () => void
@@ -5398,8 +5462,15 @@ function MenuBar ({
   const isFirst = CardIndex === 0
   const isLast  = CardIndex === CardCount-1
 
+  const [activeSubmenu, setActiveSubmenu] = useState<'import'|'export'|null>(null)
+
   function toggleOverlay (o:Overlay) {
+    setActiveSubmenu(null)
     onOverlayToggle(activeOverlay === o ? null : o)
+  }
+
+  function toggleSubmenu (name:'import'|'export') {
+    setActiveSubmenu(activeSubmenu === name ? null : name)
   }
 
   return html`
@@ -5448,16 +5519,39 @@ function MenuBar ({
             <div class=${`bc-dropdown-item${isReadOnly ? ' disabled' : ''}`}
               onClick=${() => { onDeckReset?.(); onOverlayToggle(null) }}>Reset to Original</div>
             <div class="bc-dropdown-separator"></div>
+            <div class="bc-dropdown-submenu">
+              <div class=${`bc-dropdown-item has-submenu${isReadOnly ? ' disabled' : ''}${activeSubmenu === 'import' ? ' open' : ''}`}
+                onClick=${() => !isReadOnly && toggleSubmenu('import')}>Import</div>
+              ${(activeSubmenu === 'import') && html`
+                <div class="bc-submenu">
+                  <div class="bc-dropdown-item"
+                    onClick=${() => { onDeckImport?.(); onOverlayToggle(null) }}>from JSON File…</div>
+                  <div class="bc-dropdown-item"
+                    onClick=${() => { onDeckImportText?.(); onOverlayToggle(null) }}>from JSON Text…</div>
+                  <div class="bc-dropdown-item"
+                    onClick=${() => { onDeckImportURL?.(); onOverlayToggle(null) }}>from URL…</div>
+                </div>
+              `}
+            </div>
+            <div class="bc-dropdown-submenu">
+              <div class=${`bc-dropdown-item has-submenu${activeSubmenu === 'export' ? ' open' : ''}`}
+                onClick=${() => toggleSubmenu('export')}>Export</div>
+              ${(activeSubmenu === 'export') && html`
+                <div class="bc-submenu">
+                  <div class="bc-dropdown-item"
+                    onClick=${() => { onDeckExport?.(); onOverlayToggle(null) }}>as JSON File</div>
+                  <div class="bc-dropdown-item"
+                    onClick=${() => { onDeckExportText?.(); onOverlayToggle(null) }}>as JSON Text…</div>
+                  <div class="bc-dropdown-item"
+                    onClick=${() => { onDeckEmbed?.(); onOverlayToggle(null) }}>for Embedding…</div>
+                  <div class="bc-dropdown-item"
+                    onClick=${() => { onDeckStandalone?.(); onOverlayToggle(null) }}>as Standalone App…</div>
+                </div>
+              `}
+            </div>
+            <div class="bc-dropdown-separator"></div>
             <div class="bc-dropdown-item"
-              onClick=${() => { onDeckExport?.(); onOverlayToggle(null) }}>Export as JSON</div>
-            <div class="bc-dropdown-item"
-              onClick=${() => { onDeckEmbed?.(); onOverlayToggle(null) }}>Export for Embedding…</div>
-            <div class="bc-dropdown-item"
-              onClick=${() => { onDeckStandalone?.(); onOverlayToggle(null) }}>Export as Standalone App…</div>
-            <div class=${`bc-dropdown-item${isReadOnly ? ' disabled' : ''}`}
-              onClick=${() => { onDeckImport?.(); onOverlayToggle(null) }}>Import from JSON…</div>
-            <div class=${`bc-dropdown-item${isReadOnly ? ' disabled' : ''}`}
-              onClick=${() => { onDeckImportURL?.(); onOverlayToggle(null) }}>Import from URL…</div>
+              onClick=${() => { onMCPSettings?.(); onOverlayToggle(null) }}>MCP Settings…</div>
           </div>
         `}
       </div>
@@ -5598,22 +5692,129 @@ function Dialog ({ State, onClose }:{ State:DialogState; onClose:(Result:string 
     `
   }
 
-  let enteredValue = State.defaultValue        // tracked without re-rendering
+  if (State.kind === 'ask') {
+    let enteredValue = State.defaultValue        // tracked without re-rendering
+    return html`
+      <div class="bc-dialog-backdrop">
+        <div class="bc-dialog">
+          <div class="bc-dialog-title">BrowserCard</div>
+          <div class="bc-dialog-msg">${State.prompt}</div>
+          <input
+            ref=${(el:HTMLInputElement | null) => el?.focus()}
+            class="bc-dialog-input" type="text"
+            defaultValue=${State.defaultValue}
+            onInput=${(e:Event) => { enteredValue = (e.target as HTMLInputElement).value }}
+            onKeyDown=${(e:KeyboardEvent) => (e.key === 'Enter') && onClose(enteredValue)}
+          />
+          <div class="bc-dialog-buttons">
+            <button class="bc-dialog-btn secondary" onClick=${() => onClose(null)}>Cancel</button>
+            <button class="bc-dialog-btn primary"   onClick=${() => onClose(enteredValue)}>OK</button>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  if (State.kind === 'export-json') {
+    return html`
+      <div class="bc-dialog-backdrop">
+        <div class="bc-dialog bc-dialog-wide">
+          <div class="bc-dialog-title">Export Deck as JSON</div>
+          <textarea class="bc-dialog-textarea" readonly>${State.json}</textarea>
+          <div class="bc-dialog-buttons">
+            <button class="bc-dialog-btn secondary"
+              onClick=${() => navigator.clipboard.writeText(State.json).catch(() => {})}>Copy</button>
+            <button class="bc-dialog-btn primary" onClick=${() => onClose(null)}>Close</button>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  let enteredJSON = ''
   return html`
     <div class="bc-dialog-backdrop">
-      <div class="bc-dialog">
-        <div class="bc-dialog-title">BrowserCard</div>
-        <div class="bc-dialog-msg">${State.prompt}</div>
-        <input
-          ref=${(el:HTMLInputElement | null) => el?.focus()}
-          class="bc-dialog-input" type="text"
-          defaultValue=${State.defaultValue}
-          onInput=${(e:Event) => { enteredValue = (e.target as HTMLInputElement).value }}
-          onKeyDown=${(e:KeyboardEvent) => (e.key === 'Enter') && onClose(enteredValue)}
-        />
+      <div class="bc-dialog bc-dialog-wide">
+        <div class="bc-dialog-title">Import Deck from JSON</div>
+        <textarea
+          class="bc-dialog-textarea"
+          placeholder="Paste deck JSON here…"
+          onInput=${(e:Event) => { enteredJSON = (e.target as HTMLTextAreaElement).value }}
+        ></textarea>
         <div class="bc-dialog-buttons">
           <button class="bc-dialog-btn secondary" onClick=${() => onClose(null)}>Cancel</button>
-          <button class="bc-dialog-btn primary"   onClick=${() => onClose(enteredValue)}>OK</button>
+          <button class="bc-dialog-btn primary"   onClick=${() => onClose(enteredJSON)}>Import</button>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+/**** MCPSettingsDialog ****/
+
+function MCPSettingsDialog ({
+  onClose, onApply,
+}:{
+  onClose:  () => void
+  onApply?: (URL:string, Token:string) => void
+}) {
+  const StoredURL   = localStorage.getItem('bc-mcp-url')   ?? ''
+  const StoredToken = localStorage.getItem('bc-mcp-token') ?? ''
+
+  const [BrokerURL, setBrokerURL]       = useState(StoredURL)
+  const [AccessToken, setAccessToken]   = useState(StoredToken)
+  const [rememberToken, setRememberToken] = useState(StoredToken !== '')
+
+  function save ():void {
+    const URL   = BrokerURL.trim()
+    const Token = AccessToken.trim()
+    try {
+      localStorage.setItem('bc-mcp-url', URL)
+      if (rememberToken) {
+        localStorage.setItem('bc-mcp-token', Token)
+      } else {
+        localStorage.removeItem('bc-mcp-token')
+      }
+    } catch { /* ignore */ }
+    onApply?.(URL, Token)
+    onClose()
+  }
+
+  return html`
+    <div class="bc-dialog-backdrop">
+      <div class="bc-dialog bc-dialog-wide">
+        <div class="bc-dialog-title">MCP Broker Settings</div>
+        <div style=${{ padding:'8px 0' }}>
+          <label style=${{ display:'block', marginBottom:'4px', fontSize:'12px' }}>Broker WebSocket URL</label>
+          <input
+            class="bc-dialog-input"
+            type="text"
+            placeholder="ws://localhost:3001/bc"
+            value=${BrokerURL}
+            onInput=${(e:Event) => setBrokerURL((e.target as HTMLInputElement).value)}
+          />
+        </div>
+        <div style=${{ padding:'8px 0' }}>
+          <label style=${{ display:'block', marginBottom:'4px', fontSize:'12px' }}>Access Token</label>
+          <input
+            class="bc-dialog-input"
+            type="password"
+            placeholder="secret token"
+            value=${AccessToken}
+            onInput=${(e:Event) => setAccessToken((e.target as HTMLInputElement).value)}
+          />
+          <label style=${{ display:'flex', alignItems:'center', gap:'6px', marginTop:'6px', fontSize:'12px', cursor:'pointer' }}>
+            <input
+              type="checkbox"
+              checked=${rememberToken}
+              onChange=${(e:Event) => setRememberToken((e.target as HTMLInputElement).checked)}
+            />
+            Remember token permanently
+          </label>
+        </div>
+        <div class="bc-dialog-buttons">
+          <button class="bc-dialog-btn secondary" onClick=${onClose}>Cancel</button>
+          <button class="bc-dialog-btn primary" onClick=${save}>Save</button>
         </div>
       </div>
     </div>
@@ -5625,13 +5826,15 @@ function Dialog ({ State, onClose }:{ State:DialogState; onClose:(Result:string 
 interface AppProps {
   deck:      BC_Deck | null
   isReadOnly: boolean
-  withChrome?:    boolean       // false = bare deck without menu/bottom bars
-  StorageKey?:    string                     // key of the currently shown deck
+  withChrome?:       boolean       // false = bare deck without menu/bottom bars
+  StorageKey?:       string                     // key of the currently shown deck
+  initialCardIndex?: number
   onDeckSave?:   () => void
   onDeckRevert?: () => void
   onDeckReset?:  () => void
   onDeckExport?: () => void
   onDeckImport?: () => void
+  onDeckImportText?: (json:string) => void
   onDeckList?:   () => Promise<BC_DeckInfo[]>
   onDeckOpen?:   (Key:string) => void
   onDeckCreate?: (Name:string) => Promise<void> | void
@@ -5640,17 +5843,23 @@ interface AppProps {
   onDeckEmbed?:      () => void
   onDeckStandalone?: () => void
   onDeckImportURL?:  (URL:string) => Promise<void> | void
+  connector?:              MCPConnector
+  onDeckSaveImmediate?:    () => Promise<void>
 }
 
 function DeckView ({
   deck:initialDeck, isReadOnly, withChrome = true, StorageKey = '',
-  onDeckSave, onDeckRevert, onDeckReset, onDeckExport, onDeckImport,
+  initialCardIndex = 0,
+  onDeckSave, onDeckRevert, onDeckReset, onDeckExport, onDeckImport, onDeckImportText,
   onDeckList, onDeckOpen, onDeckCreate, onDeckDelete, onDeckRename,
   onDeckEmbed, onDeckStandalone, onDeckImportURL,
+  connector, onDeckSaveImmediate,
 }:AppProps) {
   const effectiveDeck = initialDeck ?? DemoDeck
   const [Deck]        = useState<BC_Deck>(effectiveDeck)
-  const [CardIndex, setCardIndex]         = useState(0)
+  const [, setVersion] = useState(0)
+  const bumpVersion = () => setVersion((n) => n+1)
+  const [CardIndex, setCardIndex]         = useState(Math.min(initialCardIndex, effectiveDeck?.Cards.length - 1 || 0))
   const [History, setHistory]             = useState<number[]>([])
   const [activeOverlay, setActiveOverlay] = useState<Overlay>(null)
   const [activeDialog, setActiveDialog]   = useState<DialogState>(null)
@@ -5666,6 +5875,7 @@ function DeckView ({
 
   const [Mode, setMode]             = useState<'browse' | 'edit'>('browse')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [showMCPSettings, setShowMCPSettings] = useState(false)
   const isEditing = (Mode === 'edit') && ! isReadOnly
 
   function toggleEditMode ():void {
@@ -5675,6 +5885,12 @@ function DeckView ({
   }
 
   useEffect(() => { setSelectedId(null) }, [CardIndex])  // card change deselects
+
+  useEffect(() => {                                       // persist last card index
+    if (StorageKey) {
+      try { localStorage.setItem('bc-card-index:' + StorageKey, String(CardIndex)) } catch { /* ignore */ }
+    }
+  }, [StorageKey, CardIndex])
 
 /**** decks panel state and handlers ****/
 
@@ -5718,6 +5934,17 @@ function DeckView ({
     const URLString = (await askUser('URL of the deck to import:','https://'))?.trim()
     if ((URLString == null) || (URLString === '') || (URLString === 'https://')) { return }
     await onDeckImportURL?.(URLString)
+  }
+
+  function exportDeckViaDialog ():void {
+    setActiveDialog({ kind:'export-json', json:JSON.stringify(Deck,null,2) })
+  }
+
+  async function importDeckViaDialog ():Promise<void> {
+    const json = await new Promise<string | null>(
+      (resolve) => setActiveDialog({ kind:'import-json', resolve })
+    )
+    if (json != null) { onDeckImportText?.(json) }
   }
 
   async function deleteDeckViaDialog (Info:BC_DeckInfo):Promise<void> {
@@ -5966,6 +6193,40 @@ function DeckView ({
       onDeckSave()
     }, 800)
   })                       // deliberately without dependency list - see comment
+
+/**** MCP connector context — refreshed on every render ****/
+
+  useEffect(() => {
+    if (connector == null) { return }
+    const Context:BCMCPContext = {
+      getDeck:       () => Deck,
+      getCardIndex:  () => CardIndexRef.current,
+      mutateDeck:    (fn) => { fn(Deck); bumpVersion() },
+      navigate:      (Card) => {
+        if (typeof Card === 'number') {
+          navigate({ type:'card-index', index:Card })
+        } else {
+          const Idx = Deck.Cards.findIndex((c) => c.Id === Card || c.Name === Card)
+          if (Idx >= 0) { navigate({ type:'card-index', index:Idx }) }
+        }
+      },
+      saveDeck:      () => onDeckSaveImmediate?.() ?? Promise.resolve(),
+      evalInContext: async (Expression) => {
+        const inst = new ScriptInstance()
+        const ctx  = buildContext(
+          Deck, Deck.Cards, null,
+          navigate,
+          (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
+          (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
+          ConsoleFns, CardIndexRef,
+        )
+        const { Params, Args } = buildScriptParams(inst, ctx, 'deck')
+        const AsyncFn = new Function(...Params, `return (async () => { return (${Expression}) })()`)
+        return AsyncFn(...Args)
+      },
+    }
+    connector.setContext(Context)
+  })                       // deliberately without dependency list — always fresh
 
 /**** undo/redo — snapshot-based, with coalescing of rapid edit sequences ****/
 
@@ -6348,6 +6609,8 @@ function DeckView ({
           onDeckReset=${onDeckReset}
           onDeckExport=${onDeckExport}
           onDeckImport=${onDeckImport}
+          onDeckExportText=${exportDeckViaDialog}
+          onDeckImportText=${() => void importDeckViaDialog()}
           onCardAdd=${() => void addCardViaDialog()}
           onCardDuplicate=${() => duplicateCardAt(CardIndex)}
           onCardRename=${() => void renameCardAt(CardIndex)}
@@ -6362,6 +6625,7 @@ function DeckView ({
           onDeckEmbed=${onDeckEmbed}
           onDeckStandalone=${onDeckStandalone}
           onDeckImportURL=${() => void importDeckFromURLViaDialog()}
+          onMCPSettings=${() => setShowMCPSettings(true)}
         />`}
         <div class="bc-main-area">
           <div class="bc-card-area" ref=${CardAreaRef}>
@@ -6523,8 +6787,9 @@ function DeckView ({
             setActiveDialog(null)
             if (Dialog_ != null) {
               switch (Dialog_.kind) {
-                case 'answer': Dialog_.resolve?.(Result ?? ''); break
-                case 'ask':    Dialog_.resolve?.(Result);       break
+                case 'answer':      Dialog_.resolve?.(Result ?? ''); break
+                case 'ask':         Dialog_.resolve?.(Result);       break
+                case 'import-json': Dialog_.resolve(Result);         break
               }
             }
           }}
@@ -6535,6 +6800,12 @@ function DeckView ({
           key=${activeEditor.Title}
           State=${activeEditor}
           onClose=${() => setActiveEditor(null)}
+        />
+      `}
+      ${showMCPSettings && html`
+        <${MCPSettingsDialog}
+          onClose=${() => setShowMCPSettings(false)}
+          onApply=${(URL:string, Token:string) => connector?.configure(URL, Token)}
         />
       `}
     <//>
@@ -6580,6 +6851,15 @@ export function escapedForHTML (Text:string):string {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;')
 }
 
+/**** escapedForSingleQuotedAttr — escapes for single-quoted HTML attributes ****/
+/**** (JSON never contains single quotes, so only &, <, > need escaping)      ****/
+
+function escapedForSingleQuotedAttr (Text:string):string {
+  return Text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/'/g,'&#39;')
+}
+
 //----------------------------------------------------------------------------//
 //                              BC_Designer                                   //
 //----------------------------------------------------------------------------//
@@ -6598,14 +6878,19 @@ class BC_Designer extends HTMLElement {
   #StorageKey = 'bc-deck:default'
   #Generation = 0          // remount key - bumped whenever the deck is swapped
   #MountId    = 0                    // guards against overlapping async mounts
+  #Connector  = new MCPConnector()
 
 /**** connectedCallback ****/
 
-  connectedCallback () { void this.#mount() }
+  connectedCallback () {
+    this.#Connector.connect()
+    void this.#mount()
+  }
 
 /**** disconnectedCallback ****/
 
   disconnectedCallback () {
+    this.#Connector.disconnect()
     if (this.#Container != null) { render(null as any, this.#Container) }
   }
 
@@ -6647,6 +6932,17 @@ class BC_Designer extends HTMLElement {
 
     this.#StorageKey = 'bc-deck:' + (this.getAttribute('name') ?? Deck.Name ?? 'default')
 
+    if (! this.hasAttribute('name')) {         // restore last opened deck if possible
+      try {
+        const lastKey = localStorage.getItem('bc-last-deck')
+        if (lastKey && lastKey !== this.#StorageKey) {
+          const lastDeck = await get(lastKey, DeckStore)
+          if (MountId !== this.#MountId) { return }
+          if (ValueIsDeck(lastDeck)) { this.#StorageKey = lastKey }
+        }
+      } catch { /* ignore */ }
+    }
+
     try {                  // a persisted copy supersedes the original definition
       const persisted = await get(this.#StorageKey, DeckStore)
       if (MountId !== this.#MountId) { return }       // superseded by new mount
@@ -6673,16 +6969,24 @@ class BC_Designer extends HTMLElement {
 /**** #renderDeck ****/
 
   #renderDeck ():void {
+    let initialCardIndex = 0
+    try {
+      const saved = localStorage.getItem('bc-card-index:' + this.#StorageKey)
+      if (saved != null) { initialCardIndex = Math.max(0, parseInt(saved, 10) || 0) }
+    } catch { /* ignore */ }
+
     render(html`<${DeckView}
       key=${this.#Generation}
       deck=${this.#Deck}
       isReadOnly=${this.#isReadOnly}
       StorageKey=${this.#StorageKey}
+      initialCardIndex=${initialCardIndex}
       onDeckSave=${()   => void this.#saveDeck()}
       onDeckRevert=${() => void this.#revertDeck()}
       onDeckReset=${()  => void this.#resetDeck()}
       onDeckExport=${() => this.#exportDeck()}
       onDeckImport=${() => this.#importDeck()}
+      onDeckImportText=${(json:string) => void this.#importDeckFromJSON(json)}
       onDeckList=${()   => this.#listDecks()}
       onDeckOpen=${(Key:string) => void this.#openDeck(Key)}
       onDeckCreate=${(Name:string) => this.#createDeck(Name)}
@@ -6691,6 +6995,8 @@ class BC_Designer extends HTMLElement {
       onDeckEmbed=${() => this.#exportEmbeddable()}
       onDeckStandalone=${() => this.#exportStandalone()}
       onDeckImportURL=${(URL:string) => this.#importDeckFromURL(URL)}
+      connector=${this.#Connector}
+      onDeckSaveImmediate=${() => this.#saveDeck()}
     />` as any, this.#Container!)
   }
 
@@ -6732,7 +7038,7 @@ class BC_Designer extends HTMLElement {
     if (this.#Deck == null) { return }
 
     const DeckName  = this.#Deck.Name ?? 'Deck'
-    const escapedSrc = escapedForHTML(JSON.stringify(this.#Deck))
+    const escapedSrc = escapedForSingleQuotedAttr(JSON.stringify(this.#Deck))
     const ModuleURL  = BC_ModuleURL
     const Width      = this.#Deck.CardWidth  ?? DefaultDeckWidth
     const Height     = this.#Deck.CardHeight ?? DefaultDeckHeight
@@ -6754,7 +7060,7 @@ class BC_Designer extends HTMLElement {
 
   <bc-deck
     style="display:block; width:${Width}px; height:${Height}px"
-    src="${escapedSrc}"
+    src='${escapedSrc}'
   ></bc-deck>
 </body>
 </html>`
@@ -6769,7 +7075,7 @@ class BC_Designer extends HTMLElement {
     if (this.#Deck == null) { return }
 
     const DeckName  = this.#Deck.Name ?? 'Deck'
-    const escapedSrc = escapedForHTML(JSON.stringify(this.#Deck))
+    const escapedSrc = escapedForSingleQuotedAttr(JSON.stringify(this.#Deck))
 
     const Page = (
 `<!DOCTYPE html>
@@ -6784,7 +7090,7 @@ class BC_Designer extends HTMLElement {
 </head>
 <body>
   <script type="module" src="${escapedForHTML(BC_ModuleURL)}"></script>
-  <bc-deck style="display:block; width:100%; height:100%" src="${escapedSrc}"></bc-deck>
+  <bc-deck style="display:block; width:100%; height:100%" src='${escapedSrc}'></bc-deck>
 </body>
 </html>`
     )
@@ -6831,6 +7137,7 @@ class BC_Designer extends HTMLElement {
       this.#Deck      = Deck
       this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
       this.#Generation += 1
+      try { localStorage.setItem('bc-last-deck', Key) } catch { /* ignore */ }
       this.#renderDeck()
     } catch (Signal) {
       console.warn('[BrowserCard] could not access IndexedDB:', Signal)
@@ -7006,6 +7313,29 @@ class BC_Designer extends HTMLElement {
         }
       }
     Input.click()
+  }
+
+/**** #importDeckFromJSON — parses and persists a deck from a JSON string ****/
+
+  async #importDeckFromJSON (JSONString:string):Promise<void> {
+    if (this.#isReadOnly) { return }
+    try {
+      const Candidate = JSON.parse(JSONString)
+      if (! ValueIsDeck(Candidate)) {
+        window.alert('The pasted text does not contain a valid BrowserCard deck.')
+        return
+      }
+      const Deck = Candidate as BC_Deck
+      adjustIdCounterFor(Deck)
+      if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
+      this.#Deck      = Deck
+      this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
+      await this.#saveDeck()
+      this.#Generation += 1
+      this.#renderDeck()
+    } catch (Signal) {
+      window.alert('Import failed: ' + Signal)
+    }
   }
 }
 

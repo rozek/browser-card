@@ -1,6 +1,8 @@
 # BrowserCard - Test Plan
 
-> **Status:** implemented as a [Vitest](https://vitest.dev) suite under `test/` - `npm test` runs **84 tests, all green**. The pure-logic, runtime, context, proxy, export and demo-integrity areas are covered directly; deep DOM-render/pointer interaction of the designer in jsdom is intentionally limited to registration + crash-free mounting (see "Not automatically testable").
+> **Status:** implemented as a [Vitest](https://vitest.dev) suite under `test/` - `npm test` runs **138 tests, all green**. The pure-logic, runtime, context, proxy, export, demo-integrity and MCP-connector areas are covered; deep DOM-render/pointer interaction of the designer in jsdom is intentionally limited to registration + crash-free mounting (see "Not automatically testable").
+>
+> **Note (area 17d):** `MCPSettingsDialog` is an internal Preact component and not exported. Its localStorage contract and `connector.configure()` side-effect isolation are tested in `mcp-settings-dialog.test.ts`; the component rendering itself requires manual/visual testing until the component is exported.
 
 
 This document lists everything in BrowserCard that can be tested **automatically**, organized by area, plus the tooling to run those tests and a short list of aspects that remain **manual/visual** only.
@@ -184,6 +186,73 @@ Suggested scripts (add to `package.json`):
 | card/deck menus | new/duplicate/rename/move/delete card; insert widget; arrange/z-order; copy/paste |
 | `<bc-designer>` / `<bc-deck>` | custom elements register and mount; `<bc-deck>` renders chromeless (no menu/footer); CSS variables / `CardWidth`/`CardHeight` size the canvas |
 
+## 17. MCP Connector (unit + fake WebSocket)
+
+### 17a. `MCPConnector` — connection management
+
+| Test | Expectation |
+|------|-------------|
+| constructor with localStorage `bc-mcp-url` + `bc-mcp-token` | reads both values; `connect()` opens a WebSocket to that URL |
+| constructor without stored URL | `connect()` is a no-op; `connectionStatus.connected` is `false` |
+| `configure(url, token)` | updates internal URL/token, closes any existing socket, opens a new one; does **not** touch localStorage (persistence is the dialog's responsibility) |
+| `configure('')` | disconnects and does not reconnect |
+| `connect()` without URL | no-op |
+| `disconnect()` | closes socket, clears reconnect timer |
+| auto-reconnect | if socket closes unexpectedly, a new connection is attempted after 3 s (fake timers) |
+| single-connection enforcement | a second `connect()` while already connected replaces the old socket |
+
+### 17b. `MCPConnector` — WebSocket protocol
+
+| Test | Expectation |
+|------|-------------|
+| `hello` on open | sends `{ type:'hello', accessToken, deckName, currentCard }` |
+| request dispatch | an incoming `{ id, method, params }` message calls `#handle(method, params)` and sends back `{ id, result }` |
+| error wrapping | if `#handle` throws, response is `{ id, error: message }` |
+| card-change notification | `setContext()` with a different card name sends `{ type:'notify', event:'card_changed', cardName }` over the socket |
+| `setContext(null)` | no notification sent; context cleared |
+
+### 17c. `MCPConnector` — tool handlers (via fake context)
+
+Test each handler against a stubbed `BCMCPContext` that returns controlled fixtures:
+
+| Handler | Key assertions |
+|---------|----------------|
+| `connection_status` | returns `connected` flag and URL without requiring a context |
+| `deck_get` | returns all `DeckSchemaKeys` fields; `Cards` and `Id` excluded |
+| `deck_patch` | merges only allowed keys; schema keys (`Id`, `Cards`) rejected |
+| `deck_save` | calls `ctx.saveDeck()` |
+| `card_list` | returns all card ids, names, and indices |
+| `card_get` | correct card by index; error on out-of-range |
+| `card_patch` | merges allowed `CardSchemaKeys`; `Id`/`Widgets` rejected |
+| `card_add` | inserts a new card after the current index; new id is unique |
+| `card_delete` | removes card; refuses when only one card remains |
+| `card_navigate` | calls `ctx.navigate()` with the right argument |
+| `widget_list` | returns all widget ids, names, types for a given card |
+| `widget_get` | returns all `WidgetSchemaKeys` fields for the addressed widget |
+| `widget_patch` | merges allowed keys; `Id`/`Type` rejected |
+| `widget_add` | inserts new widget with correct defaults per type |
+| `widget_delete` | removes widget from the card |
+| `widget_get_rect` / `widget_set_rect` | round-trip `Anchors + Offsets → {x,y,width,height} → Anchors + Offsets` is identity for all 9 anchor combos and card sizes |
+| `extras_get` | returns only keys not in the schema key set of the addressed target |
+| `extras_set` | writes the key-value pairs; schema keys rejected |
+| `extras_delete` | removes the key; no-op for non-existent keys |
+| `live_eval` | calls `ctx.evalInContext(expr)` and returns the result |
+| `live_send` | constructs a `send(…)` expression and delegates to `evalInContext` |
+| `live_screenshot` | throws a descriptive error when `globalThis.html2canvas` is absent |
+
+### 17d. `MCPSettingsDialog` (jsdom + testing-library)
+
+| Test | Expectation |
+|------|-------------|
+| renders with stored values | URL input and token input pre-filled from localStorage |
+| "Remember token permanently" checkbox | initially checked iff a token was previously stored |
+| Save with checkbox checked | saves URL **and** token to localStorage; calls `onApply(url, token)` |
+| Save with checkbox unchecked | saves URL to localStorage; **removes** token from localStorage; calls `onApply(url, token)` |
+| Cancel | calls `onClose()`, does not write to localStorage |
+| empty URL + Save | saves empty URL; `onApply` called with empty strings |
+
+---
+
 ## 16. Demo-deck integrity (data tests)
 
 Run the same checks the deck generators use, as a test over `demos/*.bc` and `FeatureTest.bc`:
@@ -208,18 +277,23 @@ Run the same checks the deck generators use, as a test over `demos/*.bc` and `Fe
 - **touch/pointer "feel"** - `touch-action`, capture, drag smoothness on real devices
 - **external behavior loading over the network** - URL *resolution* is unit-tested; actual `import()` from GitHub Pages/jsDelivr is manual or an integration test
 - **embedded-module URL availability** - that `BC_ModuleURL` actually serves the module is a deployment check
+- **live WebSocket roundtrip against a real broker** - the protocol is unit-tested with a fake WebSocket; an end-to-end test against a running `BrowserCard-AIBroker` instance is manual or a separate integration suite
+- **`live_screenshot` with real `html2canvas`** - the error path (no `html2canvas`) is unit-testable; the actual PNG result requires a real browser with the library loaded
 
 ## Suggested layout & CI
 
 ```
 src/
   BrowserCard.ts
+  MCPConnector.ts
   internals.ts        # test-only re-exports of private helpers (optional)
 test/
   geometry.test.ts    cards.test.ts      runtime.test.ts
   validators.test.ts  persistence.test.ts clipboard.test.ts
   proxies.test.ts     undo.test.ts        components.test.tsx
   demos.test.ts       exports.test.ts     behaviors.test.ts
+  mcp-connector.test.ts                   # areas 17a–17c
+  mcp-settings-dialog.test.tsx            # area 17d
 ```
 
 Run `npm test` in CI (e.g. a GitHub Actions workflow on push/PR) and gate merges on green plus a coverage threshold for the pure-logic modules (geometry, validators, runtime, persistence, undo, clipboard).

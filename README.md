@@ -120,7 +120,7 @@ Inside a script, `me` is a reactive proxy of the visual itself (`my` and `I` are
 ```javascript
 on('render', () => {                              // a custom widget: a counter
   const Count = my.Count ?? 0
-  return HTML`
+  return html`
     <div style=${{ textAlign:'center' }}>
       <b>${Count}</b>
       <button onClick=${() => { my.Count = Count+1 }}>+</button>
@@ -131,10 +131,10 @@ on('render', () => {                              // a custom widget: a counter
 
 Use `my.own` for *transient* script-private state: writes to `my.own.whatever` neither re-render nor persist.
 
-Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`HTML\`...\``) - Preact takes care of efficient updates. A custom widget additionally receives `dispatch(msg)` (to send messages to itself and its card) and `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
+Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. A custom widget additionally receives `dispatch(msg)` (to send messages to itself and its card) and `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
 
 ```javascript
-on('render', () => HTML`<div>Hello, ${Configuration.Name ?? 'world'}!</div>`)
+on('render', () => html`<div>Hello, ${Configuration.Name ?? 'world'}!</div>`)
 ```
 
 With `Configuration = { "Name":"World" }` this widget greets "Hello, World!". Use `Configuration` for static, design-time settings; use `me.*` for mutable runtime state.
@@ -143,14 +143,14 @@ With `Configuration = { "Name":"World" }` this widget greets "Hello, World!". Us
 
 BrowserCard runs on a single, bundled Preact instance. If a script imports Preact again (e.g. `import { useState } from 'https://…/preact'`), it gets a *second*, unconnected copy whose hooks and rendering do not work together with BrowserCard's - widgets then misbehave in subtle ways.
 
-Therefore: **never import preact in a script**. Everything you need is already provided. The `HTML` tag covers most cases; for the rest, **use the injected `preact` object**:
+Therefore: **never import preact in a script**. Everything you need is already provided. The `html` tag covers most cases; for the rest, **use the injected `preact` object**:
 
 ```javascript
 on('render', () => {
   const [open, setOpen] = preact.useState(false)        // NOT: import … from 'preact'
-  return HTML`
+  return html`
     <button onClick=${() => setOpen(! open)}>${open ? 'hide' : 'show'}</button>
-    ${open && HTML`<div>now you see me</div>`}
+    ${open && html`<div>now you see me</div>`}
   `
 })
 ```
@@ -163,7 +163,7 @@ The `preact` object bundles the most important exports: `h`, `Fragment`, `render
 
 ```javascript
 on('ready', () => every(1000, () => { my.Time = Date.now() }))
-on('render', () => HTML`<div>${new Date(my.Time ?? Date.now()).toLocaleTimeString()}</div>`)
+on('render', () => html`<div>${new Date(my.Time ?? Date.now()).toLocaleTimeString()}</div>`)
 ```
 
 ### Talking to other widgets
@@ -188,11 +188,13 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 
 | Message | When | Notes |
 |---------|------|-------|
-| `render` | on every (re-)render of the visual | must return `HTML\`...\`` **synchronously**; the result is rendered first inside the visual's DOM element |
+| `render` | on every (re-)render of the visual | must return `html\`...\`` **synchronously**; the result is rendered first inside the visual's DOM element |
+| `update` | synchronously **before** every `render` | use to pull external state into the widget before rendering (see [Widget behavior pattern](#widget-behavior-pattern)) |
 | `ready` | once all inner visuals have been instantiated and initialized | fires inside-out: widgets → card → deck |
+| `open` | when a card becomes the active card | card scripts only; runs every time the card is navigated to |
 | `obsolete` | right before the visual is removed (navigation, deletion, script change) | for cleanup; `after()`/`every()` timers are cancelled automatically afterwards |
 | `click` | a button (or auto-hiliting picture) was clicked | bubbles up the hierarchy: the widget's script, then its card's, then the deck's |
-| *custom* | whatever you `send()` or `dispatch()` | handler arguments = the extra `send()` arguments |
+| *custom* | whatever you `send()` or `dispatch()` | handler arguments = the extra `send()` / `dispatch()` arguments |
 
 ### Functions
 
@@ -205,7 +207,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `CardCount()` | number of cards in the deck |
 | `Widget(NameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
 | `await send(Target, Msg, ...Args)` | sends a message to another widget's script (name, index or proxy); resolves with `false` if no handler exists |
-| `dispatch(Msg)` | *(widgets only)* sends a message up the hierarchy: the widget's own script, then its card's, then the deck's |
+| `dispatch(Msg, ...Args)` | *(widgets only)* sends a message up the hierarchy: the widget's own script, then its card's, then the deck's; extra arguments are passed to each handler |
 | `await answer(Message, ...Buttons)` | shows a dialog; resolves with the label of the clicked button |
 | `await ask(Prompt, Default?)` | shows an input dialog; resolves with the input or `null` on cancel |
 | `openURL(URL)` | opens a URL in a new tab |
@@ -225,7 +227,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `my.Card.WidgetList` | proxies of all widgets on the current card, in drawing order |
 | `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
 | `nextCard`, `prevCard`, `firstCard`, `lastCard` | card refs for `go()` |
-| `HTML` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
+| `html` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
 | `preact` | the most important Preact exports, bundled into one object (see below) - use these instead of importing Preact |
 | `Configuration` | *(custom widgets only)* the widget's read-only JSON configuration object (edited as "Configuration (JSON)" in the designer) |
 
@@ -246,16 +248,65 @@ I.changeGeometryTo(null, null, 300)         // set width to 300px, keep position
 
 A *behavior* is a reusable script, packaged as an ordinary ES module - the BrowserCard way of sharing functionality between widgets, cards and decks. A visual whose script calls `await behaveLike(...)` runs the behavior as if its code were part of the script itself (only one behavior per visual; additional calls are ignored).
 
+### Widget behavior pattern
+
+Well-designed custom widget behaviors follow a simple convention that decouples the widget's internal rendering from the card or deck state it represents:
+
+- **`on('update', ...)`** — called synchronously before every render. Use it to pull the "outer" value (from `my.Card` or `my.Applet`) into the widget's own local state. This ensures the widget always displays the current external value, even if it was changed from elsewhere.
+
+- **`dispatch('change', value)`** — dispatched whenever the user makes an input. The card (or deck) script listens for this and stores the new value in its own state.
+
+This separation means the widget behavior doesn't need to know who owns the value - it just reads from a well-known property and announces changes. The consumer decides where to persist them.
+
+Example — a `NumberInput` behavior and its use in a Temperature Converter card:
+
+```javascript
+// NumberInput behavior (the widget):
+on('update', () => {
+  my.Value = my.Card.Temperature   // pull card state into widget before render
+})
+
+on('change', (Value) => {
+  my.Card.Temperature = Value      // push user input back to card
+})
+
+on('render', () => {
+  const Value = my.Value ?? 0
+  return html`
+    <input
+      type="number"
+      value=${Value}
+      style=${{ width:'100%', height:'100%', boxSizing:'border-box', padding:'4px 6px', fontSize:'inherit' }}
+      onInput=${(e) => {
+        const n = e.target.valueAsNumber
+        if (!isNaN(n)) { my.Value = n; dispatch('change', n) }
+      }}
+    />
+  `
+})
+```
+
+The card script simply bridges its own state to the behavior's convention - it doesn't need to know anything about how the widget renders itself:
+
+```javascript
+// Card script (or another widget's script):
+on('ready', () => {
+  my.Card.Temperature = 20        // set initial value
+})
+```
+
+If several widgets on the same card share state in this way, changing one automatically updates all others on the next render cycle, because each widget's `update` handler re-reads `my.Card.Temperature`.
+
 ### Writing a behavior
 
-Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need. Everything from the [Script API Reference](#script-api-reference) is available, including `on`, the visual proxy as `me` / `my` / `I` (three synonyms - pick one), `HTML`, `after`, `every`, `Configuration` and `dispatch`:
+Create a `.js` file whose **default export** is an async function. It receives the complete script context as a **single object with named entries** - simply destructure what you need. Everything from the [Script API Reference](#script-api-reference) is available, including `on`, the visual proxy as `me` / `my` / `I` (three synonyms - pick one), `html`, `after`, `every`, `Configuration` and `dispatch`:
 
 ```javascript
 // Blinker.js - a behavior for "generic" widgets: makes its content blink
 
-export default async function ({ on, my, every, HTML }) {
+export default async function ({ on, my, every, html }) {
   on('ready',  () => every(500, () => { my.shown = ! my.shown }))
-  on('render', () => HTML`
+  on('render', () => html`
     <div style=${{
       display:'flex', alignItems:'center', justifyContent:'center',
       width:'100%', height:'100%',

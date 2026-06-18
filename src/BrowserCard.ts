@@ -4046,11 +4046,14 @@ export function makeCardProxy (
   forceUpdate:   () => void,
 ):BC_CardProxy {
   let _own:Record<string,unknown> | null = null
+  let _View:Element | undefined      // the card's DOM element (.bc-card-canvas)
   let proxy:BC_CardProxy
   proxy = new Proxy(Card, {
     get (target, key) {
+      if (key === $View) { return _View }
       switch (key) {
         case 'own':        return (_own ??= {})
+        case 'View':       return _View
         case 'Applet':     return deckProxy
         case 'Card':       return proxy
         case 'WidgetList': return widgetListRef.current
@@ -4058,6 +4061,8 @@ export function makeCardProxy (
       }
     },
     set (target, key, value) {
+      if (key === $View) { _View = value as Element | undefined; return true }
+      if (key === 'View') { return true }                // me.View is read-only
       if (key === 'own') { _own = value as Record<string,unknown>; return true }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
@@ -4076,6 +4081,7 @@ export function makeDeckProxy (
   forceUpdate:  () => void,
 ):BC_DeckProxy {
   let _own:Record<string,unknown> | null = null
+  let _View:Element | undefined      // the deck's DOM element (.bc-app)
   let _console           = ''
   let _consoleLineCount  = 0
   let _consoleCharCount  = 0
@@ -4083,11 +4089,13 @@ export function makeDeckProxy (
   proxy = new Proxy(Deck, {
     get (target, key) {
       if (key === $rerender)          { return forceUpdate }
+      if (key === $View)              { return _View }
       if (key === $Console)           { return _console }
       if (key === $Console_LineCount) { return _consoleLineCount }
       if (key === $Console_CharCount) { return _consoleCharCount }
       switch (key) {
         case 'own':               return (_own ??= {})
+        case 'View':              return _View
         case 'Applet':            return proxy
         case 'Card':              return cardProxyRef.current!
         case 'Console_LineLimit': return Reflect.get(target, key) ?? Default_LineLimit
@@ -4096,6 +4104,8 @@ export function makeDeckProxy (
       }
     },
     set (target, key, value) {
+      if (key === $View)            { _View = value as Element | undefined; return true }
+      if (key === 'View')           { return true }     // me.View is read-only
       if (key === 'own')            { _own = value as Record<string,unknown>; return true }
       if (key === $Console)         { _console          = value as string; return true }
       if (key === $Console_LineCount) { _consoleLineCount = value as number; return true }
@@ -5346,6 +5356,12 @@ function CardView ({
   }
   const cardProxy = cardProxyRef.current!
 
+  // hands the card's DOM element to the proxy, reachable as "me.View" in scripts
+  const cardViewRef = useCallback(
+    (Element:Element | null) => { (cardProxy as Indexable)[$View] = Element ?? undefined },
+    [cardProxy]
+  )
+
   // tracks which child WidgetViews have completed their script
   const childReadySet   = useRef(new Set<string>())
   const scriptDoneRef   = useRef(false)
@@ -5436,7 +5452,7 @@ function CardView ({
       ${(deckRenderSlot != null) && html`
         <div class="bc-deck-render" style=${DeckRenderStyle}>${deckRenderSlot}</div>
       `}
-      <div class="bc-card-canvas" style=${CanvasStyle}>
+      <div class="bc-card-canvas" style=${CanvasStyle} ref=${cardViewRef}>
         ${renderSlot}
         ${allObjects.map((obj) => html`
           <${WidgetView}
@@ -6463,6 +6479,12 @@ function DeckView ({
   }
   const deckProxy = deckProxyRef.current!
 
+  // hands the deck's DOM element to the proxy, reachable as "me.View" in scripts
+  const deckViewRef = useCallback(
+    (Element:Element | null) => { (deckProxy as Indexable)[$View] = Element ?? undefined },
+    [deckProxy]
+  )
+
   const deckScriptDoneRef = useRef(false)
   const cardReadyDoneRef  = useRef(false)
 
@@ -6693,7 +6715,7 @@ function DeckView ({
 
   return html`
     <${Fragment}>
-      <div class="bc-app">
+      <div class="bc-app" ref=${deckViewRef}>
         ${withChrome && html`<${MenuBar}
           DeckName=${Deck.Name}
           CardIndex=${CardIndex}

@@ -237,7 +237,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `my.Card` | proxy of the current card |
 | `my.Card.WidgetList` | proxies of all widgets on the current card, in drawing order |
 | `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
-| `my.View` | *(widgets only)* the widget's wrapper DOM element once mounted (read-only; `undefined` before the first render and after removal - always guard with `if (my.View != null)`) |
+| `my.View` | the visual's own DOM element once mounted - the widget's wrapper for widgets, `.bc-card-canvas` for cards, `.bc-app` for the deck (read-only; `undefined` before the first render and after removal - always guard with `if (my.View != null)`) |
 | `nextCard`, `prevCard`, `firstCard`, `lastCard` | card refs for `go()` |
 | `html` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
 | `preact` | the most important Preact exports, bundled into one object (see below) - use these instead of importing Preact |

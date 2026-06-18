@@ -1,0 +1,116 @@
+/**** nativeNumberInput - wraps a single-line <input type="number"> ****/
+
+// the parameters Value, invalid, Placeholder, readonly, Minimum, Stepping,
+// Maximum, Suggestions and disabled are read from my.* (falling back to the
+// Configuration); Value may also be given in "Text" (where typing writes it
+// back). "invalid" forces the invalid state; Stepping may be 'any'; Suggestions
+// is an array or comma-separated string rendered as a <datalist>. while focused,
+// external Value/Text changes do not disturb the input; on blur it is synced
+
+/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+
+  function styleRuleInjectedOnce (Id, CSS) {
+    if (document.getElementById(Id) != null) { return }
+    const Style = document.createElement('style')
+      Style.id          = Id
+      Style.textContent = CSS
+    document.head.appendChild(Style)
+  }
+
+/**** suggestionList - normalises Suggestions into a list of strings ****/
+
+  function suggestionList (Raw) {
+    if (Raw == null) { return [] }
+    const Items = (Array.isArray(Raw) ? Raw : String(Raw).split(','))
+    return Items.map((Item) => String(Item).trim()).filter((Item) => Item !== '')
+  }
+
+  const NumberStyle = `
+    .bc-widget > input[type="number"] {
+      width:100%;
+      height:30px;
+      border:solid 1px #888888; border-radius:2px;
+      background:#e8f0ff;
+      padding:0px 2px 0px 2px;
+      line-height:28px;
+    }
+    .bc-widget > input[type="number"]:invalid {
+      text-decoration:underline wavy red 1px;
+    }
+    .bc-widget > input[type="number"]:read-only {
+      border:solid 1px #DDDDDD; border-radius:2px;
+      background:#F0F0F0;
+    }
+    .bc-widget > input[type="number"]:disabled {
+      cursor:not-allowed;
+    }
+  `
+
+/**** actual behavior script ****/
+
+  export default async function ({ on, my, html, dispatch, Configuration }) {
+    styleRuleInjectedOnce('bc-nativenumberinput-style', NumberStyle)
+
+    on('render', () => {
+      const valueOf   = (Name) => (my[Name] ?? Configuration?.[Name])
+      const booleanOf = (Name) => (valueOf(Name) === true)
+      const numberOf  = (Name) => {
+        const Number = parseFloat(valueOf(Name))
+        return (isFinite(Number) ? Number : undefined)
+      }
+      const textOf = (Name) => {
+        const Value = valueOf(Name)
+        return (Value == null ? undefined : String(Value))
+      }
+
+      const Invalid     = booleanOf('invalid')
+      const Disabled    = booleanOf('disabled')
+      const ReadOnly    = booleanOf('readonly')
+      const Suggestions = suggestionList(valueOf('Suggestions'))
+      const ListId      = ('bc-number-' + (my.Id ?? 'list'))
+
+      const rawStep = valueOf('Stepping')
+      const Step = (
+        String(rawStep).trim().toLowerCase() === 'any'
+        ? 'any'
+        : (isFinite(parseFloat(rawStep)) ? parseFloat(rawStep) : undefined)
+      )
+
+      const resolvedValue = () => (
+        my.Text != null ? String(my.Text) : String(valueOf('Value') ?? '')
+      )
+
+    /**** sync display & validity, but leave the value alone while focused ****/
+
+      const applyState = (Element) => {
+        if (Element == null) { return }
+        Element.setCustomValidity(Invalid ? 'invalid' : '')
+        if (document.activeElement !== Element) { Element.value = resolvedValue() }
+      }
+
+      return html`
+        <input
+          type="number"
+          placeholder=${textOf('Placeholder')}
+          readonly=${ReadOnly}
+          disabled=${Disabled}
+          min=${numberOf('Minimum')}
+          max=${numberOf('Maximum')}
+          step=${Step}
+          aria-invalid=${Invalid ? 'true' : undefined}
+          list=${Suggestions.length > 0 ? ListId : undefined}
+          ref=${applyState}
+          onInput=${(Event) => {
+            my.Text = Event.target.value
+            dispatch('change', Event.target.valueAsNumber)
+          }}
+          onBlur=${(Event) => { Event.target.value = resolvedValue() }}
+        />
+        ${(Suggestions.length > 0) && html`
+          <datalist id=${ListId}>
+            ${Suggestions.map((Suggestion) => html`<option value=${Suggestion}></option>`)}
+          </datalist>
+        `}
+      `
+    })
+  }

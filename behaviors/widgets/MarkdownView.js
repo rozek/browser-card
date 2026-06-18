@@ -1,9 +1,9 @@
 /**** MarkdownView - renders the widget's "Text" property as Markdown ****/
 
 // with syntax highlighting (highlight.js), math (KaTeX) and Mermaid diagrams
-// reusing the toolkit already bundled into BrowserCard
-// all extra assets (CSS, fonts, Mermaid) are served same-origin from the
-// "markdown/" folder beside BrowserCard.js - no third-party network requests
+// reusing the toolkit already bundled into BrowserCard. All extra assets (CSS,
+// fonts, Mermaid) are served same-origin from the "markdown/" folder beside
+// BrowserCard.js - no third-party network requests
 
   const AssetsBeside = 'markdown/'        // sibling of BrowserCard.js (preferred)
   const AssetsFromHere = '../../markdown/' // fallback, relative to this behaviour
@@ -45,7 +45,7 @@
     return globalThis._BC_MermaidPromise
   }
 
-/**** actual script ****/
+/**** actual behavior script ****/
 
   export default async function ({ on, my, html, Configuration }) {
     const BC = globalThis.BC                 // the running BrowserCard instance

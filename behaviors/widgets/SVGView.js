@@ -30,7 +30,7 @@
       : AlignToken[Alignment] + (Scaling === 'cover' ? ' slice' : ' meet')
     )
 
-    /**** fitEmbeddedSVG - sizes/aligns the inserted <svg> to the widget box ****/
+  /**** fitEmbeddedSVG - sizes/aligns the inserted <svg> to the widget box ****/
 
     function fitEmbeddedSVG (Element) {
       if (Element == null) { return }
@@ -48,9 +48,7 @@
       }
     }
 
-    /**** ensuredViewBoxFor - many SVGs (e.g. W3C's tiger) carry no "viewBox"; ****/
-    /**** preserveAspectRatio can only scale once a viewBox exists, so derive  ****/
-    /**** one from width/height, falling back to the rendered content bounds   ****/
+  /**** ensuredViewBoxFor - many SVGs carry no "viewBox" but preserveAspectRatio can only scale if viewBox exists ****/
 
     function ensuredViewBoxFor (SVG) {
       if (SVG.hasAttribute('viewBox')) { return }

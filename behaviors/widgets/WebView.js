@@ -1,12 +1,15 @@
-/**** WebView - wraps an <iframe> around the URL in "Text". the Configuration ****/
-/**** controls "allowsFullScreen" (boolean), "Permissions" (the "allow"        ****/
-/**** attribute), "SandboxPermissions" (the "sandbox" attribute; false omits   ****/
-/**** sandboxing, '' is maximally restrictive) and "ReferrerPolicy".           ****/
+/**** WebView - wraps an <iframe> around the URL in "Text" ****/
+
+// the Configuration controls "allowsFullScreen" (boolean), "Permissions" (the
+// "allow" attribute), "SandboxPermissions" (the "sandbox" attribute; false omits
+// sandboxing, '' is maximally restrictive) and "ReferrerPolicy"
 
   const DefaultSandbox = (
     'allow-downloads allow-forms allow-modals allow-orientation-lock ' +
     'allow-pointer-lock allow-popups allow-same-origin allow-scripts'
   )
+
+/**** actual behavior script ****/
 
   export default async function ({ on, my, html, Configuration }) {
     const FullScreen = (Configuration?.allowsFullScreen === true)

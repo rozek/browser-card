@@ -2502,7 +2502,7 @@ const Styles = `
 
   /* ---- objects --------------------------------------------------------- */
 
-  .bc-obj {
+  .bc-widget {
     position: absolute;
     overflow: hidden;
   }
@@ -4368,6 +4368,7 @@ function WidgetView ({
 
   useEffect(() => {
     const inst = instanceRef.current!
+    ExtraRef.current!.Configuration = Obj.Configuration ?? {}   // refresh on re-run
     const { Params, Args } = buildScriptParams(inst, ContextRef.current!, 'widget', ExtraRef.current)
 
     ;(proxy as Indexable)[$Script] = inst              // makes send() reach this widget
@@ -4393,7 +4394,7 @@ function WidgetView ({
     })
 
     return () => { void inst.teardown() }
-  }, [Obj.Script])
+  }, [Obj.Script, Obj.Configuration])
 
   if (! Obj.visible) { return null }
 
@@ -4413,7 +4414,7 @@ function WidgetView ({
   return html`
     <div
       ref=${viewRef}
-      class=${`bc-obj${Obj.Type === 'shape' ? ' bc-shape' : ''}`}
+      class=${`bc-widget${Obj.Type === 'shape' ? ' bc-shape' : ''}`}
       style=${{ ...RectStyle(Obj, containerW, containerH), ...extraStyle }}
     >
       ${renderSlot}

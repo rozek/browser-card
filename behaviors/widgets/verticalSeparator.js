@@ -1,5 +1,4 @@
-/**** verticalSeparator - a thin light-grey line down the widget's ****/
-/**** horizontal middle, from the top to the bottom edge. ****/
+/**** verticalSeparator - a thin light-grey vertical separation line ****/
 
   export default async function ({ on, html }) {
     on('render', () => html`

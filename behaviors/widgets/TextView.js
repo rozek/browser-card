@@ -1,0 +1,12 @@
+/**** TextView - shows the widget's "Text" property as 15px normal text ****/
+
+  export default async function ({ on, my, html }) {
+    on('render', () => html`
+      <div style=${{
+        display:'flex', alignItems:'center', justifyContent:'flex-start',
+        width:'100%', height:'100%',
+        fontSize:'15px', fontWeight:'normal', textAlign:'left',
+        overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+      }}>${my.Text ?? '(Text)'}</div>
+    `)
+  }

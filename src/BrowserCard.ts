@@ -125,6 +125,7 @@
 
   const $Target             = Symbol('Target')
   const $Script             = Symbol('Script')
+  const $View               = Symbol('View')
   const $Descriptor         = Symbol('Descriptor')
   const $Behavior           = Symbol('Behavior')
   const $normalizedName     = Symbol('normalizedName')
@@ -2483,11 +2484,17 @@ const Styles = `
     container-type: size;
   }
 
+  /* deck-level on('render') output: a deck-wide backdrop sharing the card's
+     geometry (sits inside the card wrapper, behind the card canvas) */
+  .bc-deck-render {
+    overflow: hidden;
+  }
+
   .bc-card-canvas {
     position: absolute;
     top: 0; left: 0;
-    background: #fff;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+    background: transparent;   /* default: transparent so the deck render shows through;
+                                  the white "paper" + shadow live on the card wrapper */
     border-radius: 3px;
     overflow: hidden;
     transform-origin: top left;
@@ -2724,6 +2731,9 @@ const Styles = `
     width: 26px; height: 22px; flex: none;
     padding: 0; border: none; background: transparent; cursor: pointer;
   }
+  .bc-props-row input.bc-props-opacity {       /* the opacity (%) field next to a colour picker */
+    flex: 0 0 48px;
+  }
   .bc-props-row input[type="checkbox"] { accent-color: #0A84FF; }
   .bc-props-row select option { background: #2c2c2e; }
   .bc-props-hint { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 2px; }
@@ -2792,6 +2802,13 @@ const Styles = `
     padding: 6px 0; cursor: pointer;
   }
   .bc-decks-new:hover { background: rgba(255,255,255,0.18); }
+  .bc-decks-remember {
+    flex-shrink: 0; display: flex; align-items: center; gap: 7px;
+    margin: 2px 12px 10px; cursor: pointer;
+    color: rgba(255,255,255,0.65); font-size: 11px;
+    border-top: 1px solid rgba(255,255,255,0.10); padding-top: 9px;
+  }
+  .bc-decks-remember input[type="checkbox"] { accent-color: #0A84FF; cursor: pointer; }
 
   /* ---- card browser ----------------------------------------------------- */
 
@@ -3694,6 +3711,37 @@ on('render', () => {
 
   export type BC_DeckInfo = { Key:string; Name:string }
 
+/**** "remember last deck" - opt-in, just like the MCP "remember token" option ****/
+/****  while enabled, the storage-key of the active deck is kept in localStorage  ****/
+/****  and reopened on the next page load (if that deck still exists)             ****/
+
+  const RememberDeckFlag = 'bc-remember-deck'
+  const LastDeckKey      = 'bc-last-deck'
+
+  export function deckShallBeRemembered ():boolean {
+    try { return localStorage.getItem(RememberDeckFlag) === '1' } catch { return false }
+  }
+
+  export function rememberCurrentDeck (StorageKey:string):void {   // refreshes the pointer while enabled
+    try {
+      if (deckShallBeRemembered() && (StorageKey !== '')) {
+        localStorage.setItem(LastDeckKey, StorageKey)
+      }
+    } catch { /* ignore */ }
+  }
+
+  export function setDeckRemembering (Enabled:boolean, StorageKey:string):void {
+    try {
+      if (Enabled) {
+        localStorage.setItem(RememberDeckFlag, '1')
+        if (StorageKey !== '') { localStorage.setItem(LastDeckKey, StorageKey) }
+      } else {
+        localStorage.removeItem(RememberDeckFlag)
+        localStorage.removeItem(LastDeckKey)
+      }
+    } catch { /* ignore */ }
+  }
+
 /**** ValueIsWidgetJSON/CardJSON/Deck — light structural checks ****/
 
   export function ValueIsWidgetJSON (Value:any):boolean {
@@ -3948,11 +3996,14 @@ export function makeWidgetProxy (
 ):BC_WidgetProxy {
   let _own:Record<string,unknown> | null = null
   let _Script:unknown = null         // ScriptInstance of this widget, for send()
+  let _View:Element | undefined      // the widget's wrapper DOM element, once mounted
   return new Proxy(Obj, {
     get (target, key) {
       if (key === $Script) { return _Script }
+      if (key === $View)   { return _View }
       switch (key) {
         case 'own':    return (_own ??= {})
+        case 'View':   return _View
         case 'Applet': return deckProxy
         case 'Card':   return cardProxy
         case 'x':      { const { left }   = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return left   }
@@ -3975,6 +4026,8 @@ export function makeWidgetProxy (
     },
     set (target, key, value) {
       if (key === $Script) { _Script = value; return true }
+      if (key === $View)   { _View = value as Element | undefined; return true }
+      if (key === 'View')  { return true }              // me.View is read-only
       if (key === 'own')   { _own = value as Record<string,unknown>; return true }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
@@ -4273,6 +4326,11 @@ function WidgetView ({
   }
   const proxy = proxyRef.current!
 
+  // hands the wrapper DOM element to the proxy, reachable as "me.View" in scripts
+  const viewRef = useCallback(
+    (Element:Element | null) => { (proxy as Indexable)[$View] = Element ?? undefined }, [proxy]
+  )
+
   const onReadyRef     = useRef(onReady)
   onReadyRef.current   = onReady
   const onMessageRef   = useRef(onMessage)
@@ -4344,6 +4402,7 @@ function WidgetView ({
   )
   return html`
     <div
+      ref=${viewRef}
       class=${`bc-obj${Obj.Type === 'shape' ? ' bc-shape' : ''}`}
       style=${{ ...RectStyle(Obj, containerW, containerH), ...extraStyle }}
     >
@@ -4794,9 +4853,6 @@ function WidgetView ({
         onEdited()
       }
 
-      const cardColor    = Card.Color ?? '#ffffff'
-      const colorPickable = /^#[0-9a-f]{6}$/i.test(cardColor)
-
       return html`
         <div class="bc-props-panel">
           <div class="bc-props-title">${Card.Name}</div>
@@ -4811,13 +4867,7 @@ function WidgetView ({
             <input type="text" value=${Card.Name}
               onInput=${(Event:Event) => updateCard('Name', (Event.target as HTMLInputElement).value)}/>
           </div>
-          <div class="bc-props-row">
-            <label>Color</label>
-            <input type="color" value=${colorPickable ? cardColor : '#ffffff'}
-              onInput=${(Event:Event) => updateCard('Color', (Event.target as HTMLInputElement).value)}/>
-            <input type="text" value=${cardColor}
-              onInput=${(Event:Event) => updateCard('Color', (Event.target as HTMLInputElement).value)}/>
-          </div>
+          ${ColorAlphaRow('Color', Card.Color ?? '#ffffff00', (Color) => updateCard('Color', Color))}
           <div class="bc-props-row">
             <label>searchable</label>
             <input type="checkbox" checked=${! Card.dontSearch}
@@ -4991,15 +5041,8 @@ function WidgetView ({
     }
 
     function ColorRow (Label:string, Key:string, Fallback:string) {
-      const Value    = ((Widget as Indexable)[Key] as string) ?? Fallback
-      const pickable = /^#[0-9a-f]{6}$/i.test(Value)
-      return html`<div class="bc-props-row">
-        <label>${Label}</label>
-        <input type="color" value=${pickable ? Value : '#000000'}
-          onInput=${(Event:Event) => update(Key, (Event.target as HTMLInputElement).value)}/>
-        <input type="text" value=${Value}
-          onInput=${(Event:Event) => update(Key, (Event.target as HTMLInputElement).value)}/>
-      </div>`
+      const Value = ((Widget as Indexable)[Key] as string) ?? Fallback
+      return ColorAlphaRow(Label, Value, (Color) => update(Key, Color))
     }
 
     const TypeLabel = (              // user-facing name of the widget's type
@@ -5116,7 +5159,10 @@ function WidgetView ({
         `
         break
       default:                                                       // 'generic'
-        TypeSection = ConfigurationRow()
+        TypeSection = html`
+          ${TextRow('Text','Text')}
+          ${ConfigurationRow()}
+        `
     }
 
     return html`
@@ -5203,6 +5249,49 @@ function clamp (v:number, min:number, max:number) {
   return Math.max(min, Math.min(max, v))
 }
 
+/**** colour <-> (RGB picker + opacity) helpers ****/
+/****  a colour is stored as #RRGGBBAA so it carries its own alpha; these split  ****/
+/****  it for the (alpha-less) native colour picker plus a separate opacity input ****/
+
+export function RGBHexOf (Color:string):string {     // the #RRGGBB part, for <input type="color">
+  const Match = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(Color)
+  return (Match == null) ? '#ffffff' : '#'+Match[1].toLowerCase()
+}
+
+export function AlphaPercentOf (Color:string):number {   // opacity 0..100; opaque unless told otherwise
+  if ((Color == null) || (Color === 'transparent')) { return 0 }
+  const Hex8 = /^#[0-9a-f]{6}([0-9a-f]{2})$/i.exec(Color)
+  if (Hex8 != null) { return Math.round(parseInt(Hex8[1],16)/255*100) }
+  const RGBA = /^rgba\([^,]+,[^,]+,[^,]+,\s*([01]|0?\.[0-9]+)\s*\)$/i.exec(Color)
+  if (RGBA != null) { return Math.round(parseFloat(RGBA[1])*100) }
+  return 100
+}
+
+export function ColorFrom (rgbHex:string, alphaPercent:number):string {   // build #RRGGBBAA
+  const Match = /^#?([0-9a-f]{6})$/i.exec(rgbHex)
+  const RGB   = (Match == null) ? 'ffffff' : Match[1].toLowerCase()
+  const Alpha = Math.round(clamp(alphaPercent,0,100)/100*255).toString(16).padStart(2,'0')
+  return '#'+RGB+Alpha
+}
+
+/**** ColorAlphaRow — a properties row: colour picker + opacity (%) + full value ****/
+
+function ColorAlphaRow (Label:string, Current:string, Commit:(Color:string) => void) {
+  return html`<div class="bc-props-row">
+    <label>${Label}</label>
+    <input type="color" value=${RGBHexOf(Current)}
+      onInput=${(Event:Event) => Commit(ColorFrom((Event.target as HTMLInputElement).value, AlphaPercentOf(Current)))}/>
+    <input class="bc-props-opacity" type="number" min="0" max="100" title="opacity (%)"
+      value=${AlphaPercentOf(Current)}
+      onInput=${(Event:Event) => {
+        const Percent = parseInt((Event.target as HTMLInputElement).value,10)
+        if (isFinite(Percent)) { Commit(ColorFrom(RGBHexOf(Current), Percent)) }
+      }}/>
+    <input type="text" value=${Current}
+      onInput=${(Event:Event) => Commit((Event.target as HTMLInputElement).value)}/>
+  </div>`
+}
+
 /**** CardView — Preact component for a Card; manages the card script lifecycle ****/
 
 // CardView is instantiated from outside (Deck) and instantiates its Objects in turn.
@@ -5210,7 +5299,7 @@ function clamp (v:number, min:number, max:number) {
 
 function CardView ({
   Card, Scale, CanvasW, CanvasH, makeContext,
-  deckProxy, onCardProxy, onCardReady, onMessage,
+  deckProxy, onCardProxy, onCardReady, onMessage, deckRenderSlot = null,
   isEditing = false, selectedId = null, onSelect, onEdited, Grid, onBeforeEdit,
 }:{
   Card:        BC_Card
@@ -5222,6 +5311,7 @@ function CardView ({
   onCardProxy: (proxy:BC_CardProxy) => void
   onCardReady: () => void
   onMessage?:  (msg:string) => void       // bubbles a widget message up to the deck
+  deckRenderSlot?: unknown                 // deck-level on('render') output, shown behind the card
   isEditing?:  boolean
   selectedId?: string | null
   onSelect?:   (Id:string | null) => void
@@ -5329,14 +5419,23 @@ function CardView ({
     height:          CanvasH,
     transform:       `scale(${Scale})`,
     transformOrigin: 'top left',
-    background:      Card.Color ?? '#fff',
+    background:      Card.Color ?? '#ffffff00',      // transparent white by default so the deck render shows through
   }
-  const WrapperStyle = {
+  const WrapperStyle = {        // the white "paper" + drop shadow behind the (now transparent) card
     width:CanvasW*Scale, height:CanvasH*Scale, position:'relative', flexShrink:0,
+    background:'#fff', borderRadius:3,
+    boxShadow:'0 4px 24px rgba(0,0,0,0.55)',
+  }
+  const DeckRenderStyle = {        // matches the canvas geometry so it aligns with the card
+    position:'absolute', top:0, left:0, width:CanvasW, height:CanvasH,
+    transform:`scale(${Scale})`, transformOrigin:'top left',
   }
 
   return html`
     <div style=${WrapperStyle}>
+      ${(deckRenderSlot != null) && html`
+        <div class="bc-deck-render" style=${DeckRenderStyle}>${deckRenderSlot}</div>
+      `}
       <div class="bc-card-canvas" style=${CanvasStyle}>
         ${renderSlot}
         ${allObjects.map((obj) => html`
@@ -5895,6 +5994,12 @@ function DeckView ({
 /**** decks panel state and handlers ****/
 
   const [DeckList, setDeckList] = useState<BC_DeckInfo[] | null>(null)
+  const [rememberDeck, setRememberDeck] = useState(deckShallBeRemembered())
+
+  function toggleRememberDeck (Enabled:boolean):void {
+    setDeckRemembering(Enabled, StorageKey)
+    setRememberDeck(Enabled)
+  }
 
   function refreshDeckList ():void {
     if (onDeckList == null) { setDeckList([]); return }
@@ -6589,7 +6694,6 @@ function DeckView ({
   return html`
     <${Fragment}>
       <div class="bc-app">
-        ${deckRenderSlot}
         ${withChrome && html`<${MenuBar}
           DeckName=${Deck.Name}
           CardIndex=${CardIndex}
@@ -6635,6 +6739,7 @@ function DeckView ({
               Scale=${Scale}
               CanvasW=${CanvasW}
               CanvasH=${CanvasH}
+              deckRenderSlot=${deckRenderSlot}
               makeContext=${makeBaseContext}
               deckProxy=${deckProxy}
               onCardProxy=${onCardProxy}
@@ -6702,6 +6807,12 @@ function DeckView ({
                     `)
               }
             </div>
+            <label class="bc-decks-remember"
+              title="reopen the deck you last worked on automatically after a page reload">
+              <input type="checkbox" checked=${rememberDeck}
+                onChange=${(e:Event) => toggleRememberDeck((e.target as HTMLInputElement).checked)}/>
+              <span>remember last deck on reload</span>
+            </label>
           </div>
         `}
         ${(activeOverlay === 'cards-panel') && html`
@@ -6932,9 +7043,9 @@ class BC_Designer extends HTMLElement {
 
     this.#StorageKey = 'bc-deck:' + (this.getAttribute('name') ?? Deck.Name ?? 'default')
 
-    if (! this.hasAttribute('name')) {         // restore last opened deck if possible
+    if (deckShallBeRemembered()) {   // opt-in: reopen the last deck, even overriding a "name" default
       try {
-        const lastKey = localStorage.getItem('bc-last-deck')
+        const lastKey = localStorage.getItem(LastDeckKey)
         if (lastKey && lastKey !== this.#StorageKey) {
           const lastDeck = await get(lastKey, DeckStore)
           if (MountId !== this.#MountId) { return }
@@ -6969,6 +7080,8 @@ class BC_Designer extends HTMLElement {
 /**** #renderDeck ****/
 
   #renderDeck ():void {
+    rememberCurrentDeck(this.#StorageKey)   // keep the "last deck" pointer fresh (no-op unless enabled)
+
     let initialCardIndex = 0
     try {
       const saved = localStorage.getItem('bc-card-index:' + this.#StorageKey)
@@ -7137,8 +7250,7 @@ class BC_Designer extends HTMLElement {
       this.#Deck      = Deck
       this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
       this.#Generation += 1
-      try { localStorage.setItem('bc-last-deck', Key) } catch { /* ignore */ }
-      this.#renderDeck()
+      this.#renderDeck()                       // #renderDeck records the last-deck pointer
     } catch (Signal) {
       console.warn('[BrowserCard] could not access IndexedDB:', Signal)
     }
@@ -7425,7 +7537,8 @@ class BC_DeckElement extends HTMLElement {
     createPortal,
     useId, useRef, useState, useEffect, useCallback, useMemo, useContext,
     fromLocalTo, fromViewportTo, fromDocumentTo,
-    Marked,
+    Marked, markedHighlight, markedKatex, hljs,
+    ModuleURL: import.meta.url,        // actual URL of the running BrowserCard.js
   }
 
 if (customElements.get('bc-deck') == null) {

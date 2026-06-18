@@ -18,7 +18,7 @@ Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.h
 
 **Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `Widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.Count` and the widget re-renders.
 
-**Stay organized.** The decks panel lists every deck stored in your browser - create, open, rename or delete them there. The card browser shows live wireframe thumbnails of all cards in the current deck and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
+**Stay organized.** The decks panel lists every deck stored in your browser - create, open, rename or delete them there, and optionally enable "remember last deck on reload" (off by default) so the designer reopens the deck you last worked on after a page reload, if it still exists. The card browser shows live wireframe thumbnails of all cards in the current deck and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
 
 **Move content around.** Copy cards and widgets to the system clipboard (with BrowserCard-specific MIME types and a plain text fallback) and paste them into another card, another deck, or another browser tab - BrowserCard detects by itself what the clipboard contains. Import decks from JSON files or directly from a URL; export them as JSON, as a ready-to-paste embedding snippet, or as a complete standalone web app.
 
@@ -139,6 +139,17 @@ on('render', () => html`<div>Hello, ${Configuration.Name ?? 'world'}!</div>`)
 
 With `Configuration = { "Name":"World" }` this widget greets "Hello, World!". Use `Configuration` for static, design-time settings; use `me.*` for mutable runtime state.
 
+Custom widgets also have a standard **`Text`** property - the same one a field has. It is edited in the properties panel ("Custom Widget" section) just like a field's text, and read or written from the script via `my.Text`. Unlike a field, a custom widget does *not* render its `Text` on its own: it is plain data until the widget's `on('render', ...)` (or a behavior) displays it. This makes `Text` the natural place for the widget's primary text content - a `TitleView` behavior, for instance, simply renders `my.Text` in bold:
+
+```javascript
+// TitleView widget behavior:
+on('render', () => html`
+  <div style=${{ fontSize:'22px', fontWeight:'bold' }}>${my.Text ?? ''}</div>
+`)
+```
+
+`Text` is persisted with the deck and can be changed at runtime (`my.Text = '…'` re-renders immediately), so the same widget can serve as a design-time label and a script-driven display.
+
 ### Using Preact — do not re-import it
 
 BrowserCard runs on a single, bundled Preact instance. If a script imports Preact again (e.g. `import { useState } from 'https://…/preact'`), it gets a *second*, unconnected copy whose hooks and rendering do not work together with BrowserCard's - widgets then misbehave in subtle ways.
@@ -226,6 +237,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `my.Card` | proxy of the current card |
 | `my.Card.WidgetList` | proxies of all widgets on the current card, in drawing order |
 | `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
+| `my.View` | *(widgets only)* the widget's wrapper DOM element once mounted (read-only; `undefined` before the first render and after removal - always guard with `if (my.View != null)`) |
 | `nextCard`, `prevCard`, `firstCard`, `lastCard` | card refs for `go()` |
 | `html` | the htm/Preact template tag for `render` handlers (do **not** re-import Preact) |
 | `preact` | the most important Preact exports, bundled into one object (see below) - use these instead of importing Preact |
@@ -347,6 +359,38 @@ Since behaviors are plain ES modules, sharing one simply means hosting the file 
 - **jsDelivr** for files in any public GitHub repo: `https://cdn.jsdelivr.net/gh/<user>/<repo>/<path>.js` (note: `raw.githubusercontent.com` does *not* work - it serves `text/plain`, which browsers refuse to import)
 
 To contribute a behavior to the shared collection, place it in this repository's `behaviors/decks`, `behaviors/cards` or `behaviors/widgets` folder (via pull request) - it then becomes loadable by its bare name.
+
+### Predefined widget behaviors
+
+This repository provides a small family of ready-to-use widget behaviors, most of which display a custom widget's `Text` property (see [custom widgets](#reactive-state-with-me--my--i) above). Load any of them with `await behaveLike('<name>')`:
+
+| Behavior | Purpose |
+|----------|---------|
+| `TitleView` | shows `my.Text` as 22px bold text |
+| `SubtitleView` | shows `my.Text` as 18px bold text |
+| `Label` | shows `my.Text` as 15px bold text |
+| `TextView` | shows `my.Text` as 15px normal text |
+| `FineprintView` | shows `my.Text` as 13px normal text |
+| `HTMLView` | renders `my.Text` as raw HTML |
+| `MarkdownView` | renders `my.Text` as Markdown - with syntax highlighting, math and Mermaid diagrams |
+| `ImageView` | shows the image loaded from the URL in `my.Text` |
+| `SVGView` | renders the inline SVG source held in `my.Text` |
+| `WebView` | shows the web page at the URL in `my.Text` inside an `<iframe>` |
+| `nativeButton` | a native `<button>` whose (HTML) label is `my.Text` |
+| `horizontalSeparator` | a thin light-grey line across the widget's vertical middle |
+| `verticalSeparator` | a thin light-grey line down the widget's horizontal middle |
+
+`ImageView` and `SVGView` both read a `scaling` (`'none'`, `'stretch'`, `'cover'`, `'contain'`) and an `alignment` (`'left top'` … `'right bottom'`) from the widget's `Configuration`. `WebView` reads `allowsFullScreen` (boolean), `Permissions` (the iframe's `allow` attribute), `SandboxPermissions` (the `sandbox` attribute - `false` omits it entirely, `''` is maximally restrictive) and `ReferrerPolicy` from `Configuration`. `nativeButton` dispatches a `'click'` message on every click (handle it with `on('click', () => ...)` in the widget's own script) and is locked via `my.disabled = true` (or the `Configuration` field `disabled`). `HTMLView`, `SVGView`, `MarkdownView` and `nativeButton` insert markup that originates from `my.Text`; treat that text as you would any HTML/SVG you embed (it is author content, but do not feed untrusted input into it unsanitised).
+
+### MarkdownView and the bundled Markdown toolkit
+
+`MarkdownView` reuses the Markdown stack that is already bundled into BrowserCard rather than pulling in its own copy. For external behaviors these pieces are exposed on the global `BC` object: `BC.Marked` (the [marked](https://marked.js.org) class), `BC.markedHighlight` and `BC.markedKatex` (the highlight/KaTeX extensions), `BC.hljs` (a [highlight.js](https://highlightjs.org) core with `css`, `javascript`, `java`, `json`, `typescript`, `html`/`xml` registered) and `BC.ModuleURL` (the running module's URL, used to locate the assets beside it). It renders ` ```mermaid ` fenced blocks as [Mermaid](https://mermaid.js.org) diagrams, code blocks with highlight.js, and `$…$` / `$$…$$` math with KaTeX (inline `$…$` works even when touching brackets, via the `nonStandard` option; override per widget with the `Configuration` field `KaTeX`).
+
+The vendored assets are **served same-origin** beside the running `BrowserCard.js`: the KaTeX CSS + web-fonts and the Mermaid build live in a `markdown/` folder, the content/highlight stylesheet in a hand-authored `markdown.css` next to that folder (kept in the repo's `public/` folder, which Vite copies into `dist/` on build). `MarkdownView` never issues a third-party network request - everything is loaded from the same origin that serves BrowserCard, with the location derived from `BC.ModuleURL`. Override it with the optional `Configuration` field `AssetBase` (and set `{ "Mermaid": false }` to disable diagram rendering):
+
+```javascript
+await behaveLike('MarkdownView')   // then type Markdown into the widget's "Text"
+```
 
 ## Technology
 

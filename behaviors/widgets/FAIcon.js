@@ -30,6 +30,9 @@
 
   const IconStyle = `
     .bc-widget > fa-icon {
+      position:absolute;
+      left:50%; top:50%;
+      transform:translate(-50%,-50%);
       width:24px ! important; height:24px ! important;
       font-size:18px; line-height:24px; text-align:center;
       pointer-events:auto;

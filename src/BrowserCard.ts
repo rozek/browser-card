@@ -2219,6 +2219,7 @@ export interface BC_Deck extends BC_Visual {
   GridHeight?:         number                                          // dto.
   CardWidth?:          number      // native card canvas width (default: 600)
   CardHeight?:         number      // native card canvas height (default: 450)
+  localBehaviors?:     Record<string,string>   // name -> behaviour source text
 }
 
 /**** BC_Grid — resolved grid settings, used while editing ****/
@@ -2315,7 +2316,7 @@ interface BC_Picture extends BC_Widget { Type: 'picture'; Variant: BC_PictureVar
 // forward declarations (mutually recursive)
 // 'own' is a plain object for script-private state; writes to it do NOT trigger a re-render
 type BC_DeckProxy   = BC_Deck   & {
-  own:Record<string,unknown>; readonly Applet:BC_DeckProxy; readonly Card:BC_CardProxy
+  own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy
   [$Console]:           string
   [$rerender]:          () => void
   [$Console_LineCount]: number
@@ -2323,8 +2324,8 @@ type BC_DeckProxy   = BC_Deck   & {
   Console_LineLimit:           number
   Console_CharLimit:           number
 }
-type BC_CardProxy   = BC_Card   & { own:Record<string,unknown>; readonly Applet:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[] }
-type BC_WidgetProxy = BC_Widget & { own:Record<string,unknown>; readonly Applet:BC_DeckProxy; readonly Card:BC_CardProxy }
+type BC_CardProxy   = BC_Card   & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[] }
+type BC_WidgetProxy = BC_Widget & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy }
 type BC_Proxy = BC_DeckProxy | BC_CardProxy | BC_WidgetProxy
 
 //----------------------------------------------------------------------------//
@@ -2976,6 +2977,8 @@ interface BC_ScriptContext {
   print:        (...ArgList:unknown[]) => void
   println:      (...ArgList:unknown[]) => void
   clearConsole: () => void
+  defineLocalBehavior: (Name:string, Fn:unknown) => string
+  localBehavior:       (Name:string) => string
   me:        BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null
   my:        BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null   // synonym for "me"
   I:         BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null   // synonym for "me"
@@ -3267,6 +3270,20 @@ export function buildContext (
     print:        ConsoleFns.print,
     println:      ConsoleFns.println,
     clearConsole: ConsoleFns.clearConsole,
+
+    defineLocalBehavior (Name, Fn) {           // store readable source in the deck
+      const Source = (typeof Fn === 'function' ? Fn.toString() : String(Fn ?? ''))
+      ;(_Deck.localBehaviors ??= {})[Name] = Source
+      return Source
+    },
+    localBehavior (Name) {                      // turn stored source into a data-URI
+      const Source = _Deck.localBehaviors?.[Name]
+      if (Source == null) throwError(
+        'NoSuchBehavior: no local behavior named ' + quoted(Name) + ' has been defined'
+      )
+      return 'data:text/javascript;charset=utf-8,' +
+        encodeURIComponent('export default ' + Source)
+    },
 
     me,
     my: me,                                  // "me", "my" and "I" are synonyms
@@ -4004,7 +4021,7 @@ export function makeWidgetProxy (
       switch (key) {
         case 'own':    return (_own ??= {})
         case 'View':   return _View
-        case 'Applet': return deckProxy
+        case 'Deck': return deckProxy
         case 'Card':   return cardProxy
         case 'x':      { const { left }   = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return left   }
         case 'y':      { const { top }    = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return top    }
@@ -4054,7 +4071,7 @@ export function makeCardProxy (
       switch (key) {
         case 'own':        return (_own ??= {})
         case 'View':       return _View
-        case 'Applet':     return deckProxy
+        case 'Deck':     return deckProxy
         case 'Card':       return proxy
         case 'WidgetList': return widgetListRef.current
         default:           return Reflect.get(target, key)
@@ -4096,7 +4113,7 @@ export function makeDeckProxy (
       switch (key) {
         case 'own':               return (_own ??= {})
         case 'View':              return _View
-        case 'Applet':            return proxy
+        case 'Deck':            return proxy
         case 'Card':              return cardProxyRef.current!
         case 'Console_LineLimit': return Reflect.get(target, key) ?? Default_LineLimit
         case 'Console_CharLimit': return Reflect.get(target, key) ?? Default_CharLimit

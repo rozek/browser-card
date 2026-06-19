@@ -61,7 +61,7 @@ Write meaningful scripts for interactive elements:
 - Deck/card level: initialization via `on('ready', ...)`, global logic
 - Use `on('click', ...)`, `on('open', ...)`, `on('ready', ...)`, `on('update', ...)`, `on('render', ...)` and the full API from the SystemPrompt
 - `dispatch(msg, ...args)` passes arguments to handlers — use for event-driven value propagation
-- Access the current card from a widget script via `my.Card`, the deck via `my.Applet`
+- Access the current card from a widget script via `my.Card`, the deck via `my.Deck`
 - **Do not** use `Card()` without arguments — it returns `null`. `Card('Name')` / `Card(N)` is navigation only
 - **Widget behavior pattern:** custom input widgets use `on('update', ...)` to pull state from `my.Card` before render, and `dispatch('change', value)` to notify the card of user input — see the "Widget Behavior Pattern" section in the SystemPrompt for a full `NumberInput` example
 

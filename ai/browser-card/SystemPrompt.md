@@ -363,7 +363,7 @@ my.Width = 200                 // Update geometry → triggers layout
 my.own.counter = 0             // Transient (private) state - no re-render, no persistence
 I.changeGeometryTo(x, y, w, h) // Update position/size from pixel values
 my.Card                        // Proxy of the widget's own card (read/write properties)
-my.Applet                      // Proxy of the deck (read/write properties)
+my.Deck                        // Proxy of the deck (read/write properties)
 ```
 
 > **Note:** `Card('Name')` and `Card(index)` are for **navigation only** (used with `go()`).
@@ -397,7 +397,7 @@ clearConsole()
 
 Well-designed custom widget behaviors decouple internal rendering from external (Card/Deck) state using two conventions:
 
-- **`on('update', ...)`** — called synchronously before every render. Pull the current external value into the widget's local state so it always reflects the latest `my.Card` or `my.Applet` property.
+- **`on('update', ...)`** — called synchronously before every render. Pull the current external value into the widget's local state so it always reflects the latest `my.Card` or `my.Deck` property.
 - **`dispatch('change', value)`** — dispatch after user input. The card or deck script listens for this event and saves the value to its own state.
 
 This way the widget behavior doesn't need to know who owns the value. Example — a `NumberInput` behavior:

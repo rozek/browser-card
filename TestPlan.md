@@ -138,7 +138,7 @@ Suggested scripts (add to `package.json`):
 | `me.changeGeometryTo(...)` | writes offsets + triggers update |
 | `me.own` | reads/writes a private object **without** triggering re-render or persistence |
 | `me.Configuration` | exposes the widget's config object |
-| `me.Applet` / `me.Card` / `me.Card.WidgetList` | resolve to the right proxies / ordered widget list |
+| `me.Deck` / `me.Card` / `me.Card.WidgetList` | resolve to the right proxies / ordered widget list |
 
 ## 11. Message bubbling
 

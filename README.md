@@ -226,13 +226,15 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `after(ms, Fn)` | one-shot timer, cancelled automatically on teardown |
 | `every(ms, Fn)` | repeating timer, cancelled automatically on teardown |
 | `await behaveLike(Name)` | loads and runs a behavior (one per visual) |
+| `defineLocalBehavior(Name, Fn)` | stores `Fn`'s source text as a local behavior in the deck (`Deck.localBehaviors.<Name>`) |
+| `localBehavior(Name)` | returns a data-URI module for the stored local behavior `Name`, ready for `behaveLike(...)` |
 
 ### Values
 
 | Value | Description |
 |-------|-------------|
 | `me` / `my` / `I` | reactive proxy of the visual running the script (three synonyms) |
-| `my.Applet` | proxy of the surrounding deck |
+| `my.Deck` | proxy of the surrounding deck |
 | `my.Card` | proxy of the current card |
 | `my.Card.WidgetList` | proxies of all widgets on the current card, in drawing order |
 | `my.own` | plain object for transient, script-private state (no re-render, no persistence) |
@@ -263,7 +265,7 @@ A *behavior* is a reusable script, packaged as an ordinary ES module - the Brows
 
 Well-designed custom widget behaviors follow a simple convention that decouples the widget's internal rendering from the card or deck state it represents:
 
-- **`on('update', ...)`** — called synchronously before every render. Use it to pull the "outer" value (from `my.Card` or `my.Applet`) into the widget's own local state. This ensures the widget always displays the current external value, even if it was changed from elsewhere.
+- **`on('update', ...)`** — called synchronously before every render. Use it to pull the "outer" value (from `my.Card` or `my.Deck`) into the widget's own local state. This ensures the widget always displays the current external value, even if it was changed from elsewhere.
 
 - **`dispatch('change', value)`** — dispatched whenever the user makes an input. The card (or deck) script listens for this and stores the new value in its own state.
 
@@ -349,6 +351,23 @@ Note: `on()` registers one handler per message - if both the behavior and the sc
 
 The intrinsic names `button`, `field`, `shape` and `picture` are reserved for the built-in behaviors (they are also what renders these widget types - a button script implicitly starts with `await behaveLike('button')`).
 
+### Local behaviors
+
+A behavior need not be a separate file: a deck can carry its own behaviors inline. `defineLocalBehavior(Name, Fn)` stores the **source text** of `Fn` in the deck (as `Deck.localBehaviors.<Name>`, so it is persisted and human-readable); `localBehavior(Name)` turns that stored source into a `data:`-URI ES module that `behaveLike()` can load:
+
+```javascript
+// once (e.g. in the deck script), define a reusable local behavior:
+defineLocalBehavior('Blink', async ({ on, my, every, html }) => {
+  on('ready',  () => every(500, () => { my.shown = ! my.shown }))
+  on('render', () => html`<div style=${{ visibility:(my.shown === false ? 'hidden' : 'visible') }}>${my.Text ?? 'blink!'}</div>`)
+})
+
+// in any widget (or card) script:
+await behaveLike(localBehavior('Blink'))
+```
+
+The function receives the full [script context](#script-api-reference) as its single argument - exactly like a file behavior - so it must be **self-contained**: it may only use its destructured parameters and real globals (`globalThis.BC`, `document`, …), never variables from the script that defined it (only the source text is stored, not its closure). As with any behavior, only one `behaveLike(...)` runs per visual. `Deck.localBehaviors` is ordinary deck data, so local behaviors travel with the deck's JSON export.
+
 ### Exporting ("sharing") a behavior
 
 Since behaviors are plain ES modules, sharing one simply means hosting the file somewhere it can be imported from:
@@ -397,12 +416,13 @@ This repository provides a small family of ready-to-use widget behaviors, most o
 | `nativeColorInput` | a colour `<input>` with `Value`/`readonly`/`Suggestions`/`disabled` |
 | `nativeTextInput` | a multi-line `<textarea>` with `Value`/`invalid`/`Placeholder`/`readonly`/`minLength`/`maxLength`/`LineWrapping`/`Resizability`/`SpellChecking`/`disabled` |
 | `FAIcon` | a clickable FontAwesome 4.7.0 icon (`Value` = icon name, `Color`, `hilite`, `disabled`) |
+| `Icon` | a clickable bitmap icon (greyscale, 24x24 contain; `hilite` adds an `active` highlight box) |
 | `horizontalSeparator` | a thin light-grey line across the widget's vertical middle |
 | `verticalSeparator` | a thin light-grey line down the widget's horizontal middle |
 
 `ImageView` and `SVGView` both read a `scaling` (`'none'`, `'stretch'`, `'cover'`, `'contain'`) and an `alignment` (`'left top'` … `'right bottom'`) from the widget's `Configuration`. `WebView` reads `allowsFullScreen` (boolean), `Permissions` (the iframe's `allow` attribute), `SandboxPermissions` (the `sandbox` attribute - `false` omits it entirely, `''` is maximally restrictive) and `ReferrerPolicy` from `Configuration`. `nativeButton` dispatches a `'click'` message on every click (handle it with `on('click', () => ...)` in the widget's own script) and is locked via `my.disabled = true` (or the `Configuration` field `disabled`). `nativeCheckbox` reflects `my.Text` (`on`/`true`, `off`/`false`, `-` = indeterminate), writes `'on'`/`'off'` back to `my.Text` on every toggle and dispatches `'change'` with the new boolean state; it is locked the same way. `nativeRadiobutton` behaves like `nativeCheckbox` but as a radio button (no indeterminate state). `nativeGauge` reads its numeric parameters `Value`, `Minimum`, `lowerBound`, `Optimum`, `upperBound` and `Maximum` from `my.*` (falling back to `Configuration`), mapping them to the `<meter>` attributes; `Value` may alternatively be given as text in `my.Text`. `nativeProgressbar` works the same way with `Value` and `Maximum` (and shows the indeterminate animation when no `Value` is resolvable). `nativeSlider` reads `Value`, `Minimum`, `Stepping` (may be `'any'`), `Maximum` and `Hashmarks` the same way, dragging writes the value back to `my.Text` and dispatches `'change'`; `Hashmarks` is an array - or a space/comma-separated string - of numbers or `value=label` pairs and is rendered as `<datalist>` tick marks. It is lockable via `my.disabled`/`Configuration.disabled`. `nativeTextlineInput` reads `Value`, `Placeholder`, `readonly`, `minLength`, `maxLength`, `Pattern` (a regular expression the value must match to be valid), `SpellChecking`, `Suggestions` (an array or comma-separated string rendered as a `<datalist>`), `invalid` (forces the invalid state, independent of `Pattern`) and `disabled`; typing writes the value back to `my.Text` and dispatches `'change'`.
 
-`nativePasswordInput` is identical to `nativeTextlineInput` but masks its input (no `SpellChecking`/`Suggestions`). `nativeNumberInput` is the numeric variant, taking `Minimum`/`Stepping` (may be `'any'`)/`Maximum` instead of `minLength`/`maxLength`/`Pattern`. `nativeEMailAddressInput` is the email variant; its `multiple` flag permits several comma-separated addresses. `nativePhoneNumberInput` is the telephone (`type="tel"`) variant with the same parameters as `nativeTextlineInput` (minus `SpellChecking`); `nativeURLInput` is the URL (`type="url"`) variant with the same parameters (and native URL validation); `nativeSearchInput` is the search (`type="search"`) variant (like `nativeTextlineInput`, including `SpellChecking`). `nativeTimeInput` is a `type="time"` field whose `withSeconds` flag adds a seconds field and whose `Minimum`/`Maximum` bound the range; `nativeDateTimeInput` is the `type="datetime-local"` equivalent, while `nativeDateInput`, `nativeWeekInput` and `nativeMonthInput` cover `type="date"`/`"week"`/`"month"` (all without `withSeconds`). All of them also honour an `invalid` flag (on top of the native `Minimum`/`Maximum` check). `nativeDropDown` renders a `<select>` from `Options` - a list (or space-separated string) of values or `value:label` pairs where a leading `-` disables an entry - and writes the chosen value back to `my.Text`. `nativeColorInput` is a `type="color"` picker (`#rrggbb`) whose `Suggestions` appear as swatches. `nativeTextInput` is a multi-line `<textarea>` (filling the widget) whose `LineWrapping` toggles soft wrapping and whose `Resizability` (`'none'`/`'horizontal'`/`'vertical'`/`'both'`) controls the resize handle. `FAIcon` shows a clickable [FontAwesome 4.7.0](https://fontawesome.com/v4/) icon (`Value` is the icon name such as `fa-home`, `Color` its colour, `hilite` adds the `active` class, `disabled` blocks clicks); it dispatches `'click'`. The FontAwesome stylesheet and webfont are vendored **same-origin** in a `fontawesome/` folder beside `BrowserCard.js` (kept in the repo's `public/`) - no third-party request. All input behaviors keep the value the user is editing untouched **while the input is focused** - external changes to `Value`/`my.Text` are ignored until focus leaves, at which point the display syncs to the current value. `HTMLView`, `SVGView`, `MarkdownView` and `nativeButton` insert markup that originates from `my.Text`; treat that text as you would any HTML/SVG you embed (it is author content, but do not feed untrusted input into it unsanitised).
+`nativePasswordInput` is identical to `nativeTextlineInput` but masks its input (no `SpellChecking`/`Suggestions`). `nativeNumberInput` is the numeric variant, taking `Minimum`/`Stepping` (may be `'any'`)/`Maximum` instead of `minLength`/`maxLength`/`Pattern`. `nativeEMailAddressInput` is the email variant; its `multiple` flag permits several comma-separated addresses. `nativePhoneNumberInput` is the telephone (`type="tel"`) variant with the same parameters as `nativeTextlineInput` (minus `SpellChecking`); `nativeURLInput` is the URL (`type="url"`) variant with the same parameters (and native URL validation); `nativeSearchInput` is the search (`type="search"`) variant (like `nativeTextlineInput`, including `SpellChecking`). `nativeTimeInput` is a `type="time"` field whose `withSeconds` flag adds a seconds field and whose `Minimum`/`Maximum` bound the range; `nativeDateTimeInput` is the `type="datetime-local"` equivalent, while `nativeDateInput`, `nativeWeekInput` and `nativeMonthInput` cover `type="date"`/`"week"`/`"month"` (all without `withSeconds`). All of them also honour an `invalid` flag (on top of the native `Minimum`/`Maximum` check). `nativeDropDown` renders a `<select>` from `Options` - a list (or space-separated string) of values or `value:label` pairs where a leading `-` disables an entry - and writes the chosen value back to `my.Text`. `nativeColorInput` is a `type="color"` picker (`#rrggbb`) whose `Suggestions` appear as swatches. `nativeTextInput` is a multi-line `<textarea>` (filling the widget) whose `LineWrapping` toggles soft wrapping and whose `Resizability` (`'none'`/`'horizontal'`/`'vertical'`/`'both'`) controls the resize handle. `FAIcon` shows a clickable [FontAwesome 4.7.0](https://fontawesome.com/v4/) icon (`Value` is the icon name such as `fa-home`, `Color` its colour, `hilite` adds the `active` class, `disabled` blocks clicks); it dispatches `'click'`. The FontAwesome stylesheet and webfont are vendored **same-origin** in a `fontawesome/` folder beside `BrowserCard.js` (kept in the repo's `public/`) - no third-party request. `Icon` shows a clickable bitmap (URL from `my.Value`/`my.Text`/`Configuration.Value`): it is converted to greyscale and scaled to 24x24 (aspect-preserving `contain`), centred in the widget, and gets the CSS class `active` (a highlight box) when `hilite` is set; it dispatches `'click'` unless `disabled`. A bare name (no `/` and no `.`) is resolved to `icons/<name>.png` beside `BrowserCard.js`; with no source it falls back to a built-in `fa-question-circle-o`-style default. All input behaviors keep the value the user is editing untouched **while the input is focused** - external changes to `Value`/`my.Text` are ignored until focus leaves, at which point the display syncs to the current value. `HTMLView`, `SVGView`, `MarkdownView` and `nativeButton` insert markup that originates from `my.Text`; treat that text as you would any HTML/SVG you embed (it is author content, but do not feed untrusted input into it unsanitised).
 
 ### MarkdownView and the bundled Markdown toolkit
 

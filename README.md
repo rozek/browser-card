@@ -88,6 +88,16 @@ A deck has a *native* canvas size, set in the designer via the deck properties `
 
 Priority: CSS variables → `CardWidth`/`CardHeight` from the deck → built-in defaults.
 
+By default the scale factor is *computed* so the canvas fits its element. To pin it instead, set the CSS variable `--canvas-scale` (a unitless, positive number) on the element - it overrides the fit calculation (`1.0` = native size, `2.0` = double size, …):
+
+```html
+<bc-deck style="display:block; width:100%; height:100%;
+                 --canvas-width:800; --canvas-height:600; --canvas-scale:1.0"
+  src="..."></bc-deck>
+```
+
+A non-numeric or non-positive `--canvas-scale` is ignored, falling back to the automatic fit-to-element scaling. The pinned value applies to normal (browse) mode only; while editing, the canvas may be scaled *down* to fit the available area, but never *up* beyond `--canvas-scale`.
+
 
 ## Scripting Guide
 

@@ -381,6 +381,12 @@ every(500,  () => { /* runs every 500 ms */ })
 openURL('https://example.com')   // Open URL in new tab
 ```
 
+**Persistence:**
+```javascript
+await saveDeck()   // persist the deck (incl. geometry & Values) to the browser
+                   // store immediately; no-op while the deck is read-only
+```
+
 **Console (built-in BC console):**
 ```javascript
 println('value is', someValue)

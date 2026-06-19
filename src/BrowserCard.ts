@@ -2979,6 +2979,7 @@ interface BC_ScriptContext {
   clearConsole: () => void
   defineLocalBehavior: (Name:string, Fn:unknown) => string
   localBehavior:       (Name:string) => string
+  saveDeck:    () => Promise<void>         // persist the deck to the browser store
   me:        BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null
   my:        BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null   // synonym for "me"
   I:         BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null   // synonym for "me"
@@ -3190,6 +3191,7 @@ export function buildContext (
   onAsk:        (prompt:string, defaultValue:string, resolve:(Result:string | null) => void) => void,
   ConsoleFns:   BC_ConsoleFns,
   CardIndexRef: { current:number },
+  requestSave?: () => Promise<void> | void,
 ):BC_ScriptContext {
   function makeRef (navType:string, extra?:Partial<BC_CardRef>):BC_CardRef {
     return { __navType:navType, ...extra }
@@ -3284,6 +3286,7 @@ export function buildContext (
       return 'data:text/javascript;charset=utf-8,' +
         encodeURIComponent('export default ' + Source)
     },
+    saveDeck () { return Promise.resolve(requestSave?.()) },
 
     me,
     my: me,                                  // "me", "my" and "I" are synonyms
@@ -6525,16 +6528,28 @@ function DeckView ({
 
       setCanvasW(cw)
       setCanvasH(ch)
-      const Padding = 24
-      const s = Math.min((width - Padding*2) / cw, (height - Padding*2) / ch)
-      setScale(Math.max(0.1, s))
+
+      const Padding   = 24
+      const fitScale  = Math.max(0.1, Math.min((width - Padding*2) / cw, (height - Padding*2) / ch))
+
+    // an explicit "--canvas-scale" pins the scale - but only in browse mode;
+    // while editing the canvas may be scaled down to fit (never up beyond it)
+      const csVar = parseFloat(style.getPropertyValue('--canvas-scale').trim())
+      if (isFinite(csVar) && (csVar > 0)) {
+        setScale(isEditing ? Math.min(csVar, fitScale) : csVar)
+      } else {
+        setScale(fitScale)
+      }
     }
 
     updateScale()
+    // re-measure once the edit chrome (e.g. the properties panel) has settled,
+    // so the fit-scale reflects the actually available area, not the pre-layout one
+    const RAF = requestAnimationFrame(updateScale)
     const Observer = new ResizeObserver(updateScale)
     Observer.observe(Area)
-    return () => Observer.disconnect()
-  }, [Deck.CardWidth, Deck.CardHeight])
+    return () => { cancelAnimationFrame(RAF); Observer.disconnect() }
+  }, [Deck.CardWidth, Deck.CardHeight, isEditing])
 
 /**** navigate ****/
 
@@ -6579,6 +6594,13 @@ function DeckView ({
     clearConsole () { Console_clear(deckProxy) },
   }), [])
 
+/**** requestDeckSave — persist the deck (no-op while read-only) ****/
+
+  const requestDeckSave = useCallback(():Promise<void> => {
+    if (isReadOnly) { return Promise.resolve() }
+    return onDeckSaveImmediate?.() ?? Promise.resolve()
+  }, [isReadOnly, onDeckSaveImmediate])
+
 /**** makeBaseContext — builds a script context for any Visual in this Deck ****/
 
   const makeBaseContext = useCallback((me:BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null):BC_ScriptContext => {
@@ -6587,9 +6609,9 @@ function DeckView ({
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
-      ConsoleFns, CardIndexRef,
+      ConsoleFns, CardIndexRef, requestDeckSave,
     )
-  }, [Deck, navigate, ConsoleFns])
+  }, [Deck, navigate, ConsoleFns, requestDeckSave])
 
 /**** deck ready check ****/
 
@@ -6617,7 +6639,7 @@ function DeckView ({
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
-      ConsoleFns, CardIndexRef,
+      ConsoleFns, CardIndexRef, requestDeckSave,
     )
     const { Params, Args } = buildScriptParams(inst, ctx, 'deck')
 

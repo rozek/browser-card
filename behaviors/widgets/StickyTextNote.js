@@ -9,7 +9,9 @@
 // otherwise it is; the tab width is 10px. while moving or resizing the note
 // consults its "Card": if "Card.SnapToGrid" is exactly true, positions and
 // sizes are forced onto multiples of "Card.GridWidth"/"Card.GridHeight"
-// (default 10x10px); values of a wrong data type are ignored.
+// (default 10x10px); values of a wrong data type are ignored. changes to
+// position, size and content are persisted with the deck in the browser via a
+// debounced "saveDeck()" (a no-op on a read-only deck or an older runtime).
 
 /**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
@@ -85,8 +87,17 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, dispatch, Configuration, saveDeck }) {
     injectStyleRuleOnce('bc-stickytextnote-style', StickyTextNoteStyle)
+
+    /**** scheduleSave - persists position, size and content with the deck ****/
+
+    let SaveTimer = null
+    function scheduleSave () {
+      if (typeof saveDeck !== 'function') { return }   // older runtime: no-op
+      if (SaveTimer != null) { clearTimeout(SaveTimer) }
+      SaveTimer = setTimeout(() => { SaveTimer = null; saveDeck() }, 400)
+    }
 
   /**** beginDrag - moves or resizes the note while a pointer is held down ****/
 
@@ -132,6 +143,7 @@
             Math.max((Snap ? Math.ceil(MinHeight/GridH)*GridH : MinHeight), newHeight)
           )
         }
+        scheduleSave()
       }
 
       function onUp () {
@@ -160,6 +172,7 @@
 
       my.Value = next
       dispatch('change', next)
+      scheduleSave()
     }
 
     on('render', () => {
@@ -179,6 +192,7 @@
             onInput=${(Event) => {
               my.Value = Event.target.value
               dispatch('change', Event.target.value)
+              scheduleSave()
             }}
           ></textarea>
           <div

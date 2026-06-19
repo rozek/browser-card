@@ -1,4 +1,4 @@
-/**** MarkdownView - renders the widget's "Text" property as Markdown ****/
+/**** MarkdownView - renders the widget's "Value" property as Markdown ****/
 
 // with syntax highlighting (highlight.js), math (KaTeX) and Mermaid diagrams
 // reusing the toolkit already bundled into BrowserCard. All extra assets (CSS,
@@ -15,9 +15,9 @@
       .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
   }
 
-/**** styleLinkedOnce - links a stylesheet into the document head only once ****/
+/**** linkStyleOnce - links a stylesheet into the document head only once ****/
 
-  function styleLinkedOnce (Id, Href) {
+  function linkStyleOnce (Id, Href) {
     if (document.getElementById(Id) != null) { return }
     const Link = document.createElement('link')
       Link.id   = Id
@@ -50,7 +50,7 @@
   export default async function ({ on, my, html, Configuration }) {
     const BC = globalThis.BC                 // the running BrowserCard instance
 
-    /**** without the bundled toolkit there is nothing to render ****/
+  /**** without the bundled toolkit there is nothing to render ****/
 
     if ((BC == null) || (BC.Marked == null)) {
       on('render', () => html`
@@ -71,15 +71,14 @@
     )
     const MermaidEnabled = (Configuration?.Mermaid !== false)
 
-    /**** "nonStandard" lets inline $…$ touch brackets/words, e.g. ($x$) - so ****/
-    /**** no surrounding blanks (and their gaps) are needed; override per widget ****/
+  /**** "nonStandard" lets inline $…$ touch brackets/words, no surrounding blanks needed ****/
 
     const KatexOptions = (Configuration?.KaTeX ?? { throwOnError:false, nonStandard:true })
 
   /**** the highlighting / math CSS lives next to the behaviour's assets ****/
 
-    styleLinkedOnce('bc-md-styles', new URL('../markdown.css', AssetBase).href)
-    styleLinkedOnce('bc-md-katex',  AssetBase + 'katex/katex.min.css')
+    linkStyleOnce('bc-md-styles', new URL('../markdown.css', AssetBase).href)
+    linkStyleOnce('bc-md-katex',  AssetBase + 'katex/katex.min.css')
 
   /**** renderCode - Mermaid blocks stay raw, everything else is highlighted ****/
 
@@ -94,7 +93,7 @@
       }
 
       const canHighlight = (hljs != null) && (typeof hljs.highlight === 'function')
-      const Highlighted = (
+      const highlighted = (
         ! canHighlight
         ? escapedForHTML(Source)
         : (
@@ -103,7 +102,7 @@
             : hljs.highlightAuto(Source).value
           )
       )
-      return `<pre><code class="hljs language-${Language}">${Highlighted}</code></pre>`
+      return `<pre><code class="hljs language-${Language}">${highlighted}</code></pre>`
     }
 
     const Markdown = new Marked()
@@ -135,7 +134,7 @@
     on('render', () => {
       let renderedContent
       try {
-        renderedContent = Markdown.parse(my.Text ?? '')
+        renderedContent = Markdown.parse(my.Value ?? '')
       } catch (Signal) {
         renderedContent = '<pre style="color:#a00">' +
           escapedForHTML('Markdown error: ' + Signal.message) + '</pre>'

@@ -1,14 +1,14 @@
 /**** FAIcon - shows a FontAwesome 4.7.0 icon ****/
 
-// "Value" is the icon name (e.g. "fa-home"), "Color" its foreground colour. if
-// "hilite" is set, the CSS class "active" is added. the icon is clickable (and
-// dispatches 'click') unless "disabled". the FontAwesome stylesheet and webfont
+// "Icon" is the icon name (e.g. "fa-home"), "Color" its foreground colour. if
+// "hilite" is set, the CSS class "active" is added. The icon is clickable (and
+// dispatches 'click') unless "disabled". The FontAwesome stylesheet and webfont
 // are served same-origin from the "fontawesome/" folder beside BrowserCard.js -
 // no third-party network requests.
 
-/**** styleRuleInjectedOnce / styleLinkedOnce - inject CSS into the head once ****/
+/**** injectStyleRuleOnce / linkStyleOnce - inject CSS into the head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -16,17 +16,17 @@
     document.head.appendChild(Style)
   }
 
-  function styleLinkedOnce (Id, Href) {
+  function linkStyleOnce (Id, HRef) {
     if (document.getElementById(Id) != null) { return }
     const Link = document.createElement('link')
       Link.id   = Id
       Link.rel  = 'stylesheet'
-      Link.href = Href
+      Link.href = HRef
     document.head.appendChild(Link)
   }
 
-  const AssetsBeside  = 'fontawesome/css/font-awesome.min.css'  // beside BrowserCard.js
-  const AssetsFromHere = '../../fontawesome/css/font-awesome.min.css'  // fallback
+  const AssetsBeside   = 'fontawesome/css/font-awesome.min.css' // beside BrowserCard.js
+  const AssetsFromHere = '../../fontawesome/css/font-awesome.min.css' // fallback
 
   const IconStyle = `
     .bc-widget > fa-icon {
@@ -256,28 +256,28 @@
       : new URL(AssetsFromHere, import.meta.url).href
     )
 
-    styleLinkedOnce('bc-fontawesome', CSSHref)
-    styleRuleInjectedOnce('bc-faicon-style', IconStyle)
+    linkStyleOnce('bc-fontawesome', CSSHref)
+    injectStyleRuleOnce('bc-faicon-style', IconStyle)
 
     on('render', () => {
-      const Value    = String((my.Value ?? Configuration?.Value ?? my.Text) ?? 'fa-question-circle-o').trim()
-      const Color    = (my.Color ?? Configuration?.Color)
-      const Hilite   = ((my.hilite ?? Configuration?.hilite ?? false) === true)
-      const Disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+      const IconName = String((my.Icon ?? Configuration?.Icon) ?? 'fa-question-circle-o').trim()
+      const Color    = (my.Color     ?? Configuration?.Color)
+      const Hilite   = ((my.hilite   ?? Configuration?.hilite   ?? false) === true)
+      const disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
 
-      if ((Value !== '') && ! FAIconNames.includes(Value) && ! warnedNames.has(Value)) {
-        warnedNames.add(Value)
-        console.warn('[FAIcon] unknown FontAwesome icon name: ' + Value)
+      if ((IconName !== '') && ! FAIconNames.includes(IconName) && ! warnedNames.has(IconName)) {
+        warnedNames.add(IconName)
+        console.warn('[FAIcon] unknown FontAwesome icon name: ' + IconName)
       }
 
-      const ClassName = ('fa ' + Value + (Hilite ? ' active' : '')).trim()
+      const ClassName = ('fa ' + IconName + (Hilite ? ' active' : '')).trim()
 
       return html`
         <fa-icon
           class=${ClassName}
           aria-hidden="true"
-          style=${{ color:Color, cursor:(Disabled ? 'not-allowed' : 'pointer') }}
-          onClick=${() => { if (! Disabled) { dispatch('click') } }}
+          style=${{ color:Color, cursor:(disabled ? 'not-allowed' : 'pointer') }}
+          onClick=${() => { if (! disabled) { dispatch('click') } }}
         ></fa-icon>
       `
     })

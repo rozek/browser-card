@@ -1,14 +1,14 @@
 /**** nativeColorInput - wraps a native <input type="color"> ****/
 
 // the parameters Value, readonly, Suggestions and disabled are read from my.*
-// (falling back to the Configuration); Value may also be given in "Text" (as a
-// "#rrggbb" colour, where picking writes it back). Suggestions is a list or
+// (falling back to the Configuration); the Value is a "#rrggbb" colour, where
+// picking writes it back. Suggestions is a list or
 // comma-separated string of colours offered as swatches. while focused, external
-// Value/Text changes do not disturb the input; on blur it is synced
+// Value changes do not disturb the input; on blur it is synced
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -18,9 +18,9 @@
 
 /**** suggestionList - normalises Suggestions into a list of strings ****/
 
-  function suggestionList (Raw) {
-    if (Raw == null) { return [] }
-    const Items = (Array.isArray(Raw) ? Raw : String(Raw).split(','))
+  function SuggestionList (rawSuggestions) {
+    if (rawSuggestions == null) { return [] }
+    const Items = (Array.isArray(rawSuggestions) ? rawSuggestions : String(rawSuggestions).split(','))
     return Items.map((Item) => String(Item).trim()).filter((Item) => Item !== '')
   }
 
@@ -43,19 +43,19 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-nativecolorinput-style', ColorStyle)
+    injectStyleRuleOnce('bc-nativecolorinput-style', ColorStyle)
 
     on('render', () => {
-      const valueOf   = (Name) => (my[Name] ?? Configuration?.[Name])
-      const booleanOf = (Name) => (valueOf(Name) === true)
+      const ValueOf   = (Name) => (my[Name] ?? Configuration?.[Name])
+      const BooleanOf = (Name) => (ValueOf(Name) === true)
 
-      const Disabled    = booleanOf('disabled')
-      const ReadOnly    = booleanOf('readonly')
-      const Suggestions = suggestionList(valueOf('Suggestions'))
+      const disabled    = BooleanOf('disabled')
+      const readonly    = BooleanOf('readonly')
+      const Suggestions = SuggestionList(ValueOf('Suggestions'))
       const ListId      = ('bc-color-' + (my.Id ?? 'list'))
 
       const resolvedValue = () => {
-        const Value = (my.Text != null ? String(my.Text) : String(valueOf('Value') ?? ''))
+        const Value = String(ValueOf('Value') ?? '')
         return (Value.trim() === '' ? '#000000' : Value)
       }
 
@@ -70,12 +70,12 @@
       return html`
         <input
           type="color"
-          readonly=${ReadOnly}
-          disabled=${Disabled}
+          readonly=${readonly}
+          disabled=${disabled}
           list=${Suggestions.length > 0 ? ListId : undefined}
           ref=${syncWhenUnfocused}
           onInput=${(Event) => {
-            my.Text = Event.target.value
+            my.Value = Event.target.value
             dispatch('change', Event.target.value)
           }}
           onBlur=${(Event) => { Event.target.value = resolvedValue() }}

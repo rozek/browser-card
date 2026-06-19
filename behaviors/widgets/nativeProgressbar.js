@@ -1,12 +1,12 @@
 /**** nativeProgressbar - wraps a native <progress> ****/
 
 // the parameters Value and Maximum are read from my.* (falling back to the
-// Configuration); Value may also be given as text in "Text". without a
+// Configuration); the Value is given as a numeric string. without a
 // resolvable Value the bar shows the indeterminate (animated) state
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -35,19 +35,18 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, Configuration }) {
-    styleRuleInjectedOnce('bc-nativeprogressbar-style', ProgressbarStyle)
+    injectStyleRuleOnce('bc-nativeprogressbar-style', ProgressbarStyle)
 
     on('render', () => {
-      const numberFrom = (Name) => {
+      const NumberFrom = (Name) => {
         const Number = parseFloat(my[Name] ?? Configuration?.[Name])
         return (isFinite(Number) ? Number : undefined)
       }
 
-      const fromText = parseFloat(String(my.Text ?? ''))
-      const Value = (numberFrom('Value') ?? (isFinite(fromText) ? fromText : undefined))
+      const Value = NumberFrom('Value')
 
       return html`
-        <progress value=${Value} max=${numberFrom('Maximum')}></progress>
+        <progress value=${Value} max=${NumberFrom('Maximum')}></progress>
       `
     })
   }

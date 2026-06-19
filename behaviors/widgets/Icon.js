@@ -1,15 +1,17 @@
 /**** Icon - a clickable bitmap icon ****/
 
-// the image URL comes from my.Value, my.Text or Configuration.Value. a bare
-// name (no "/" and no "." - i.e. no path and no extension) is resolved to
-// "icons/<name>.png" beside BrowserCard.js. the bitmap is shown greyscale,
-// scaled to 24x24 keeping its aspect ratio ("contain") and centred in the
-// widget. if "hilite" is set, the CSS class "active" is added (highlight box).
-// it dispatches 'click' unless "disabled".
+// the image URL comes from my.Icon or Configuration.Icon. a bare name (no "/"
+// and no "." - i.e. no path and no extension) is resolved to
+// "icons/<name>.png" beside BrowserCard.js. the bitmap is scaled to 24x24
+// keeping its aspect ratio ("contain") and centred in the widget. without
+// "Color" it is shown greyscale; with "Color" it is tinted in that colour (via
+// a mask - works for monochrome icons with transparency). if "hilite" is set,
+// the CSS class "active" is added (highlight box). it dispatches 'click' unless
+// "disabled".
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -17,10 +19,10 @@
     document.head.appendChild(Style)
   }
 
-  const IconsBeside  = 'icons/'        // beside BrowserCard.js
-  const IconsFromHere = '../../icons/' // fallback, relative to this behaviour
+  const IconsBeside   = 'icons/'                        // beside BrowserCard.js
+  const IconsFromHere = '../../icons/'   // fallback, relative to this behaviour
 
-  /**** a "fa-question-circle-o"-style default icon, embedded as a data-URI ****/
+/**** a "fa-question-circle-o"-style default icon, embedded as a data-URI ****/
 
   const DefaultIcon = 'data:image/svg+xml,' + encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 30 30">' +
@@ -44,6 +46,12 @@
       object-fit:contain;
       filter:grayscale(1);
     }
+    .bc-widget > icon > .bc-icon-tint {
+      width:100%; height:100%;
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+      -webkit-mask-position:center; mask-position:center;
+      -webkit-mask-size:contain; mask-size:contain;
+    }
     .bc-widget > icon.active {
       background:#e8f0ff;
       outline:solid 2px lightgray; border-radius:4px;
@@ -53,7 +61,7 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-icon-style', IconStyle)
+    injectStyleRuleOnce('bc-icon-style', IconStyle)
 
     const BC = globalThis.BC
     const IconsBase = (
@@ -63,23 +71,34 @@
     )
 
     on('render', () => {
-      const Raw = String((my.Value ?? my.Text ?? Configuration?.Value) ?? '').trim()
+      const rawIcon = String((my.Icon ?? Configuration?.Icon) ?? '').trim()
       const URL = (
-        Raw === ''
-        ? DefaultIcon                              // no source -> built-in default
-        : ( (! Raw.includes('/') && ! Raw.includes('.'))
-            ? IconsBase + Raw + '.png'             // bare name -> icons/<name>.png
-            : Raw )
+        rawIcon === ''
+        ? DefaultIcon                           // no source -> built-in default
+        : ( (! rawIcon.includes('/') && ! rawIcon.includes('.'))
+            ? IconsBase + rawIcon + '.png'      // bare name -> icons/<name>.png
+            : rawIcon )
       )
-      const Hilite   = ((my.hilite ?? Configuration?.hilite ?? false) === true)
-      const Disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+      const Color    = (my.Color     ?? Configuration?.Color)
+      const Hilite   = ((my.hilite   ?? Configuration?.hilite   ?? false) === true)
+      const disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+
+      const Visual = (
+        (Color != null)
+        ? html`<div class="bc-icon-tint" style=${{
+            backgroundColor:Color,
+            maskImage:'url("' + URL.replaceAll('"','%22') + '")',
+            WebkitMaskImage:'url("' + URL.replaceAll('"','%22') + '")',
+          }}></div>`
+        : html`<img src=${URL} alt="" />`
+      )
 
       return html`
         <icon
           class=${Hilite ? 'active' : undefined}
-          style=${{ cursor:(Disabled ? 'not-allowed' : 'pointer') }}
-          onClick=${() => { if (! Disabled) { dispatch('click') } }}
-        ><img src=${URL} alt="" /></icon>
+          style=${{ cursor:(disabled ? 'not-allowed' : 'pointer') }}
+          onClick=${() => { if (! disabled) { dispatch('click') } }}
+        >${Visual}</icon>
       `
     })
   }

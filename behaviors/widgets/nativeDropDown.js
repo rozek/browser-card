@@ -1,15 +1,15 @@
 /**** nativeDropDown - wraps a native <select> ****/
 
-// the selected Value (also available via "Text", where picking writes it back)
+// the selected Value (where picking writes the new value back)
 // and the disabled flag are read from my.* (falling back to the Configuration).
 // "Options" is a list - or a space-separated string - of selectable values or
 // "value:label" pairs; a leading "-" before an entry disables that option.
-// while focused, external Value/Text changes do not disturb the selection; on
+// while focused, external Value changes do not disturb the selection; on
 // blur it is synced
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -17,23 +17,23 @@
     document.head.appendChild(Style)
   }
 
-/**** optionList - normalises Options into { value, label, disabled } entries ****/
+/**** OptionList - normalises Options into { value, label, disabled } entries ****/
 
-  function optionList (Raw) {
-    if (Raw == null) { return [] }
-    const Items = (Array.isArray(Raw) ? Raw : String(Raw).split(/\s+/))
+  function OptionList (rawOptions) {
+    if (rawOptions == null) { return [] }
+    const Items = (Array.isArray(rawOptions) ? rawOptions : String(rawOptions).split(/\s+/))
     return Items
       .map((Item) => String(Item).trim())
       .filter((Item) => Item !== '')
       .map((Item) => {
-        let Disabled = false
+        let disabled = false
         let Entry = Item
-        if (Entry.startsWith('-')) { Disabled = true; Entry = Entry.slice(1) }
+        if (Entry.startsWith('-')) { disabled = true; Entry = Entry.slice(1) }
         const ColonAt = Entry.indexOf(':')
         return (
           ColonAt < 0
-          ? { value:Entry, label:Entry, disabled:Disabled }
-          : { value:Entry.slice(0,ColonAt), label:Entry.slice(ColonAt+1), disabled:Disabled }
+          ? { value:Entry, label:Entry, disabled:disabled }
+          : { value:Entry.slice(0,ColonAt), label:Entry.slice(ColonAt+1), disabled:disabled }
         )
       })
   }
@@ -54,27 +54,27 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-nativedropdown-style', DropDownStyle)
+    injectStyleRuleOnce('bc-nativedropdown-style', DropDownStyle)
 
     on('render', () => {
-      const Disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
-      const Options  = optionList(my.Options ?? Configuration?.Options)
+      const disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+      const Options  = OptionList(my.Options ?? Configuration?.Options)
 
-      const Wanted = (
-        my.Text != null ? String(my.Text) : String((my.Value ?? Configuration?.Value) ?? '')
+      const wanted = (
+        String((my.Value ?? Configuration?.Value) ?? '')
       )
 
     /**** show the wanted value if it is among the options, else the first one ****/
 
-      const Matches  = Options.some((Option) => Option.value === Wanted)
-      const Selected = (Matches ? Wanted : (Options[0]?.value ?? ''))
+      const Matches  = Options.some((Option) => Option.value === wanted)
+      const Selected = (Matches ? wanted : (Options[0]?.value ?? ''))
 
       return html`
         <select
-          disabled=${Disabled}
+          disabled=${disabled}
           value=${Selected}
           onChange=${(Event) => {
-            my.Text = Event.target.value
+            my.Value = Event.target.value
             dispatch('change', Event.target.value)
           }}
         >

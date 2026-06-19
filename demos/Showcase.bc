@@ -56,7 +56,7 @@
             74,
             22
           ],
-          "Text": "SCRIPTS & BUTTONS",
+          "Value": "SCRIPTS & BUTTONS",
           "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -90,7 +90,7 @@
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "Text": "Say hello"
+          "Value": "Say hello"
         },
         {
           "Id": "bc-widget-913",
@@ -115,7 +115,7 @@
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "Text": "dark card background"
+          "Value": "dark card background"
         },
         {
           "Id": "bc-widget-914",
@@ -143,7 +143,7 @@
           "sharedText": false,
           "FontSize": 10,
           "Color": "#223",
-          "Text": "fields are editable right in browse mode - try me!"
+          "Value": "fields are editable right in browse mode - try me!"
         },
         {
           "Id": "bc-widget-915",
@@ -168,7 +168,7 @@
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "Text": "Roll the dice ▶"
+          "Value": "Roll the dice ▶"
         },
         {
           "Id": "bc-widget-916",
@@ -208,7 +208,7 @@
             74,
             22
           ],
-          "Text": "SHAPES",
+          "Value": "SHAPES",
           "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -332,7 +332,7 @@
             74,
             22
           ],
-          "Text": "LIVE WIDGETS",
+          "Value": "LIVE WIDGETS",
           "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -406,7 +406,7 @@
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "Text": "Learn more ↗"
+          "Value": "Learn more ↗"
         },
         {
           "Id": "bc-widget-926",
@@ -426,7 +426,7 @@
             304,
             44
           ],
-          "Text": "open the designer, hit ✎ Edit -\nand take this card apart!",
+          "Value": "open the designer, hit ✎ Edit -\nand take this card apart!",
           "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -441,7 +441,7 @@
           "Number": 18,
           "zIndex": 18,
           "visible": true,
-          "Script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => html`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${Configuration.Text ?? 'BrowserCard'}</div>\n  </div>\n`)",
+          "Script": "on('ready', () => every(40, () => {\n  me._x = (me._x ?? 100) - 0.4\n  if (me._x < -110) { me._x = 100 }\n}))\non('render', () => html`\n  <div style=${{\n    overflow:'hidden', width:'100%', height:'100%', display:'flex', alignItems:'center',\n    background:'#101418', borderRadius:'8px', border:'1px solid #2a3a4a',\n  }}>\n    <div style=${{\n      whiteSpace:'nowrap', transform:`translateX(${me._x ?? 100}%)`,\n      color:'#9ee49e', fontFamily:'ui-monospace, monospace', fontSize:'12px',\n    }}>${Configuration.Value ?? 'BrowserCard'}</div>\n  </div>\n`)",
           "Anchors": [
             "left-width",
             "top-height"
@@ -455,7 +455,7 @@
             28
           ],
           "Configuration": {
-            "Text": "+++ BrowserCard +++ decks, cards & widgets +++ scripted with plain JavaScript +++ reactive state via me.* +++ self-cleaning timers +++ dialogs that return values +++ persisted in IndexedDB +++ embeddable everywhere via <bc-deck> +++"
+            "Value": "+++ BrowserCard +++ decks, cards & widgets +++ scripted with plain JavaScript +++ reactive state via me.* +++ self-cleaning timers +++ dialogs that return values +++ persisted in IndexedDB +++ embeddable everywhere via <bc-deck> +++"
           }
         }
       ]

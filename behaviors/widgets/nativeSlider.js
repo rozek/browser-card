@@ -1,15 +1,15 @@
 /**** nativeSlider - wraps a native <input type="range"> ****/
 
 // the parameters Value, Minimum, Stepping, Maximum and Hashmarks are read from
-// my.* (falling back to the Configuration); Value may also be given as text in
-// "Text" (which is also where dragging writes the value back). Stepping may be
+// my.* (falling back to the Configuration); dragging writes the new value back
+// to Value. Stepping may be
 // 'any'. Hashmarks is an array - or a space/comma-separated string - of numbers
 // or "value=label" pairs and renders <datalist> ticks. while focused, external
-// Value/Text changes do not disturb the input; on blur the display is synced
+// Value changes do not disturb the input; on blur the display is synced
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -17,20 +17,20 @@
     document.head.appendChild(Style)
   }
 
-/**** hashmarkList - normalises Hashmarks into { value, label? } entries ****/
+/**** HashmarkList - normalises Hashmarks into { value, label? } entries ****/
 
-  function hashmarkList (Raw) {
-    if (Raw == null) { return [] }
-    const Items = (Array.isArray(Raw) ? Raw : String(Raw).split(/[\s,]+/))
+  function HashmarkList (rawHashmarks) {
+    if (rawHashmarks == null) { return [] }
+    const Items = (Array.isArray(rawHashmarks) ? rawHashmarks : String(rawHashmarks).split(/[\s,]+/))
     return Items
       .map((Item) => String(Item).trim())
       .filter((Item) => Item !== '')
       .map((Item) => {
-        const EqualsAt = Item.indexOf('=')
+        const EqualSignIndex = Item.indexOf('=')
         return (
-          EqualsAt < 0
+          EqualSignIndex < 0
           ? { value:Item, label:undefined }
-          : { value:Item.slice(0,EqualsAt).trim(), label:Item.slice(EqualsAt+1).trim() }
+          : { value:Item.slice(0,EqualSignIndex).trim(), label:Item.slice(EqualSignIndex+1).trim() }
         )
       })
   }
@@ -50,7 +50,7 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-nativeslider-style', SliderStyle)
+    injectStyleRuleOnce('bc-nativeslider-style', SliderStyle)
 
     on('render', () => {
       const numberFrom = (Name) => {
@@ -68,16 +68,15 @@
         : (isFinite(parseFloat(rawStep)) ? parseFloat(rawStep) : undefined)
       )
 
-      const Disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+      const disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
 
-      const Marks = hashmarkList(my.Hashmarks ?? Configuration?.Hashmarks)
+      const Marks = HashmarkList(my.Hashmarks ?? Configuration?.Hashmarks)
       const ListId = ('bc-slider-' + (my.Id ?? 'list'))
 
-    /**** the displayed value follows "Text"/"Value", but stays put while focused ****/
+    /**** the displayed value follows "Value", but stays put while focused ****/
 
       const resolvedValue = () => {
-        const fromText = parseFloat(String(my.Text ?? ''))
-        return (isFinite(fromText) ? fromText : (numberFrom('Value') ?? Min ?? 0))
+        return (numberFrom('Value') ?? Min ?? 0)
       }
       const syncWhenUnfocused = (Element) => {
         if ((Element != null) && (document.activeElement !== Element)) {
@@ -91,12 +90,12 @@
           min=${Min}
           max=${Max}
           step=${Step}
-          disabled=${Disabled}
+          disabled=${disabled}
           list=${Marks.length > 0 ? ListId : undefined}
           ref=${syncWhenUnfocused}
           onInput=${(Event) => {
             const Number = Event.target.valueAsNumber
-            if (isFinite(Number)) { my.Text = String(Number); dispatch('change', Number) }
+            if (isFinite(Number)) { my.Value = String(Number); dispatch('change', Number) }
           }}
           onBlur=${(Event) => { Event.target.value = String(resolvedValue()) }}
         />

@@ -179,7 +179,7 @@ Suggested scripts (add to `package.json`):
 | Test | Expectation |
 |------|-------------|
 | widget rendering per type | button (8 variants), field (locked/editable, lines), shape (rect/oval/poly/line/arc, arrowheads as `<polygon>`), picture (object-fit per variant), custom widget |
-| field write-back | typing into an editable field updates `me.Text` |
+| field write-back | typing into an editable field updates `me.Value` |
 | button/checkbox/radio | click dispatches `click`; `autoHilite` checkbox toggles `hilite` |
 | edit mode | selection frame + 8 handles appear; pointer drag/resize updates offsets (simulate pointer events); arrow-key nudge |
 | properties panel | editing a field updates the descriptor; anchor switch preserves geometry; "Configuration (JSON)" edits `me.Configuration` |

@@ -8,7 +8,7 @@ const Deck = {
     Widgets:[{ Id:'bc-widget-1', Name:'B', Number:1, Type:'button', zIndex:1,
       Anchors:['left-width','top-height'], Offsets:[10,100,10,30], visible:true,
       Variant:'rounded-rect', showName:true, autoHilite:true, enabled:true, sharedHilite:false,
-      Text:'Hi', Script:'' }] }],
+      Value:'Hi', Script:'' }] }],
 }
 
 describe('custom elements', () => {

@@ -139,16 +139,16 @@ on('render', () => html`<div>Hello, ${Configuration.Name ?? 'world'}!</div>`)
 
 With `Configuration = { "Name":"World" }` this widget greets "Hello, World!". Use `Configuration` for static, design-time settings; use `me.*` for mutable runtime state.
 
-Custom widgets also have a standard **`Text`** property - the same one a field has. It is edited in the properties panel ("Custom Widget" section) just like a field's text, and read or written from the script via `my.Text`. Unlike a field, a custom widget does *not* render its `Text` on its own: it is plain data until the widget's `on('render', ...)` (or a behavior) displays it. This makes `Text` the natural place for the widget's primary text content - a `TitleView` behavior, for instance, simply renders `my.Text` in bold:
+Custom widgets also have a standard **`Value`** property - the same one a field has. It is edited in the properties panel ("Custom Widget" section) just like a field's text, and read or written from the script via `my.Value`. Unlike a field, a custom widget does *not* render its `Value` on its own: it is plain data until the widget's `on('render', ...)` (or a behavior) displays it. This makes `Value` the natural place for the widget's primary text content - a `TitleView` behavior, for instance, simply renders `my.Value` in bold:
 
 ```javascript
 // TitleView widget behavior:
 on('render', () => html`
-  <div style=${{ fontSize:'22px', fontWeight:'bold' }}>${my.Text ?? ''}</div>
+  <div style=${{ fontSize:'22px', fontWeight:'bold' }}>${my.Value ?? ''}</div>
 `)
 ```
 
-`Text` is persisted with the deck and can be changed at runtime (`my.Text = '…'` re-renders immediately), so the same widget can serve as a design-time label and a script-driven display.
+`Value` is persisted with the deck and can be changed at runtime (`my.Value = '…'` re-renders immediately), so the same widget can serve as a design-time label and a script-driven display.
 
 ### Using Preact — do not re-import it
 
@@ -324,7 +324,7 @@ export default async function ({ on, my, every, html }) {
       display:'flex', alignItems:'center', justifyContent:'center',
       width:'100%', height:'100%',
       visibility:(my.shown === false ? 'hidden' : 'visible'),
-    }}>${my.Text ?? 'blink!'}</div>
+    }}>${my.Value ?? 'blink!'}</div>
   `)
 }
 ```
@@ -359,7 +359,7 @@ A behavior need not be a separate file: a deck can carry its own behaviors inlin
 // once (e.g. in the deck script), define a reusable local behavior:
 defineLocalBehavior('Blink', async ({ on, my, every, html }) => {
   on('ready',  () => every(500, () => { my.shown = ! my.shown }))
-  on('render', () => html`<div style=${{ visibility:(my.shown === false ? 'hidden' : 'visible') }}>${my.Text ?? 'blink!'}</div>`)
+  on('render', () => html`<div style=${{ visibility:(my.shown === false ? 'hidden' : 'visible') }}>${my.Value ?? 'blink!'}</div>`)
 })
 
 // in any widget (or card) script:
@@ -380,23 +380,23 @@ To contribute a behavior to the shared collection, place it in this repository's
 
 ### Predefined widget behaviors
 
-This repository provides a small family of ready-to-use widget behaviors, most of which display a custom widget's `Text` property (see [custom widgets](#reactive-state-with-me--my--i) above). Load any of them with `await behaveLike('<name>')`:
+This repository provides a small family of ready-to-use widget behaviors, most of which display a custom widget's `Value` property (see [custom widgets](#reactive-state-with-me--my--i) above). Load any of them with `await behaveLike('<name>')`:
 
 | Behavior | Purpose |
 |----------|---------|
-| `TitleView` | shows `my.Text` as 22px bold text |
-| `SubtitleView` | shows `my.Text` as 18px bold text |
-| `Label` | shows `my.Text` as 15px bold text |
-| `TextView` | shows `my.Text` as 15px normal text |
-| `FineprintView` | shows `my.Text` as 13px normal text |
-| `HTMLView` | renders `my.Text` as raw HTML |
-| `MarkdownView` | renders `my.Text` as Markdown - with syntax highlighting, math and Mermaid diagrams |
-| `ImageView` | shows the image loaded from the URL in `my.Text` |
-| `SVGView` | renders the inline SVG source held in `my.Text` |
-| `WebView` | shows the web page at the URL in `my.Text` inside an `<iframe>` |
-| `nativeButton` | a native `<button>` whose (HTML) label is `my.Text` |
-| `nativeCheckbox` | a native checkbox whose state is `my.Text` (`on`/`true`, `off`/`false`, `-` = indeterminate) |
-| `nativeRadiobutton` | a native radio button whose state is `my.Text` (`on`/`true`, `off`/`false`) |
+| `TitleView` | shows `my.Value` as 22px bold text |
+| `SubtitleView` | shows `my.Value` as 18px bold text |
+| `Label` | shows `my.Value` as 15px bold text |
+| `TextView` | shows `my.Value` as 15px normal text |
+| `FineprintView` | shows `my.Value` as 13px normal text |
+| `HTMLView` | renders `my.Value` as raw HTML |
+| `MarkdownView` | renders `my.Value` as Markdown - with syntax highlighting, math and Mermaid diagrams |
+| `ImageView` | shows the image loaded from the URL in `my.Value` |
+| `SVGView` | renders the inline SVG source held in `my.Value` |
+| `WebView` | shows the web page at the URL in `my.Value` inside an `<iframe>` |
+| `nativeButton` | a native `<button>` whose (HTML) label is `my.Value` |
+| `nativeCheckbox` | a native checkbox whose state is `my.Value` (`on`/`true`, `off`/`false`, `-` = indeterminate) |
+| `nativeRadiobutton` | a native radio button whose state is `my.Value` (`on`/`true`, `off`/`false`) |
 | `nativeGauge` | a native `<meter>` gauge driven by the `Value`/`Minimum`/`lowerBound`/`Optimum`/`upperBound`/`Maximum` parameters |
 | `nativeProgressbar` | a native `<progress>` bar driven by the `Value`/`Maximum` parameters |
 | `nativeSlider` | a native range `<input>` driven by `Value`/`Minimum`/`Stepping`/`Maximum`/`Hashmarks` |
@@ -415,14 +415,18 @@ This repository provides a small family of ready-to-use widget behaviors, most o
 | `nativeDropDown` | a `<select>` whose `Options` are selectable values or `value:label` pairs (`Value`/`Options`/`disabled`) |
 | `nativeColorInput` | a colour `<input>` with `Value`/`readonly`/`Suggestions`/`disabled` |
 | `nativeTextInput` | a multi-line `<textarea>` with `Value`/`invalid`/`Placeholder`/`readonly`/`minLength`/`maxLength`/`LineWrapping`/`Resizability`/`SpellChecking`/`disabled` |
-| `FAIcon` | a clickable FontAwesome 4.7.0 icon (`Value` = icon name, `Color`, `hilite`, `disabled`) |
-| `Icon` | a clickable bitmap icon (greyscale, 24x24 contain; `hilite` adds an `active` highlight box) |
+| `FAIcon` | a clickable FontAwesome 4.7.0 icon (`Icon` = icon name, `Color`, `hilite`, `disabled`) |
+| `Icon` | a clickable bitmap icon (24x24 contain; greyscale, or tinted in `Color`; `hilite` adds an `active` highlight box) |
+| `PseudoFileInput` | an `Icon` that opens a file chooser on click (`Icon`/`Color`/`multiple`/`FileTypes`/`disabled`) |
+| `PseudoDropDown` | an `Icon` that opens a drop-down menu on click (`Value`/`Icon`/`Color`/`Options`/`disabled`) |
 | `horizontalSeparator` | a thin light-grey line across the widget's vertical middle |
 | `verticalSeparator` | a thin light-grey line down the widget's horizontal middle |
 
-`ImageView` and `SVGView` both read a `scaling` (`'none'`, `'stretch'`, `'cover'`, `'contain'`) and an `alignment` (`'left top'` … `'right bottom'`) from the widget's `Configuration`. `WebView` reads `allowsFullScreen` (boolean), `Permissions` (the iframe's `allow` attribute), `SandboxPermissions` (the `sandbox` attribute - `false` omits it entirely, `''` is maximally restrictive) and `ReferrerPolicy` from `Configuration`. `nativeButton` dispatches a `'click'` message on every click (handle it with `on('click', () => ...)` in the widget's own script) and is locked via `my.disabled = true` (or the `Configuration` field `disabled`). `nativeCheckbox` reflects `my.Text` (`on`/`true`, `off`/`false`, `-` = indeterminate), writes `'on'`/`'off'` back to `my.Text` on every toggle and dispatches `'change'` with the new boolean state; it is locked the same way. `nativeRadiobutton` behaves like `nativeCheckbox` but as a radio button (no indeterminate state). `nativeGauge` reads its numeric parameters `Value`, `Minimum`, `lowerBound`, `Optimum`, `upperBound` and `Maximum` from `my.*` (falling back to `Configuration`), mapping them to the `<meter>` attributes; `Value` may alternatively be given as text in `my.Text`. `nativeProgressbar` works the same way with `Value` and `Maximum` (and shows the indeterminate animation when no `Value` is resolvable). `nativeSlider` reads `Value`, `Minimum`, `Stepping` (may be `'any'`), `Maximum` and `Hashmarks` the same way, dragging writes the value back to `my.Text` and dispatches `'change'`; `Hashmarks` is an array - or a space/comma-separated string - of numbers or `value=label` pairs and is rendered as `<datalist>` tick marks. It is lockable via `my.disabled`/`Configuration.disabled`. `nativeTextlineInput` reads `Value`, `Placeholder`, `readonly`, `minLength`, `maxLength`, `Pattern` (a regular expression the value must match to be valid), `SpellChecking`, `Suggestions` (an array or comma-separated string rendered as a `<datalist>`), `invalid` (forces the invalid state, independent of `Pattern`) and `disabled`; typing writes the value back to `my.Text` and dispatches `'change'`.
+`ImageView` and `SVGView` both read a `scaling` (`'none'`, `'stretch'`, `'cover'`, `'contain'`) and an `alignment` (`'left top'` … `'right bottom'`) from the widget's `Configuration`. `WebView` reads `allowsFullScreen` (boolean), `Permissions` (the iframe's `allow` attribute), `SandboxPermissions` (the `sandbox` attribute - `false` omits it entirely, `''` is maximally restrictive) and `ReferrerPolicy` from `Configuration`. `nativeButton` dispatches a `'click'` message on every click (handle it with `on('click', () => ...)` in the widget's own script) and is locked via `my.disabled = true` (or the `Configuration` field `disabled`). `nativeCheckbox` reflects `my.Value` (`on`/`true`, `off`/`false`, `-` = indeterminate), writes `'on'`/`'off'` back to `my.Value` on every toggle and dispatches `'change'` with the new boolean state; it is locked the same way. `nativeRadiobutton` behaves like `nativeCheckbox` but as a radio button (no indeterminate state). `nativeGauge` reads its numeric parameters `Value`, `Minimum`, `lowerBound`, `Optimum`, `upperBound` and `Maximum` from `my.*` (falling back to `Configuration`), mapping them to the `<meter>` attributes; `Value` may alternatively be given as text in `my.Value`. `nativeProgressbar` works the same way with `Value` and `Maximum` (and shows the indeterminate animation when no `Value` is resolvable). `nativeSlider` reads `Value`, `Minimum`, `Stepping` (may be `'any'`), `Maximum` and `Hashmarks` the same way, dragging writes the value back to `my.Value` and dispatches `'change'`; `Hashmarks` is an array - or a space/comma-separated string - of numbers or `value=label` pairs and is rendered as `<datalist>` tick marks. It is lockable via `my.disabled`/`Configuration.disabled`. `nativeTextlineInput` reads `Value`, `Placeholder`, `readonly`, `minLength`, `maxLength`, `Pattern` (a regular expression the value must match to be valid), `SpellChecking`, `Suggestions` (an array or comma-separated string rendered as a `<datalist>`), `invalid` (forces the invalid state, independent of `Pattern`) and `disabled`; typing writes the value back to `my.Value` and dispatches `'change'`.
 
-`nativePasswordInput` is identical to `nativeTextlineInput` but masks its input (no `SpellChecking`/`Suggestions`). `nativeNumberInput` is the numeric variant, taking `Minimum`/`Stepping` (may be `'any'`)/`Maximum` instead of `minLength`/`maxLength`/`Pattern`. `nativeEMailAddressInput` is the email variant; its `multiple` flag permits several comma-separated addresses. `nativePhoneNumberInput` is the telephone (`type="tel"`) variant with the same parameters as `nativeTextlineInput` (minus `SpellChecking`); `nativeURLInput` is the URL (`type="url"`) variant with the same parameters (and native URL validation); `nativeSearchInput` is the search (`type="search"`) variant (like `nativeTextlineInput`, including `SpellChecking`). `nativeTimeInput` is a `type="time"` field whose `withSeconds` flag adds a seconds field and whose `Minimum`/`Maximum` bound the range; `nativeDateTimeInput` is the `type="datetime-local"` equivalent, while `nativeDateInput`, `nativeWeekInput` and `nativeMonthInput` cover `type="date"`/`"week"`/`"month"` (all without `withSeconds`). All of them also honour an `invalid` flag (on top of the native `Minimum`/`Maximum` check). `nativeDropDown` renders a `<select>` from `Options` - a list (or space-separated string) of values or `value:label` pairs where a leading `-` disables an entry - and writes the chosen value back to `my.Text`. `nativeColorInput` is a `type="color"` picker (`#rrggbb`) whose `Suggestions` appear as swatches. `nativeTextInput` is a multi-line `<textarea>` (filling the widget) whose `LineWrapping` toggles soft wrapping and whose `Resizability` (`'none'`/`'horizontal'`/`'vertical'`/`'both'`) controls the resize handle. `FAIcon` shows a clickable [FontAwesome 4.7.0](https://fontawesome.com/v4/) icon (`Value` is the icon name such as `fa-home`, `Color` its colour, `hilite` adds the `active` class, `disabled` blocks clicks); it dispatches `'click'`. The FontAwesome stylesheet and webfont are vendored **same-origin** in a `fontawesome/` folder beside `BrowserCard.js` (kept in the repo's `public/`) - no third-party request. `Icon` shows a clickable bitmap (URL from `my.Value`/`my.Text`/`Configuration.Value`): it is converted to greyscale and scaled to 24x24 (aspect-preserving `contain`), centred in the widget, and gets the CSS class `active` (a highlight box) when `hilite` is set; it dispatches `'click'` unless `disabled`. A bare name (no `/` and no `.`) is resolved to `icons/<name>.png` beside `BrowserCard.js`; with no source it falls back to a built-in `fa-question-circle-o`-style default. All input behaviors keep the value the user is editing untouched **while the input is focused** - external changes to `Value`/`my.Text` are ignored until focus leaves, at which point the display syncs to the current value. `HTMLView`, `SVGView`, `MarkdownView` and `nativeButton` insert markup that originates from `my.Text`; treat that text as you would any HTML/SVG you embed (it is author content, but do not feed untrusted input into it unsanitised).
+`nativePasswordInput` is identical to `nativeTextlineInput` but masks its input (no `SpellChecking`/`Suggestions`). `nativeNumberInput` is the numeric variant, taking `Minimum`/`Stepping` (may be `'any'`)/`Maximum` instead of `minLength`/`maxLength`/`Pattern`. `nativeEMailAddressInput` is the email variant; its `multiple` flag permits several comma-separated addresses. `nativePhoneNumberInput` is the telephone (`type="tel"`) variant with the same parameters as `nativeTextlineInput` (minus `SpellChecking`); `nativeURLInput` is the URL (`type="url"`) variant with the same parameters (and native URL validation); `nativeSearchInput` is the search (`type="search"`) variant (like `nativeTextlineInput`, including `SpellChecking`). `nativeTimeInput` is a `type="time"` field whose `withSeconds` flag adds a seconds field and whose `Minimum`/`Maximum` bound the range; `nativeDateTimeInput` is the `type="datetime-local"` equivalent, while `nativeDateInput`, `nativeWeekInput` and `nativeMonthInput` cover `type="date"`/`"week"`/`"month"` (all without `withSeconds`). All of them also honour an `invalid` flag (on top of the native `Minimum`/`Maximum` check). `nativeDropDown` renders a `<select>` from `Options` - a list (or space-separated string) of values or `value:label` pairs where a leading `-` disables an entry - and writes the chosen value back to `my.Value`. `nativeColorInput` is a `type="color"` picker (`#rrggbb`) whose `Suggestions` appear as swatches. `nativeTextInput` is a multi-line `<textarea>` (filling the widget) whose `LineWrapping` toggles soft wrapping and whose `Resizability` (`'none'`/`'horizontal'`/`'vertical'`/`'both'`) controls the resize handle. `FAIcon` shows a clickable [FontAwesome 4.7.0](https://fontawesome.com/v4/) icon (`Icon` is the icon name such as `fa-home`, `Color` its colour, `hilite` adds the `active` class, `disabled` blocks clicks); it dispatches `'click'`. The FontAwesome stylesheet and webfont are vendored **same-origin** in a `fontawesome/` folder beside `BrowserCard.js` (kept in the repo's `public/`) - no third-party request. `Icon` shows a clickable bitmap (URL from `my.Icon`/`Configuration.Icon`): it is scaled to 24x24 (aspect-preserving `contain`), centred in the widget, and shown greyscale - or, if `Color` is set, tinted in that colour (via a CSS mask, intended for monochrome icons with transparency). It gets the CSS class `active` (a highlight box) when `hilite` is set; it dispatches `'click'` unless `disabled`. A bare name (no `/` and no `.`) is resolved to `icons/<name>.png` beside `BrowserCard.js`; with no source it falls back to a built-in `fa-question-circle-o`-style default.
+
+`PseudoFileInput` and `PseudoDropDown` reuse that icon as a trigger: `PseudoFileInput` overlays a hidden `<input type="file">`, so clicking the icon opens a file chooser (`multiple` allows several files, `FileTypes` sets the `accept` filter as a string or array; `Color` optionally tints the icon) and dispatches the chosen files as `'change'` (an array of `File`). `PseudoDropDown` overlays a transparent native `<select>`, so clicking the icon opens a menu built from `Options` (values or `value:label` pairs, a leading `-` disabling an entry); the picked value is written back to `my.Value` and dispatched as `'change'`, and `Color` optionally tints the icon. All input behaviors keep the value the user is editing untouched **while the input is focused** - external changes to `Value`/`my.Value` are ignored until focus leaves, at which point the display syncs to the current value. `HTMLView`, `SVGView`, `MarkdownView` and `nativeButton` insert markup that originates from `my.Value`; treat that text as you would any HTML/SVG you embed (it is author content, but do not feed untrusted input into it unsanitised).
 
 ### MarkdownView and the bundled Markdown toolkit
 
@@ -431,7 +435,7 @@ This repository provides a small family of ready-to-use widget behaviors, most o
 The vendored assets are **served same-origin** beside the running `BrowserCard.js`: the KaTeX CSS + web-fonts and the Mermaid build live in a `markdown/` folder, the content/highlight stylesheet in a hand-authored `markdown.css` next to that folder (kept in the repo's `public/` folder, which Vite copies into `dist/` on build). `MarkdownView` never issues a third-party network request - everything is loaded from the same origin that serves BrowserCard, with the location derived from `BC.ModuleURL`. Override it with the optional `Configuration` field `AssetBase` (and set `{ "Mermaid": false }` to disable diagram rendering):
 
 ```javascript
-await behaveLike('MarkdownView')   // then type Markdown into the widget's "Text"
+await behaveLike('MarkdownView')   // then type Markdown into the widget's "Value"
 ```
 
 ## Technology

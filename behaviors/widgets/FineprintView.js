@@ -1,4 +1,4 @@
-/**** FineprintView - shows the widget's "Text" property as 13px normal text ****/
+/**** FineprintView - shows the widget's "Value" property as 13px normal text ****/
 
   export default async function ({ on, my, html }) {
     on('render', () => html`
@@ -7,6 +7,6 @@
         width:'100%', height:'100%',
         fontSize:'13px', fontWeight:'normal', textAlign:'left',
         overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
-      }}>${my.Text ?? '(Fineprint)'}</div>
+      }}>${my.Value ?? '(Fineprint)'}</div>
     `)
   }

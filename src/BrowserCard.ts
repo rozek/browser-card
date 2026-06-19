@@ -2278,7 +2278,7 @@ export interface BC_Widget extends BC_Visual {
   showLines?:    boolean
   dontSearch?:   boolean
   sharedText?:   boolean
-  Text?:         string
+  Value?:         string
   FontSize?:     number
   FontWeight?:   'normal' | 'bold'
   TextAlign?:    'left' | 'center' | 'right'
@@ -2306,7 +2306,7 @@ export interface BC_Widget extends BC_Visual {
 
 // narrow interfaces used only for type-safe access inside internal behaviors
 interface BC_Button extends BC_Widget { Type: 'button'; Variant: BC_ButtonVariant; showName: boolean; autoHilite: boolean; enabled: boolean; sharedHilite: boolean }
-interface BC_Field  extends BC_Widget { Type: 'field';  Variant: BC_FieldVariant;  lockText: boolean; scrolling: boolean; showLines: boolean; dontSearch: boolean; sharedText: boolean; Text: string }
+interface BC_Field  extends BC_Widget { Type: 'field';  Variant: BC_FieldVariant;  lockText: boolean; scrolling: boolean; showLines: boolean; dontSearch: boolean; sharedText: boolean; Value: string }
 interface BC_Shape  extends BC_Widget { Type: 'shape';  Variant: BC_ShapeVariant }
 interface BC_Picture extends BC_Widget { Type: 'picture'; Variant: BC_PictureVariant; autoHilite: boolean; ImageData: string; actualWidth: number; actualHeight: number }
 
@@ -3332,7 +3332,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'BrowserCard',
+          Value: 'BrowserCard',
           FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff',
           Script: '',
         },
@@ -3343,7 +3343,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          Text: 'Welcome to BrowserCard!\n\nBrowserCard is a browser-based reinterpretation of the classic HyperCard concept. Create interactive card decks with cards, buttons, fields, shapes and widgets.\n\nClick one of the buttons below to learn more.',
+          Value: 'Welcome to BrowserCard!\n\nBrowserCard is a browser-based reinterpretation of the classic HyperCard concept. Create interactive card decks with cards, buttons, fields, shapes and widgets.\n\nClick one of the buttons below to learn more.',
           FontSize: 11, FontWeight: 'normal', TextAlign: 'left', Color: '#1d3461',
           Script: '',
         },
@@ -3402,7 +3402,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'Demo Widgets',
+          Value: 'Demo Widgets',
           FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff',
           Script: '',
         },
@@ -3413,7 +3413,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'Button styles:',
+          Value: 'Button styles:',
           FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
         { Id: newInternalId('widget'), Name: 'Rounded Rect', Number: 3, Type: 'button', zIndex: 3,
@@ -3438,7 +3438,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'Shapes (filled):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
+          Value: 'Shapes (filled):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
         { Id: newInternalId('widget'), Name: 'Rectangle', Number: 9, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 105, 140, 54], visible: true,
@@ -3456,7 +3456,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'Shapes (lines & polygons):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
+          Value: 'Shapes (lines & polygons):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
         { Id: newInternalId('widget'), Name: 'Line', Number: 13, Type: 'shape', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 102, 225, 60], visible: true,
@@ -3480,19 +3480,19 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'Text fields:', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
+          Value: 'Text fields:', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
         },
         { Id: newInternalId('widget'), Name: 'OpaqueField', Number: 19, Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [30, 165, 320, 54], visible: true,
           Variant: 'opaque', lockText: false, scrolling: true, showLines: true,
           dontSearch: false, sharedText: false,
-          Text: 'Editable field\n(style: opaque, with lines)',
+          Value: 'Editable field\n(style: opaque, with lines)',
           FontSize: 10, Color: '#222', Script: '' },
         { Id: newInternalId('widget'), Name: 'ShadowField', Number: 20, Type: 'field', zIndex: 2,
           Anchors: ['left-width', 'top-height'], Offsets: [218, 165, 320, 54], visible: true,
           Variant: 'shadow', lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          Text: 'Locked text field\n(style: shadow)',
+          Value: 'Locked text field\n(style: shadow)',
           FontSize: 10, Color: '#444', Script: '' },
       ],
     },
@@ -3517,7 +3517,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'Script Demo',
+          Value: 'Script Demo',
           FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
         },
         {
@@ -3527,7 +3527,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          Text: 'This card demonstrates scripting. Each button has a script which runs when it is clicked.',
+          Value: 'This card demonstrates scripting. Each button has a script which runs when it is clicked.',
           FontSize: 11, Color: '#1d3461', Script: '',
         },
         {
@@ -3585,7 +3585,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'Widget Demo',
+          Value: 'Widget Demo',
           FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
         },
         {
@@ -3595,7 +3595,7 @@ const DemoDeck:BC_Deck = (() => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: false, sharedText: false,
-          Text: 'BC_Widget: objects fully defined in Preact + htm with their own state.',
+          Value: 'BC_Widget: objects fully defined in Preact + htm with their own state.',
           FontSize: 11, Color: '#1d3461', Script: '',
         },
         {
@@ -3686,7 +3686,7 @@ on('render', () => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: false, showLines: false,
           dontSearch: true, sharedText: false,
-          Text: 'About BrowserCard',
+          Value: 'About BrowserCard',
           FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
         },
         {
@@ -3696,7 +3696,7 @@ on('render', () => {
           visible: true, Variant: 'transparent',
           lockText: true, scrolling: true, showLines: false,
           dontSearch: false, sharedText: false,
-          Text: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting:\nScripts are plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full script context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
+          Value: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting:\nScripts are plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full script context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
           FontSize: 11, Color: '#1d3461', Script: '',
         },
         {
@@ -4252,8 +4252,8 @@ _InternalBehaviors.set('button', async ({ on, me, html, dispatch }) => {
     dispatch('click')
   }
   on('render', () => {
-    const Label = (              // "Text" takes precedence over the mere name
-      (O.Text != null) && (O.Text !== '') ? O.Text : O.Name
+    const Label = (              // "Value" takes precedence over the mere name
+      (O.Value != null) && (O.Value !== '') ? O.Value : O.Name
     )
     return html`
       <button
@@ -4281,16 +4281,16 @@ _InternalBehaviors.set('field', async ({ on, me, html }) => {
     }
     return (O.lockText
       ? html`
-          <div class=${styleClass} style=${{ width:'100%', height:'100%', ...textStyle }}>${O.Text}</div>
+          <div class=${styleClass} style=${{ width:'100%', height:'100%', ...textStyle }}>${O.Value}</div>
         `
       : html`
           <textarea
             class=${styleClass}
             style=${{ ...textStyle, width:'100%', height:'100%', padding:'4px 6px' }}
             onInput=${(Event:Event) => {       // write the text back into the
-              O.Text = (Event.target as HTMLTextAreaElement).value    // widget
+              O.Value = (Event.target as HTMLTextAreaElement).value    // widget
             }}
-          >${O.Text}</textarea>
+          >${O.Value}</textarea>
         `
     )
   })
@@ -4511,13 +4511,13 @@ function WidgetView ({
       case 'button':
         Object.assign(Widget, {
           Variant:'rounded-rect', showName:true, autoHilite:true,
-          enabled:true, sharedHilite:false, Text:'',
+          enabled:true, sharedHilite:false, Value:'',
         })
         break
       case 'field':
         Object.assign(Widget, {
           Variant:'opaque', lockText:false, scrolling:false, showLines:false,
-          dontSearch:false, sharedText:false, Text:'Text', FontSize:14,
+          dontSearch:false, sharedText:false, Value:'Value', FontSize:14,
         })
         break
       case 'shape':
@@ -4709,7 +4709,7 @@ function WidgetView ({
   }
 
 /**** EditorWindow — modal, draggable and resizable editor for multi-line ****/
-/****                properties such as "Text", "Script" or "Configuration" ****/
+/****                properties such as "Value", "Script" or "Configuration" ****/
 
   type BC_EditorState = {
     Title:   string
@@ -5147,7 +5147,7 @@ function WidgetView ({
       case 'button':
         TypeSection = html`
           ${DropDownRow('Style','Variant',[ 'rounded-rect','rectangle','oval','shadow','checkbox','radio','standard','transparent' ])}
-          ${TextlineRow('Text','Text')}
+          ${TextlineRow("Value","Value")}
           ${CheckboxRow('show label','showName')}
           ${CheckboxRow('enabled','enabled')}
           ${CheckboxRow('auto-hilite','autoHilite')}
@@ -5157,7 +5157,7 @@ function WidgetView ({
       case 'field':
         TypeSection = html`
           ${DropDownRow('Style','Variant',[ 'opaque','transparent','shadow','rectangle' ])}
-          ${TextRow('Text','Text')}
+          ${TextRow("Value","Value")}
           ${CheckboxRow('locked','lockText')}
           ${CheckboxRow('scrolling','scrolling')}
           ${CheckboxRow('show lines','showLines')}
@@ -5188,7 +5188,7 @@ function WidgetView ({
         break
       default:                                                       // 'generic'
         TypeSection = html`
-          ${TextRow('Text','Text')}
+          ${TextRow("Value","Value")}
           ${ConfigurationRow()}
         `
     }

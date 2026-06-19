@@ -64,6 +64,9 @@ Write meaningful scripts for interactive elements:
 - Access the current card from a widget script via `my.Card`, the deck via `my.Deck`
 - **Do not** use `Card()` without arguments — it returns `null`. `Card('Name')` / `Card(N)` is navigation only
 - **Widget behavior pattern:** custom input widgets use `on('update', ...)` to pull state from `my.Card` before render, and `dispatch('change', value)` to notify the card of user input — see the "Widget Behavior Pattern" section in the SystemPrompt for a full `NumberInput` example
+- **Built-in behaviors:** before writing custom render code, check whether a built-in behavior fits — `TitleView`, `Label`, `TextView`, `HTMLView`, `MarkdownView`, `ImageView`, `SVGView`, `WebView`, `Icon`, `FAIcon`, `nativeNumberInput`, `nativeSlider`, `nativeDropDown`, `horizontalSeparator`, etc. — see "Built-in Widget Behavior Catalog" in the SystemPrompt
+- **Local behaviors:** store reusable behavior functions inline in the deck with `defineLocalBehavior('Name', fn)` and load them with `await behaveLike(localBehavior('Name'))`
+- **Do not import Preact** — use the injected `html` tag and `preact` object (e.g. `preact.useState(...)`) instead
 
 ### Step 5 — Output
 

@@ -2,15 +2,15 @@
 
 // the parameters Value, invalid, Placeholder, readonly, minLength, maxLength,
 // LineWrapping, Resizability, SpellChecking and disabled are read from my.*
-// (falling back to the Configuration); Value may also be given in "Text" (where
-// typing writes it back). "invalid" forces the invalid state; "LineWrapping"
+// (falling back to the Configuration); typing writes the new value back to
+// Value. "invalid" forces the invalid state; "LineWrapping"
 // (default on) toggles soft wrapping; "Resizability" is one of 'none',
-// 'horizontal', 'vertical', 'both'. while focused, external Value/Text changes
+// 'horizontal', 'vertical', 'both'. while focused, external Value changes
 // do not disturb the input; on blur the display is synced
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -43,53 +43,53 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-nativetextinput-style', TextStyle)
+    injectStyleRuleOnce('bc-nativetextinput-style', TextStyle)
 
     on('render', () => {
-      const valueOf   = (Name) => (my[Name] ?? Configuration?.[Name])
-      const booleanOf = (Name) => (valueOf(Name) === true)
-      const numberOf  = (Name) => {
-        const Number = parseFloat(valueOf(Name))
+      const ValueOf   = (Name) => (my[Name] ?? Configuration?.[Name])
+      const BooleanOf = (Name) => (ValueOf(Name) === true)
+      const NumberOf  = (Name) => {
+        const Number = parseFloat(ValueOf(Name))
         return (isFinite(Number) ? Number : undefined)
       }
-      const textOf = (Name) => {
-        const Value = valueOf(Name)
+      const TextOf = (Name) => {
+        const Value = ValueOf(Name)
         return (Value == null ? undefined : String(Value))
       }
 
-      const Invalid    = booleanOf('invalid')
-      const Disabled   = booleanOf('disabled')
-      const ReadOnly   = booleanOf('readonly')
-      const Spell      = valueOf('SpellChecking')
-      const Wrap       = (valueOf('LineWrapping') === false ? 'off' : undefined)
-      const Resize     = (ResizeValues.includes(valueOf('Resizability')) ? valueOf('Resizability') : undefined)
+      const invalid       = BooleanOf('invalid')
+      const disabled      = BooleanOf('disabled')
+      const readonly      = BooleanOf('readonly')
+      const SpellChecking = ValueOf('SpellChecking')
+      const Wrap          = (ValueOf('LineWrapping') === false ? 'off' : undefined)
+      const Resize        = (ResizeValues.includes(ValueOf('Resizability')) ? ValueOf('Resizability') : undefined)
 
       const resolvedValue = () => (
-        my.Text != null ? String(my.Text) : String(valueOf('Value') ?? '')
+        String(ValueOf('Value') ?? '')
       )
 
     /**** sync display & validity, but leave the value alone while focused ****/
 
       const applyState = (Element) => {
         if (Element == null) { return }
-        Element.setCustomValidity(Invalid ? 'invalid' : '')
+        Element.setCustomValidity(invalid ? 'invalid' : '')
         if (document.activeElement !== Element) { Element.value = resolvedValue() }
       }
 
       return html`
         <textarea
-          placeholder=${textOf('Placeholder')}
-          readonly=${ReadOnly}
-          disabled=${Disabled}
-          minlength=${numberOf('minLength')}
-          maxlength=${numberOf('maxLength')}
+          placeholder=${TextOf('Placeholder')}
+          readonly=${readonly}
+          disabled=${disabled}
+          minlength=${NumberOf('minLength')}
+          maxlength=${NumberOf('maxLength')}
           wrap=${Wrap}
-          spellcheck=${Spell == null ? undefined : (Spell ? 'true' : 'false')}
-          aria-invalid=${Invalid ? 'true' : undefined}
+          spellcheck=${SpellChecking == null ? undefined : (SpellChecking ? 'true' : 'false')}
+          aria-invalid=${invalid ? 'true' : undefined}
           style=${Resize == null ? undefined : { resize:Resize }}
           ref=${applyState}
           onInput=${(Event) => {
-            my.Text = Event.target.value
+            my.Value = Event.target.value
             dispatch('change', Event.target.value)
           }}
           onBlur=${(Event) => { Event.target.value = resolvedValue() }}

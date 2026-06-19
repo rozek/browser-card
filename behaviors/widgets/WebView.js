@@ -1,4 +1,4 @@
-/**** WebView - wraps an <iframe> around the URL in "Text" ****/
+/**** WebView - wraps an <iframe> around the URL in "Value" ****/
 
 // the Configuration controls "allowsFullScreen" (boolean), "Permissions" (the
 // "allow" attribute), "SandboxPermissions" (the "sandbox" attribute; false omits
@@ -22,14 +22,14 @@
     )
 
     on('render', () => {
-      const URL = String(my.Text ?? '').trim()
+      const URL = String(my.Value ?? '').trim()
       if (URL === '') {
         return html`
           <div style=${{
             display:'flex', alignItems:'center', justifyContent:'center',
             width:'100%', height:'100%',
             color:'#999999', fontSize:'13px', textAlign:'center',
-          }}>(web page URL in "Text")</div>
+          }}>(web page URL in "Value")</div>
         `
       }
       return html`

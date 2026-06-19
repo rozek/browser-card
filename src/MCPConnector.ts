@@ -41,7 +41,7 @@ const CardSchemaKeys = new Set([
 const WidgetSchemaKeys = new Set([
   'Id','Name','Number','Type','Variant','zIndex','Anchors','Offsets',
   'visible','Script','Value',
-  'Text','showName','autoHilite','enabled','sharedHilite','Hilite','IconId',
+  'showName','autoHilite','enabled','sharedHilite','Hilite','IconId',
   'lockText','scrolling','showLines','dontSearch','sharedText',
   'TextAlign','FontSize','FontWeight','Color',
   'FillColor','BorderColor','BorderWidth','ArrowStart','ArrowEnd',
@@ -155,7 +155,7 @@ function resolveTarget (Target: string, Deck: BC_Deck):RawTarget | null {
 const WidgetDefaults: Record<string, Partial<BC_Widget>> = {
   button:  { Variant:'rounded-rect' as any, showName:true, autoHilite:true, enabled:true, sharedHilite:false },
   field:   { Variant:'opaque' as any, lockText:false, scrolling:false, showLines:false,
-             dontSearch:false, sharedText:false, Text:'' },
+             dontSearch:false, sharedText:false, Value:'' },
   shape:   { Variant:'rectangle' as any, FillColor:'#ffffff', BorderColor:'#000000', BorderWidth:1 },
   picture: { Variant:'scale-aspect-fit' as any, ImageData:'', actualWidth:0, actualHeight:0, autoHilite:false },
   generic: {},
@@ -403,7 +403,7 @@ export class MCPConnector {
 
     const nameRE   = Query.namePattern    ? new RegExp(Query.namePattern as string, 'i')    : null
     const scriptRE = Query.scriptContains ? new RegExp(Query.scriptContains as string, 'i') : null
-    const textStr  = Query.textContains as string | undefined
+    const valueStr = Query.valueContains as string | undefined
     const typeFilter = Query.widgetType as string | undefined
 
     const matchesCard = (Card: BC_Card) =>
@@ -412,10 +412,10 @@ export class MCPConnector {
 
     const matchesWidget = (Widget: BC_Widget) => {
       if (typeFilter && (Widget.Type !== typeFilter)) { return false }
-      const Text = (Widget as any).Text as string ?? ''
+      const Value = (Widget as any).Value as string ?? ''
       return (! nameRE   || nameRE.test(Widget.Name))   &&
              (! scriptRE || scriptRE.test(Widget.Script)) &&
-             (! textStr  || Text.includes(textStr))
+             (! valueStr || Value.includes(valueStr))
     }
 
     if (Scope !== 'widgets') {
@@ -435,12 +435,12 @@ export class MCPConnector {
       for (const Card of Deck.Cards) {
         for (const Widget of Card.Widgets) {
           if (matchesWidget(Widget)) {
-            const Text = (Widget as any).Text as string ?? ''
+            const Value = (Widget as any).Value as string ?? ''
             Results.push({
               target:  `${Card.Id}/${Widget.Id}`,
               type:    Widget.Type,
               name:    Widget.Name,
-              excerpt: Text || Widget.Script.slice(0, 120),
+              excerpt: Value || Widget.Script.slice(0, 120),
             })
           }
         }

@@ -137,9 +137,9 @@ BrowserCard uses an **anchor-based geometry** system that makes widgets respond 
 "Anchors": ["left-right", "top-height"],
 "Offsets": [10, 10, 10, 44]
 
-// Centered 200px wide, 44px high, 20px from top
-"Anchors": ["left-width", "top-height"],
-"Offsets": [200, 200, 20, 44]
+// Fixed width 200px, anchored right with 20px margin, fixed height 44px at top
+"Anchors": ["width-right", "top-height"],
+"Offsets": [200, 20, 10, 44]
 ```
 
 **Tip:** For most fixed-layout decks, use `"left-width"` and `"top-height"` with pixel coordinates.
@@ -148,7 +148,7 @@ BrowserCard uses an **anchor-based geometry** system that makes widgets respond 
 
 ## Widget Types and Their Properties
 
-### 1. Button (`"type": "button"`)
+### 1. Button (`"Type": "button"`)
 
 A clickable button with optional label.
 
@@ -157,7 +157,7 @@ A clickable button with optional label.
   "Type": "button",
   "Variant": "rounded-rect",
   "showName": true,
-  "Text": "Click Me",
+  "Value": "Click Me",
   "enabled": true,
   "autoHilite": true,
   "sharedHilite": false,
@@ -170,7 +170,7 @@ A clickable button with optional label.
 |---|---|---|---|
 | `Variant` | string | `"rounded-rect"` | Visual style (see below) |
 | `showName` | boolean | `true` | Show label inside button |
-| `Text` | string | (uses `Name`) | Label text (overrides Name) |
+| `Value` | string | (uses `Name`) | Label text (overrides Name) |
 | `enabled` | boolean | `true` | Allow interaction |
 | `autoHilite` | boolean | `true` | Highlight on press |
 | `sharedHilite` | boolean | `false` | Shared highlight state across cards |
@@ -181,7 +181,7 @@ A clickable button with optional label.
 
 ---
 
-### 2. Field (`"type": "field"`)
+### 2. Field (`"Type": "field"`)
 
 A text container, optionally editable.
 
@@ -194,7 +194,7 @@ A text container, optionally editable.
   "showLines": false,
   "dontSearch": false,
   "sharedText": false,
-  "Text": "Hello, World!",
+  "Value": "Hello, World!",
   "FontSize": 14,
   "FontWeight": "normal",
   "TextAlign": "left",
@@ -210,7 +210,7 @@ A text container, optionally editable.
 | `showLines` | boolean | `false` | Show horizontal text lines |
 | `dontSearch` | boolean | `false` | Exclude from search |
 | `sharedText` | boolean | `false` | Same text on all cards |
-| `Text` | string | `""` | Text content (supports `\n` for newlines) |
+| `Value` | string | `""` | Text content (supports `\n` for newlines) |
 | `FontSize` | number | `14` | Font size in points |
 | `FontWeight` | string | `"normal"` | `"normal"` or `"bold"` |
 | `TextAlign` | string | `"left"` | `"left"`, `"center"`, or `"right"` |
@@ -220,7 +220,7 @@ A text container, optionally editable.
 
 ---
 
-### 3. Shape (`"type": "shape"`)
+### 3. Shape (`"Type": "shape"`)
 
 A geometric drawing element.
 
@@ -255,7 +255,7 @@ A geometric drawing element.
 
 ---
 
-### 4. Picture (`"type": "picture"`)
+### 4. Picture (`"Type": "picture"`)
 
 Displays an image.
 
@@ -280,15 +280,17 @@ Displays an image.
 
 **Picture variants:** `"scale-aspect-fill"`, `"scale-aspect-fit"`, `"scale-to-fill"`, `"actual-size"`, `"center"`
 
+Picture widgets can also define a custom `on('render', ...)` handler to override the default display entirely.
+
 ---
 
-### 5. Generic Widget (`"type": "generic"`)
+### 5. Generic Widget (`"Type": "generic"`)
 
 A fully custom widget defined by its Preact/htm render script.
 
 ```json
 {
-  "type": "generic",
+  "Type": "generic",
   "Configuration": {
     "label": "Hello",
     "color": "#ff0000"
@@ -300,24 +302,26 @@ A fully custom widget defined by its Preact/htm render script.
 |---|---|---|---|
 | `Configuration` | object | `{}` | Read-only design-time configuration, accessible in script as `Configuration` |
 
-The widget's visual appearance is entirely defined in its `script` via `on('render', fn)`.
+The widget's visual appearance is entirely defined in its `Script` via `on('render', fn)`.
 
 ---
 
 ## Scripting
 
-Every Deck, Card, and Widget can have a JavaScript `script`. Scripts run asynchronously and use `on(message, handler)` to register event handlers.
+Every Deck, Card, and Widget can have a JavaScript `Script`. Scripts run asynchronously and use `on(message, handler)` to register event handlers.
 
-### Common Messages
+### Messages
 
-| Message | Sender | Description |
+| Message | Context | Description |
 |---|---|---|
-| `'ready'` | System | After all children are initialized (fires inside-out) |
-| `'obsolete'` | System | Before deletion or navigation away |
-| `'click'` | Widget | Button was clicked (bubbles: widget → card → deck) |
-| `'render'` | Widget | On every re-render (generic widgets only, must return `html\`...\``) |
+| `'ready'` | all | After all children are initialized (fires inside-out: widget → card → deck) |
+| `'obsolete'` | all | Before deletion or navigation away from the card |
+| `'open'` | card | When the card becomes the active card (after `'ready'`) |
+| `'click'` | widget | Button or icon was clicked (bubbles: widget → card → deck) |
+| `'update'` | widget | Called synchronously before every `'render'` — use to pull external state into the widget |
+| `'render'` | widget | On every re-render — must return `html\`...\`` (generic and custom picture widgets) |
 
-### Key API Functions
+### Key API
 
 **Navigation:**
 ```javascript
@@ -337,14 +341,14 @@ const Input  = await ask('Prompt', 'default value')      // returns string or nu
 
 **Widget access:**
 ```javascript
-Widget('MyWidget')      // Get widget by name
-Widget(2)               // Get widget by 1-based index
+Widget('MyWidget')      // Get widget proxy by name
+Widget(2)               // Get widget proxy by 1-based index
 ```
 
-**Inter-widget messaging:**
+**Messaging:**
 ```javascript
-await send('DisplayWidget', 'showValue', 42)  // Send message to named widget
-dispatch('myEvent')                            // Send message up to card/deck (widgets only)
+await send('TargetWidget', 'msgName', arg1, arg2)  // send message with args to named widget
+dispatch('eventName', value)                        // bubble event with args up to card/deck (widget only)
 ```
 
 **Card info:**
@@ -353,39 +357,167 @@ CardNumber()   // 1-based index of current card
 CardCount()    // Total number of cards
 ```
 
-**Reactive state (`me` / `my`):**
+**Reactive state (`me` / `my` / `I` - all synonyms for the current Visual's proxy):**
 ```javascript
-my.Text = 'Hello'           // Update property → triggers re-render + persistence
-my.Width = 200              // Update geometry → triggers layout
-my.own.counter = 0          // Transient (private) state - no re-render, no persistence
-I.changeGeometryTo(x, y, w, h)  // Update position/size from pixel values
+my.Value = 'Hello'               // Update property -> triggers re-render + persistence
+my.Width = 200                  // Update geometry -> triggers layout
+my.own.counter = 0              // Transient (private) state - no re-render, no persistence
+I.changeGeometryTo(x, y, w, h) // Update position/size from pixel values
+my.Card                         // Proxy for the widget's own card (read/write)
+my.Deck                         // Proxy for the deck (read/write)
 ```
 
-**Timers (auto-cancelled on `obsolete`):**
+> **Important:** `Card('Name')` / `Card(N)` are for **navigation only** (pass to `go()`).
+> To access card properties use `my.Card.someProperty`.
+
+**Timers (auto-cancelled on `'obsolete'`):**
 ```javascript
-after(1000, () => { /* runs once after 1s */ })
-every(500,  () => { /* runs every 500ms */ })
+after(1000, () => { /* runs once after 1 s */ })
+every(500,  () => { /* runs every 500 ms */ })
 ```
 
-**Navigation helpers:**
+**External links:**
 ```javascript
 openURL('https://example.com')   // Open URL in new tab
 ```
 
-**Behaviors (reusable scripts):**
+**Console (built-in BC console):**
 ```javascript
-await behaveLike('blinker')           // Load named behavior from CDN
-await behaveLike('./MyBehavior.js')   // Load local behavior
-```
-
-**Console:**
-```javascript
-println('Hello', value)   // Print to built-in console
+println('value is', someValue)
 print('no newline')
 clearConsole()
 ```
 
-### Script Examples
+**Behaviors:**
+```javascript
+await behaveLike('Label')              // load named built-in behavior (see catalog below)
+await behaveLike('./MyBehavior.js')    // load local behavior relative to the page URL
+await behaveLike('https://…/Foo.js')  // load from absolute URL
+await behaveLike(localBehavior('Foo')) // load behavior stored inside the deck
+```
+
+> Only one `behaveLike()` call is allowed per Visual.
+
+**Local behaviors (stored in the deck JSON):**
+```javascript
+// In the deck script - define and embed a behavior in the deck:
+defineLocalBehavior('MyCounter', async ({ on, my, html }) => {
+  on('render', () => html`<div>${my.Value ?? 0}</div>`)
+})
+
+// In a widget script - use the embedded behavior:
+await behaveLike(localBehavior('MyCounter'))
+```
+
+---
+
+## Widget Behavior Pattern
+
+Well-designed custom widget behaviors decouple internal rendering from external (Card/Deck) state using two conventions:
+
+- **`on('update', fn)`** - called synchronously before every render. Pull the current external value into the widget's local state so `'render'` always has the latest data.
+- **`dispatch('change', value)`** - called after user input. The card or deck script listens and saves the value to its own state.
+
+Example - a `NumberInput` widget behavior:
+
+```javascript
+// Widget script (or behavior file):
+on('update', () => {
+  my.Value = my.Card.Temperature   // pull card state into widget before render
+})
+
+on('render', () => {
+  const Value = my.Value ?? 0
+  return html`
+    <input
+      type="number"
+      value=${Value}
+      style=${{ width:'100%', height:'100%', boxSizing:'border-box', padding:'4px 6px' }}
+      onInput=${(e) => {
+        const n = e.target.valueAsNumber
+        if (!isNaN(n)) { my.Value = n; dispatch('change', n) }
+      }}
+    />
+  `
+})
+
+// Card script:
+on('open', () => { my.Card.Temperature = 20 })
+on('change', (Value) => { my.Card.Temperature = Value })
+```
+
+If multiple widgets on the same card read the same `my.Card` property in their `'update'` handler, changing one automatically keeps all others in sync on the next render cycle.
+
+---
+
+## Built-in Widget Behavior Catalog
+
+Use with `await behaveLike('BehaviorName')` in a widget script.
+
+Bare names resolve to: `https://rozek.github.io/browser-card/behaviors/widgets/<name>.js`
+
+### Text / Display
+
+| Behavior | Description |
+|---|---|
+| `TitleView` | Renders `my.Value` as 22 px bold, single-line (truncated with ellipsis) |
+| `SubtitleView` | Renders `my.Value` as 18 px bold, single-line |
+| `Label` | Renders `my.Value` as 15 px bold, single-line |
+| `TextView` | Renders `my.Value` as 15 px normal, single-line |
+| `FineprintView` | Renders `my.Value` as 13 px normal, single-line |
+| `MarkdownView` | Renders `my.Value` as Markdown with syntax highlighting (highlight.js), math (KaTeX) and diagrams (Mermaid); assets served same-origin from `markdown/` folder beside `BrowserCard.js` |
+| `HTMLView` | Renders `my.Value` as raw HTML (`dangerouslySetInnerHTML`) |
+| `SVGView` | Renders inline SVG source from `my.Value`; `Configuration.scaling` (`'none'`/`'stretch'`/`'cover'`/`'contain'`) and `Configuration.alignment` (e.g. `'center center'`, `'left top'`) control fit |
+| `ImageView` | Shows an image from `my.Value` (URL); same `Configuration.scaling` and `Configuration.alignment` options as SVGView |
+| `WebView` | Embeds `my.Value` (URL) in an `<iframe>`; `Configuration.allowsFullScreen` (boolean), `Configuration.Permissions` (allow attribute), `Configuration.SandboxPermissions` (sandbox attribute; `false` = no sandbox), `Configuration.ReferrerPolicy` |
+
+### Icons and Selectors
+
+| Behavior | Description |
+|---|---|
+| `Icon` | Clickable 24x24 icon from `my.Icon` or `Configuration.Icon`; bare name resolves to `icons/<name>.png` beside `BrowserCard.js`; `my.Color`/`Configuration.Color` tints it (monochrome mask); `my.hilite` adds CSS class `active`; `my.disabled`/`Configuration.disabled` locks it; dispatches `'click'` |
+| `FAIcon` | Same as `Icon` but uses FontAwesome 4.7.0 icon names (e.g. `"fa-home"`); assets served same-origin from `fontawesome/` folder |
+| `PseudoDropDown` | Icon + transparent overlaid `<select>` for dropdown menus; `my.Options`/`Configuration.Options` is a list or space-separated string of `value` or `value:label` entries (leading `-` disables the entry); selected value written to `my.Value`; dispatches `'change'`; `my.disabled` locks it |
+| `PseudoFileInput` | Icon + hidden `<input type="file">`; click opens the OS file picker; `my.multiple`/`Configuration.multiple` allows multiple files; `my.FileTypes`/`Configuration.FileTypes` sets the `accept` filter; dispatches `'change'` with an array of `File` objects; `my.disabled` locks it |
+
+### Separators
+
+| Behavior | Description |
+|---|---|
+| `horizontalSeparator` | Thin light-grey (`#cccccc`) horizontal line, centered vertically in the widget bounds |
+| `verticalSeparator` | Thin light-grey (`#cccccc`) vertical line, centered horizontally in the widget bounds |
+
+### Native Form Controls
+
+All native input behaviors read parameters from `my.*` first, falling back to `Configuration.*`. `my.Value` is the primary value channel. All dispatch `'change'` with the new value after user interaction. `my.disabled`/`Configuration.disabled` disables; `my.readonly`/`Configuration.readonly` makes it read-only.
+
+| Behavior | Wraps | Key parameters |
+|---|---|---|
+| `nativeButton` | `<button>` | `my.Value` as label; dispatches `'click'` |
+| `nativeCheckbox` | `<input type="checkbox">` | `my.Value`: `'on'`/`'true'` = checked, `'off'`/`'false'` = unchecked, `'-'` = indeterminate; dispatches `'change'` |
+| `nativeRadiobutton` | `<input type="radio">` | Same state convention as `nativeCheckbox`; dispatches `'change'` |
+| `nativeDropDown` | `<select>` | `my.Value` = selected value; `Options` list or space-separated string of `value` or `value:label` pairs (leading `-` disables); dispatches `'change'` |
+| `nativeSlider` | `<input type="range">` | `Value`, `Minimum`, `Maximum`, `Stepping` (`'any'` allowed), `Hashmarks` (array or string of values or `value=label` pairs for datalist ticks); dispatches `'change'` |
+| `nativeNumberInput` | `<input type="number">` | `Value`, `Minimum`, `Maximum`, `Stepping`, `Placeholder`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeTextlineInput` | `<input type="text">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `SpellChecking`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeTextInput` | `<textarea>` | `Value`, `Placeholder`, `minLength`, `maxLength`, `LineWrapping`, `Resizability`, `SpellChecking`, `invalid`; dispatches `'change'` |
+| `nativePasswordInput` | `<input type="password">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `invalid`; dispatches `'change'` |
+| `nativeEMailAddressInput` | `<input type="email">` | `Value`, `multiple`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeURLInput` | `<input type="url">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativePhoneNumberInput` | `<input type="tel">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeSearchInput` | `<input type="search">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `SpellChecking`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeColorInput` | `<input type="color">` | `Value` as `"#rrggbb"`; `Suggestions`; dispatches `'change'` |
+| `nativeDateInput` | `<input type="date">` | `Value` as `"YYYY-MM-DD"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeTimeInput` | `<input type="time">` | `Value` as `"HH:MM"` or `"HH:MM:SS"`; `withSeconds`, `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeDateTimeInput` | `<input type="datetime-local">` | `Value` as `"YYYY-MM-DDTHH:MM"`; `withSeconds`, `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeMonthInput` | `<input type="month">` | `Value` as `"YYYY-MM"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeWeekInput` | `<input type="week">` | `Value` as `"YYYY-Wnn"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeProgressbar` | `<progress>` | `Value`, `Maximum` from `my.*` or `Configuration`; without `Value` -> indeterminate (animated) |
+| `nativeGauge` | `<meter>` | `Value`, `Minimum`, `lowerBound`, `Optimum`, `upperBound`, `Maximum` from `my.*` or `Configuration` |
+
+---
+
+## Script Examples
 
 ```javascript
 // Button: navigate forward
@@ -400,34 +532,50 @@ on('click', async () => {
   if (Answer === 'Yes') go(nextCard)
 })
 
-// Button: ask for input
+// Button: ask for input, update a field widget
 on('click', async () => {
   const Name = await ask('What is your name?', '')
   if (Name != null) {
-    Widget('GreetingField').Text = 'Hello, ' + Name + '!'
+    Widget('GreetingField').Value = 'Hello, ' + Name + '!'
   }
 })
 
-// Field: update text from another widget
-on('showValue', (Value) => { my.Text = String(Value) })
-
-// Generic widget: custom render
-on('render', () => {
-  return html`<div style=${{ padding: '8px', color: Configuration.color }}>
-    ${me.label ?? Configuration.label}
-  </div>`
+// Card: initialize state when the card opens
+on('open', () => {
+  my.Card.Temperature = 20
+  Widget('UUIDView').Value = crypto.randomUUID()
 })
 
-// Deck: initialize on load
+// Card: receive change events from child widgets
+on('change', (Value) => { my.Card.Temperature = Value })
+
+// Generic widget: compute derived state before render
+on('update', () => {
+  my.displayText = (my.Value ?? 0).toFixed(2) + ' EUR'
+})
+on('render', () => html`<div style=${{ padding:'8px' }}>${my.displayText}</div>`)
+
+// Generic widget: dispatch an event with args
+on('render', () => html`
+  <button onClick=${() => { my.Value = (my.Value ?? 0) + 1; dispatch('change', my.Value) }}>
+    Count: ${my.Value ?? 0}
+  </button>
+`)
+
+// Timer: update a field every second
+on('ready', () => {
+  every(1000, () => { my.Value = new Date().toLocaleTimeString() })
+})
+
+// Behavior: use a built-in behavior
+await behaveLike('MarkdownView')
+
+// Behavior: use a local behavior stored in the deck
+await behaveLike(localBehavior('MyCustomWidget'))
+
+// Deck: initialize and log card count
 on('ready', () => {
   println('Deck ready with', CardCount(), 'cards')
-})
-
-// Timer: animate or update periodically
-on('ready', () => {
-  every(1000, () => {
-    me.Text = new Date().toLocaleTimeString()
-  })
 })
 ```
 
@@ -479,7 +627,7 @@ on('ready', () => {
           "showLines": false,
           "dontSearch": false,
           "sharedText": false,
-          "Text": "Hello, World!",
+          "Value": "Hello, World!",
           "FontSize": 32,
           "FontWeight": "bold",
           "TextAlign": "center",
@@ -497,7 +645,7 @@ on('ready', () => {
           "Offsets": [220, 160, 44, 20],
           "Variant": "rounded-rect",
           "showName": true,
-          "Text": "Next Card",
+          "Value": "Next Card",
           "enabled": true,
           "autoHilite": true,
           "sharedHilite": false,
@@ -520,9 +668,10 @@ on('ready', () => {
 4. **Widget `Number`** - start at 1, increment per card; determines drawing order (back to front)
 5. **Scripts** - empty string `""` for no script; valid JavaScript string for active scripts; use `\n` for line breaks within JSON strings
 6. **Colors** - use hex `"#rrggbb"` or CSS color names; `null` for "no color"
-7. **Text content** - use `\n` for newlines within field `Text` values
+7. **Text content** - use `\n` for newlines within field `Value` values
 8. **Deck defaults** - `CardWidth: 600`, `CardHeight: 450` are standard; adjust as needed
 9. **Widget types** - `Type` value must be exactly one of: `"button"`, `"field"`, `"shape"`, `"picture"`, `"generic"`
+10. **`behaveLike`** - only one call per Visual; bare names resolve to `https://rozek.github.io/browser-card/behaviors/{widgets|cards|decks}/{name}.js`
 
 ---
 
@@ -533,7 +682,7 @@ When creating a new deck:
 2. Plan the card sequence (navigation flow)
 3. Design each card's layout with appropriate widgets
 4. Use anchor-based geometry for responsive placement
-5. Add scripts for interactive behavior
+5. Add scripts for interactive behavior - prefer behaviors from the catalog where applicable
 6. Assign sequential, unique IDs throughout
 
 When modifying an existing deck:

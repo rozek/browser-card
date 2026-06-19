@@ -1,4 +1,4 @@
-/**** ImageView - shows the image whose URL is in "Text" ****/
+/**** ImageView - shows the image whose URL is in "Value" ****/
 
 // Configuration fields "scaling" ('none'|'stretch'|'cover'|'contain') and
 // "alignment" (e.g. 'center center', 'left top', ...) control fit and position
@@ -14,7 +14,7 @@
   ]
 
   export default async function ({ on, my, html, Configuration }) {
-    const ObjectFit = (ScalingToFit[Configuration?.scaling] ?? ScalingToFit.contain)
+    const ObjectFit      = (ScalingToFit[Configuration?.scaling] ?? ScalingToFit.contain)
     const ObjectPosition = (
       AlignmentValues.includes(Configuration?.alignment)
       ? Configuration.alignment
@@ -22,14 +22,14 @@
     )
 
     on('render', () => {
-      const URL = String(my.Text ?? '').trim()
+      const URL = String(my.Value ?? '').trim()
       if (URL === '') {
         return html`
           <div style=${{
             display:'flex', alignItems:'center', justifyContent:'center',
             width:'100%', height:'100%',
             color:'#999999', fontSize:'13px', textAlign:'center',
-          }}>(image URL in "Text")</div>
+          }}>(image URL in "Value")</div>
         `
       }
       return html`

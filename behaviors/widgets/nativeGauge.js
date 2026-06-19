@@ -2,12 +2,12 @@
 
 // the numeric parameters Value, Minimum, lowerBound, Optimum, upperBound and
 // Maximum are read from my.* (falling back to the Configuration) and map to the
-// <meter> attributes value/min/low/optimum/high/max; Value may also be given as
-// text in "Text"
+// <meter> attributes value/min/low/optimum/high/max; the Value is given as a
+// numeric string
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -27,7 +27,7 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, Configuration }) {
-    styleRuleInjectedOnce('bc-nativegauge-style', GaugeStyle)
+    injectStyleRuleOnce('bc-nativegauge-style', GaugeStyle)
 
     on('render', () => {
       const numberFrom = (Name) => {
@@ -35,8 +35,7 @@
         return (isFinite(Number) ? Number : undefined)
       }
 
-      const fromText = parseFloat(String(my.Text ?? ''))
-      const Value = (numberFrom('Value') ?? (isFinite(fromText) ? fromText : 0))
+      const Value = (numberFrom('Value') ?? 0)
 
       return html`
         <meter

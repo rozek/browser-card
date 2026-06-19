@@ -1,13 +1,13 @@
 /**** nativeCheckbox - wraps a native checkbox ****/
 
-// "Text" holds the state: 'on'/'true' = checked, 'off'/'false' = unchecked,
-// '-' = indeterminate. User toggles write 'on'/'off' back to "Text" and
+// "Value" holds the state: 'on'/'true' = checked, 'off'/'false' = unchecked,
+// '-' = indeterminate. User toggles write 'on'/'off' back to "Value" and
 // dispatch 'change'; lock via my.disabled = true (or Configuration field
 // "disabled")
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -30,23 +30,23 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-nativecheckbox-style', CheckboxStyle)
+    injectStyleRuleOnce('bc-nativecheckbox-style', CheckboxStyle)
 
     on('render', () => {
-      const Raw = String(my.Text ?? my.Value ?? '').trim().toLowerCase()
-      const Indeterminate = (Raw === '-')
-      const Checked       = ((Raw === 'on') || (Raw === 'true'))
-      const Disabled      = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+      const rawValue = String(my.Value ?? '').trim().toLowerCase()
+      const indeterminate = (rawValue === '-')
+      const checked       = ((rawValue === 'on') || (rawValue === 'true'))
+      const disabled      = ((my.disabled ?? Configuration?.disabled ?? false) === true)
 
       return html`
         <input
           type="checkbox"
-          checked=${Checked}
-          disabled=${Disabled}
-          ref=${(Element) => { if (Element != null) { Element.indeterminate = Indeterminate } }}
+          checked=${checked}
+          disabled=${disabled}
+          ref=${(Element) => { if (Element != null) { Element.indeterminate = indeterminate } }}
           onChange=${(Event) => {
             const isChecked = Event.target.checked
-            my.Text = my.Value = (isChecked ? 'on' : 'off')
+            my.Value = (isChecked ? 'on' : 'off')
             dispatch('change', isChecked)
           }}
         />

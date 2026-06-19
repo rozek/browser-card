@@ -1,4 +1,4 @@
-/**** SVGView - shows the inline SVG source held in "Text" ****/
+/**** SVGView - shows the inline SVG source held in "Value" ****/
 
 // same Configuration fields as ImageView: "scaling" ('none'|'stretch'|'cover'|
 // 'contain') and "alignment" (e.g. 'center center', 'left top', ...) - applied
@@ -10,7 +10,7 @@
     'left bottom':'xMinYMax', 'center bottom':'xMidYMax', 'right bottom':'xMaxYMax',
   }
   const FlexX = { left:'flex-start', center:'center', right:'flex-end' }
-  const FlexY = { top:'flex-start', center:'center', bottom:'flex-end' }
+  const FlexY = { top:'flex-start',  center:'center', bottom:'flex-end' }
 
   const Scalings = [ 'none','stretch','cover','contain' ]
 
@@ -24,7 +24,7 @@
       AlignToken[Configuration?.alignment] != null ? Configuration.alignment : 'center center'
     )
 
-    const PreserveAspectRatio = (
+    const preserveAspectRatio = (
       Scaling === 'stretch'
       ? 'none'
       : AlignToken[Alignment] + (Scaling === 'cover' ? ' slice' : ' meet')
@@ -42,7 +42,7 @@
         SVG.style.maxWidth = SVG.style.maxHeight = '100%'
       } else {                                   // fill the box, fit via aspect ratio
         ensuredViewBoxFor(SVG)                   // without it, scaling has no effect
-        SVG.setAttribute('preserveAspectRatio', PreserveAspectRatio)
+        SVG.setAttribute('preserveAspectRatio', preserveAspectRatio)
         SVG.style.display = 'block'
         SVG.style.width = SVG.style.height = '100%'
       }
@@ -79,14 +79,14 @@
     )
 
     on('render', () => {
-      const Source = String(my.Text ?? '').trim()
+      const Source = String(my.Value ?? '').trim()
       if (Source === '') {
         return html`
           <div style=${{
             display:'flex', alignItems:'center', justifyContent:'center',
             width:'100%', height:'100%',
             color:'#999999', fontSize:'13px', textAlign:'center',
-          }}>(SVG source in "Text")</div>
+          }}>(SVG source in "Value")</div>
         `
       }
       return html`

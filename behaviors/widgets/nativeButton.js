@@ -1,12 +1,12 @@
 /**** nativeButton - wraps a native <button> ****/
 
-// "Text" is the (HTML) label. Clicks are dispatched as 'click' so the widget's
+// "Value" is the (HTML) label. Clicks are dispatched as 'click' so the widget's
 // own script can handle them with on('click', () => ...). Lock it via
 // my.disabled = true (or the Configuration field "disabled")
 
-  /**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -30,16 +30,16 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-nativebutton-style', ButtonStyle)
+    injectStyleRuleOnce('bc-nativebutton-style', ButtonStyle)
 
     on('render', () => {
-      const Disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+      const disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
       return html`
         <button
           type="button"
-          disabled=${Disabled}
-          onClick=${() => { if (! Disabled) { dispatch('click') } }}
-          dangerouslySetInnerHTML=${{ __html:String(my.Text ?? '') }}
+          disabled=${disabled}
+          onClick=${() => { if (! disabled) { dispatch('click') } }}
+          dangerouslySetInnerHTML=${{ __html:String(my.Value ?? '') }}
         ></button>
       `
     })

@@ -1,4 +1,4 @@
-/**** HTMLView - renders the widget's "Text" property as HTML ****/
+/**** HTMLView - renders the widget's "Value" property as HTML ****/
 
   export default async function ({ on, my, html }) {
     on('render', () => html`
@@ -8,7 +8,7 @@
           fontSize:'15px', fontWeight:'normal', textAlign:'left',
           overflow:'auto',
         }}
-        dangerouslySetInnerHTML=${{ __html:my.Text ?? '(HTML)' }}
+        dangerouslySetInnerHTML=${{ __html:my.Value ?? '(HTML)' }}
       ></div>
     `)
   }

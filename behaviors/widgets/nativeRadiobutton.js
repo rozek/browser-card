@@ -1,12 +1,12 @@
 /**** nativeRadiobutton - wraps a native radio button ****/
 
-// "Text" holds the state: 'on'/'true' = selected, 'off'/'false' = not selected.
-// selecting writes 'on'/'off' back to "Text" and dispatches 'change'; lock it
+// "Value" holds the state: 'on'/'true' = selected, 'off'/'false' = not selected.
+// selecting writes 'on'/'off' back to "Value" and dispatches 'change'; lock it
 // via my.disabled = true (or the Configuration field "disabled").
 
-/**** styleRuleInjectedOnce - adds a <style> rule to the document head once ****/
+/**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
-  function styleRuleInjectedOnce (Id, CSS) {
+  function injectStyleRuleOnce (Id, CSS) {
     if (document.getElementById(Id) != null) { return }
     const Style = document.createElement('style')
       Style.id          = Id
@@ -29,21 +29,21 @@
 /**** actual behavior script ****/
 
   export default async function ({ on, my, html, dispatch, Configuration }) {
-    styleRuleInjectedOnce('bc-nativeradiobutton-style', RadiobuttonStyle)
+    injectStyleRuleOnce('bc-nativeradiobutton-style', RadiobuttonStyle)
 
     on('render', () => {
-      const Raw      = String(my.Text ?? my.Value ?? '').trim().toLowerCase()
-      const Checked  = ((Raw === 'on') || (Raw === 'true'))
-      const Disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
+      const rawValue      = String(my.Value ?? '').trim().toLowerCase()
+      const checked  = ((rawValue === 'on') || (rawValue === 'true'))
+      const disabled = ((my.disabled ?? Configuration?.disabled ?? false) === true)
 
       return html`
         <input
           type="radio"
-          checked=${Checked}
-          disabled=${Disabled}
+          checked=${checked}
+          disabled=${disabled}
           onChange=${(Event) => {
             const isChecked = Event.target.checked
-            my.Text = (isChecked ? 'on' : 'off')
+            my.Value = (isChecked ? 'on' : 'off')
             dispatch('change', isChecked)
           }}
         />

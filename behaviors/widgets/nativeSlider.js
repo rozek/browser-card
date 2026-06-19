@@ -43,7 +43,7 @@
       margin:0px; padding:0px;
     }
     .bc-widget > input[type="range"]:disabled {
-      cursor:not-allowed;
+      opacity:0.3; cursor:not-allowed;
     }
   `
 

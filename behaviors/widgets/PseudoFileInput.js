@@ -41,7 +41,7 @@
       cursor:pointer; pointer-events:auto;
     }
     .bc-widget > label.bc-pseudo-file.disabled {
-      cursor:not-allowed;
+      opacity:0.3; cursor:not-allowed;
     }
     .bc-widget > label.bc-pseudo-file > img {
       width:100%; height:100%;

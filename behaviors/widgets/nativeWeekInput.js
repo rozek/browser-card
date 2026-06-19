@@ -41,7 +41,7 @@
       background:#F0F0F0;
     }
     .bc-widget > input[type="week"]:disabled {
-      cursor:not-allowed;
+      opacity:0.3; cursor:not-allowed;
     }
   `
 

@@ -47,7 +47,7 @@
       line-height:28px;
     }
     .bc-widget > select:disabled {
-      cursor:not-allowed;
+      opacity:0.3; cursor:not-allowed;
     }
   `
 
@@ -79,7 +79,7 @@
           }}
         >
           ${Options.map((Option) => html`
-            <option key=${Option.value} value=${Option.value} disabled=${Option.disabled}>${Option.label}</option>
+            <option key=${Option.value} value=${Option.value} disabled=${Option.disabled} style=${Option.disabled ? { opacity:0.3 } : undefined}>${Option.label}</option>
           `)}
         </select>
       `

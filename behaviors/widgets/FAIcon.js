@@ -276,7 +276,7 @@
         <fa-icon
           class=${ClassName}
           aria-hidden="true"
-          style=${{ color:Color, cursor:(disabled ? 'not-allowed' : 'pointer') }}
+          style=${{ color:Color, cursor:(disabled ? 'not-allowed' : 'pointer'), opacity:(disabled ? 0.3 : 1) }}
           onClick=${() => { if (! disabled) { dispatch('click') } }}
         ></fa-icon>
       `

@@ -36,7 +36,7 @@
       background:#F0F0F0;
     }
     .bc-widget > textarea:disabled {
-      cursor:not-allowed;
+      opacity:0.3; cursor:not-allowed;
     }
   `
 

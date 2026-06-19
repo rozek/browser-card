@@ -23,7 +23,7 @@
       cursor:pointer; pointer-events:auto;
     }
     .bc-widget > button:disabled {
-      cursor:not-allowed;
+      opacity:0.3; cursor:not-allowed;
     }
   `
 

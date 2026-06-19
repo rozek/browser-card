@@ -63,6 +63,9 @@
     .bc-widget > pseudo-dropdown > select:disabled {
       cursor:not-allowed;
     }
+    .bc-widget > pseudo-dropdown:has(> select:disabled) {
+      opacity:0.3;
+    }
   `
 
   /**** OptionList - normalises Options into { value, label, disabled } entries ****/
@@ -135,7 +138,7 @@
             }}
           >
             ${Options.map((Option) => html`
-              <option key=${Option.value} value=${Option.value} disabled=${Option.disabled}>${Option.label}</option>
+              <option key=${Option.value} value=${Option.value} disabled=${Option.disabled} style=${Option.disabled ? { opacity:0.3 } : undefined}>${Option.label}</option>
             `)}
           </select>
         </pseudo-dropdown>

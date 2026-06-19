@@ -3,7 +3,7 @@
 // the note may be dragged around by grabbing its title bar and resized by
 // grabbing the handle in its lower right corner (minimum size 80x60px). clicking
 // the inner area hands the input focus to the textarea; while focused the title
-// bar turns orange and a green dashed border appears (see screenshot). "Value"
+// bar turns orange (the note keeps the same thin border as "StickyNote"). "Value"
 // holds the displayed text and is written back on every edit ('change' is
 // dispatched). if "Value" contains a tab character the text is not wrapped,
 // otherwise it is; the tab width is 10px. while moving or resizing the note
@@ -51,12 +51,9 @@
       width:100%; height:100%;
       box-sizing:border-box;
       background:#FCFBE3;
-      border:2px solid transparent;
+      border:1px solid #C9C49A;
       font-family:Helvetica,Arial,sans-serif;
       overflow:hidden;
-    }
-    .bc-widget > sticky-note:focus-within {
-      border:2px dashed #5BC23A;
     }
     .bc-widget > sticky-note > .bc-sticky-titlebar {
       flex:0 0 ${TitleBarHeight}px; height:${TitleBarHeight}px;
@@ -89,6 +86,15 @@
 
   export default async function ({ on, my, html, dispatch, Configuration, saveDeck }) {
     injectStyleRuleOnce('bc-stickytextnote-style', StickyTextNoteStyle)
+
+    /**** activate - records this note as the card's active note ****/
+
+    function activate () {
+      const Card = my.Card
+      if ((Card == null) || (Card.own.activeNote === my)) { return }
+      Card.own.activeNote = my
+      if (typeof Card.rerender === 'function') { Card.rerender() }   // refresh other notes
+    }
 
     /**** scheduleSave - persists position, size and content with the deck ****/
 
@@ -188,6 +194,7 @@
           <textarea
             wrap=${noWrap ? 'off' : 'soft'}
             value=${Text}
+            onFocus=${() => activate()}
             onKeyDown=${insertTab}
             onInput=${(Event) => {
               my.Value = Event.target.value

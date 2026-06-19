@@ -21260,6 +21260,9 @@ function h5(r, e, t, n, a) {
             const { W: x, H: T } = e.current, { left: N, top: z, width: A, height: M } = ur(l.Anchors, l.Offsets, x, T), B = ta(h ?? N, f ?? z, m ?? A, v ?? M, l.Anchors, x, T);
             return l.Offsets = B, a(), B;
           };
+        case "rerender":
+          return a;
+        // force a re-render of this widget
         default:
           return Reflect.get(l, d);
       }
@@ -21286,6 +21289,9 @@ function f5(r, e, t, n) {
           return s;
         case "WidgetList":
           return t.current;
+        case "rerender":
+          return n;
+        // force a re-render of this card and its widgets
         default:
           return Reflect.get(o, l);
       }

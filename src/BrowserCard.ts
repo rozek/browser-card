@@ -4041,6 +4041,7 @@ export function makeWidgetProxy (
           forceUpdate()
           return offsets
         }
+        case 'rerender': return forceUpdate          // force a re-render of this widget
         default: return Reflect.get(target, key)
       }
     },
@@ -4077,6 +4078,7 @@ export function makeCardProxy (
         case 'Deck':     return deckProxy
         case 'Card':       return proxy
         case 'WidgetList': return widgetListRef.current
+        case 'rerender':   return forceUpdate         // force a re-render of this card and its widgets
         default:           return Reflect.get(target, key)
       }
     },

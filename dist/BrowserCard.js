@@ -19470,6 +19470,16 @@ const vs = 800, ws = 600, a5 = `
     overflow: hidden;
   }
 
+  /* Markdown content needs a deterministic base font-size: its paragraphs have
+     no intrinsic size and would otherwise inherit the host page's base (14px in
+     the bundled demo page, but 16px by browser default when embedded/standalone),
+     which made imported decks render their Markdown larger than the original.
+     Headings keep their own sizes from markdown.css (higher specificity). */
+  .bc-markdown {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
   /* button */
   .bc-btn {
     cursor: pointer;

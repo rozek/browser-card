@@ -8,7 +8,7 @@ BrowserCard (abbreviation: **BC**) is a browser-based reinterpretation of [NovoC
 
 Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.html)!
 
-![Screenshot of a simple BrowserCard deck](Showcase.png)
+![Screenshot of a simple BrowserCard deck](BrowserCard-Pitch.jpg)
 
 > This work was intended as a test (of my agent skills and) of Anthropic's new model "Fable 5": the preparatory work - in the form of an analysis of the available information on NovoCard, considerations regarding useful changes for use in the browser, and the creation of a data model and a specification - was done in advance (by [my own variant](https://github.com/rozek/nanoclaw) of [nanoclaw](https://github.com/nanocoai/nanoclaw)); but the actual implementation was handled almost entirely by Claude Cowork and Fable 5. And, what can I say: in my opinion, the new model passed with flying colors!
 

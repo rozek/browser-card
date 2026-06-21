@@ -1,8 +1,12 @@
 /**** QRCodeView - renders the text/URL held in "Value" as a scalable QR code ****/
 
 // uses "uqr" (https://github.com/unjs/uqr) - a zero-dependency ESM QR generator,
-// kept locally in "public/" so no external import is needed at runtime. The code
-// is drawn as inline SVG with a viewBox, so it always scales square into the box.
+// kept locally so no external import is needed at runtime. The code is drawn as
+// inline SVG with a viewBox, so it always scales square into the box.
+//
+// uqr is imported dynamically, trying several locations relative to this file so
+// it works whether served from the repo root ("public/uqr.js") or from a flat
+// build output where "public/" was hoisted to the site root.
 //
 // Configuration fields:
 //   "ErrorCorrection" - 'L'|'M'|'Q'|'H' (default 'M'): higher = more robust/denser
@@ -10,13 +14,32 @@
 //   "Color"           - dark-module color (default '#000000')
 //   "Background"      - light-module color (default '#ffffff', may be 'transparent')
 
-  import { encode } from '../../public/uqr.js'
-
   const ECCLevels = [ 'L','M','Q','H' ]
+
+  const UQRCandidates = [
+    '../../public/uqr.js',          // repo-root layout (behaviors/widgets -> public/)
+    '../../uqr.js',                 // build output with "public/" hoisted to root
+    './uqr.js',                     // uqr.js placed next to this behavior
+  ]
+
+/**** loadEncode - dynamically locates uqr's "encode" without breaking the module ****/
+
+  async function loadEncode () {
+    for (const Candidate of UQRCandidates) {
+      try {
+        const Url    = new URL(Candidate, import.meta.url).href
+        const Module = await import(/* @vite-ignore */ Url)
+        if (typeof Module?.encode === 'function') { return Module.encode }
+      } catch (Signal) { /* try the next candidate */ }
+    }
+    return null
+  }
 
 /**** actual renderer ****/
 
   export default async function ({ on, my, html, Configuration }) {
+    const encode = await loadEncode()
+
     const ErrorCorrection = (
       ECCLevels.includes(Configuration?.ErrorCorrection) ? Configuration.ErrorCorrection : 'M'
     )
@@ -60,6 +83,8 @@
     }
 
     on('render', () => {
+      if (encode == null) { return placeholder('(QR library "uqr" not found)') }
+
       const Source = String(my.Value ?? '').trim()
       if (Source === '') { return placeholder('(QR content in "Value")') }
 

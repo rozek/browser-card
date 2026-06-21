@@ -2676,6 +2676,19 @@ const Styles = `
     pointer-events: none;
     z-index: 9500;
   }
+  .bc-selection-member {
+    position: absolute;
+    outline: 1px solid #0A84FF;
+    pointer-events: none;
+    z-index: 9400;
+  }
+  .bc-marquee {
+    position: absolute;
+    border: 1px solid #0A84FF;
+    background: rgba(10,132,255,0.12);
+    pointer-events: none;
+    z-index: 9600;
+  }
   .bc-handle {
     position: absolute;
     background: #fff;
@@ -3851,9 +3864,12 @@ on('render', () => {
     try {                 // plain text fallback - the content type is inferred
       const Text      = (await navigator.clipboard.readText()).trim()
       const Candidate = JSON.parse(Text)
+      const isWidgetArray = Array.isArray(Candidate) &&
+        (Candidate.length > 0) && Candidate.every(ValueIsWidgetJSON)
       switch (true) {
         case ValueIsCardJSON(Candidate):   return { Kind:'card',   Serialization:Text }
         case ValueIsWidgetJSON(Candidate): return { Kind:'widget', Serialization:Text }
+        case isWidgetArray:                return { Kind:'widget', Serialization:Text }
       }
     } catch (Signal) {
       console.warn('[BrowserCard] could not read from the clipboard:', Signal)
@@ -4450,14 +4466,16 @@ function WidgetView ({
 
   const minWidgetSize = 8           // smallest width/height (in px) while resizing
 
+  type BC_Box = { left:number; top:number; width:number; height:number }
+
   type BC_DragState = {
     PointerId:number
     Mode:     'move' | 'resize'
     Direction:string                  // '' or one of 'nw','n','ne','e','se','s','sw','w'
     startX:   number
     startY:   number
-    Origin:   { left:number; top:number; width:number; height:number }
-    Obj:      BC_Widget
+    GroupOrigin:BC_Box                // union bounding box of all dragged widgets
+    Items:    { Obj:BC_Widget; Origin:BC_Box }[]   // every widget being dragged
     captured: boolean               // true once an undo snapshot was captured
   }
 
@@ -4558,37 +4576,58 @@ function WidgetView ({
 /**** EditLayer — selection and PositionTool for the edit mode ****/
 
   function EditLayer ({
-    Objects, CanvasW, CanvasH, Scale, selectedId, onSelect, onEdited,
+    Objects, CanvasW, CanvasH, Scale, selectedIds, onSelect, onSelectMany, onEdited,
     Grid = { isActive:false, Width:10, Height:10 }, onBeforeEdit,
   }:{
-    Objects:    BC_Widget[]
-    CanvasW:    number
-    CanvasH:    number
-    Scale:      number
-    selectedId: string | null
-    onSelect:   (Id:string | null) => void
-    onEdited:   () => void
-    Grid?:      BC_Grid
+    Objects:     BC_Widget[]
+    CanvasW:     number
+    CanvasH:     number
+    Scale:       number
+    selectedIds: string[]
+    onSelect:    (Id:string | null, additive:boolean) => void
+    onSelectMany:(Ids:string[], additive:boolean) => void
+    onEdited:    () => void
+    Grid?:       BC_Grid
     onBeforeEdit?:() => void
   }) {
-    const DragRef = useRef<BC_DragState | null>(null)
+    const LayerRef   = useRef<HTMLDivElement | null>(null)
+    const DragRef    = useRef<BC_DragState | null>(null)
+    const MarqueeRef = useRef<null | {
+      PointerId:number; x0:number; y0:number; additive:boolean
+      moved:boolean; box:BC_Box
+    }>(null)
+    const [Marquee, setMarquee] = useState<BC_Box | null>(null)
 
-  /**** beginDrag ****/
+  /**** unionBox — bounding box enclosing several geometries ****/
+
+    function unionBox (Boxes:BC_Box[]):BC_Box {
+      const L  = Math.min(...Boxes.map((B) => B.left))
+      const T  = Math.min(...Boxes.map((B) => B.top))
+      const R  = Math.max(...Boxes.map((B) => B.left + B.width))
+      const Bt = Math.max(...Boxes.map((B) => B.top  + B.height))
+      return { left:L, top:T, width:R-L, height:Bt-T }
+    }
+
+  /**** beginDrag — moves or resizes one or several widgets together ****/
 
     function beginDrag (
-      Event:PointerEvent, Obj:BC_Widget, Mode:'move' | 'resize', Direction:string = ''
+      Event:PointerEvent, Mode:'move' | 'resize', Direction:string, DragObjs:BC_Widget[]
     ):void {
+      if (DragObjs.length === 0) { return }
       Event.stopPropagation(); Event.preventDefault()
       ;(Event.currentTarget as HTMLElement).setPointerCapture(Event.pointerId)
+      const Items = DragObjs.map((Obj) => ({
+        Obj, Origin:resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH),
+      }))
       DragRef.current = {
         PointerId:Event.pointerId, Mode, Direction,
         startX:Event.clientX, startY:Event.clientY,
-        Origin:resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH),
-        Obj, captured:false,
+        GroupOrigin:unionBox(Items.map((I) => I.Origin)),
+        Items, captured:false,
       }
     }
 
-  /**** applyDrag ****/
+  /**** applyDrag — the handle offset is applied to every dragged widget ****/
 
     function applyDrag (Event:PointerEvent):void {
       const Drag = DragRef.current
@@ -4599,51 +4638,49 @@ function WidgetView ({
         onBeforeEdit?.()
       }
 
-      const dx = (Event.clientX-Drag.startX)/Scale
-      const dy = (Event.clientY-Drag.startY)/Scale
-      let { left,top,width,height } = Drag.Origin
+      let dx = (Event.clientX-Drag.startX)/Scale
+      let dy = (Event.clientY-Drag.startY)/Scale
+      const G = Drag.GroupOrigin
 
       if (Drag.Mode === 'move') {
-        left += dx; top += dy
-
-        if (Grid.isActive) {                  // snap position onto grid points
-          left = Math.round(left/Grid.Width) *Grid.Width
-          top  = Math.round(top /Grid.Height)*Grid.Height
+        if (Grid.isActive) {            // snap the group as a whole, not per widget
+          dx = Math.round((G.left+dx)/Grid.Width) *Grid.Width  - G.left
+          dy = Math.round((G.top +dy)/Grid.Height)*Grid.Height - G.top
+        }
+        for (const { Obj, Origin } of Drag.Items) {
+          Obj.Offsets = computeOffsets(
+            Origin.left+dx, Origin.top+dy, Origin.width, Origin.height,
+            Obj.Anchors, CanvasW, CanvasH
+          )
         }
       } else {
-        if (Drag.Direction.includes('w')) { left += dx; width  -= dx }
-        if (Drag.Direction.includes('e')) {             width  += dx }
-        if (Drag.Direction.includes('n')) { top  += dy; height -= dy }
-        if (Drag.Direction.includes('s')) {             height += dy }
-
-        if (width < minWidgetSize) {
-          if (Drag.Direction.includes('w')) {
-            left = Drag.Origin.left + Drag.Origin.width - minWidgetSize
-          }
-          width = minWidgetSize
+        const D = Drag.Direction
+        if (Grid.isActive) {            // snap the moving group edge, derive the delta
+          if (D.includes('w')) { dx = Math.round((G.left+dx)/Grid.Width)*Grid.Width - G.left }
+          if (D.includes('e')) { dx = Math.round((G.left+G.width+dx)/Grid.Width)*Grid.Width - (G.left+G.width) }
+          if (D.includes('n')) { dy = Math.round((G.top+dy)/Grid.Height)*Grid.Height - G.top }
+          if (D.includes('s')) { dy = Math.round((G.top+G.height+dy)/Grid.Height)*Grid.Height - (G.top+G.height) }
         }
-        if (height < minWidgetSize) {
-          if (Drag.Direction.includes('n')) {
-            top = Drag.Origin.top + Drag.Origin.height - minWidgetSize
-          }
-          height = minWidgetSize
-        }
+        for (const { Obj, Origin } of Drag.Items) {
+          let { left,top,width,height } = Origin
 
-        if (Grid.isActive) {     // snap size onto multiples of the grid raster
-          width  = Math.max(Grid.Width,  Math.round(width /Grid.Width) *Grid.Width)
-          height = Math.max(Grid.Height, Math.round(height/Grid.Height)*Grid.Height)
-          if (Drag.Direction.includes('w')) {           // keep right edge fixed
-            left = Drag.Origin.left + Drag.Origin.width - width
+          if (D.includes('w')) { left += dx; width  -= dx }
+          if (D.includes('e')) {             width  += dx }
+          if (D.includes('n')) { top  += dy; height -= dy }
+          if (D.includes('s')) {             height += dy }
+
+          if (width < minWidgetSize) {                // clamp each widget on its own
+            if (D.includes('w')) { left = Origin.left + Origin.width - minWidgetSize }
+            width = minWidgetSize
           }
-          if (Drag.Direction.includes('n')) {          // keep bottom edge fixed
-            top = Drag.Origin.top + Drag.Origin.height - height
+          if (height < minWidgetSize) {
+            if (D.includes('n')) { top = Origin.top + Origin.height - minWidgetSize }
+            height = minWidgetSize
           }
+
+          Obj.Offsets = computeOffsets(left, top, width, height, Obj.Anchors, CanvasW, CanvasH)
         }
       }
-
-      Drag.Obj.Offsets = computeOffsets(
-        left, top, width, height, Drag.Obj.Anchors, CanvasW, CanvasH
-      )
       onEdited()
     }
 
@@ -4656,11 +4693,72 @@ function WidgetView ({
       DragRef.current = null
     }
 
-  /**** selection frame with eight resize handles ****/
+  /**** marquee (rubber-band) selection on the empty canvas ****/
 
-    const selectedObj = Objects.find((Obj) => Obj.Id === selectedId)
-    const HandleSize  = Math.max(6, 8/Scale)
-    const HandleDirs  = [ 'nw','n','ne','e','se','s','sw','w' ]
+    function localPoint (Event:PointerEvent):{ x:number; y:number } | null {
+      const Layer = LayerRef.current
+      if (Layer == null) { return null }
+      const Rect = Layer.getBoundingClientRect()
+      return { x:(Event.clientX-Rect.left)/Scale, y:(Event.clientY-Rect.top)/Scale }
+    }
+
+    function beginMarquee (Event:PointerEvent):void {
+      if (Event.button !== 0) { return }
+      const P = localPoint(Event)
+      if (P == null) { return }
+      ;(Event.currentTarget as HTMLElement).setPointerCapture(Event.pointerId)
+      MarqueeRef.current = {
+        PointerId:Event.pointerId, x0:P.x, y0:P.y,
+        additive:Event.shiftKey || Event.metaKey,
+        moved:false, box:{ left:P.x, top:P.y, width:0, height:0 },
+      }
+    }
+
+    function applyMarquee (Event:PointerEvent):void {
+      const M = MarqueeRef.current
+      if ((M == null) || (Event.pointerId !== M.PointerId)) { return }
+      const P = localPoint(Event)
+      if (P == null) { return }
+      const Box:BC_Box = {
+        left:Math.min(M.x0,P.x), top:Math.min(M.y0,P.y),
+        width:Math.abs(P.x-M.x0), height:Math.abs(P.y-M.y0),
+      }
+      if ((Box.width > 3) || (Box.height > 3)) { M.moved = true }
+      M.box = Box
+      setMarquee(Box)
+    }
+
+    function endMarquee (Event:PointerEvent):void {
+      const M = MarqueeRef.current
+      if ((M == null) || (Event.pointerId !== M.PointerId)) { return }
+      ;(Event.currentTarget as HTMLElement).releasePointerCapture(Event.pointerId)
+      MarqueeRef.current = null
+      setMarquee(null)
+
+      if (! M.moved) {                            // a plain click on the empty canvas
+        if (! M.additive) { onSelect(null, false) }
+        return
+      }
+
+      const Box  = M.box
+      const Hits = Objects.filter((Obj) => {      // overlap test (intersection)
+        const B = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
+        return ! (
+          (B.left > Box.left+Box.width) || (B.left+B.width < Box.left) ||
+          (B.top  > Box.top+Box.height) || (B.top+B.height < Box.top)
+        )
+      }).map((Obj) => Obj.Id)
+      onSelectMany(Hits, M.additive)
+    }
+
+  /**** selection frames and resize handles ****/
+
+    const selectedObjs = Objects.filter((Obj) => selectedIds.includes(Obj.Id))
+    const HandleSize   = Math.max(6, 8/Scale)
+    const HandleDirs   = [ 'nw','n','ne','e','se','s','sw','w' ]
+    const GroupBox     = (selectedObjs.length > 0)
+      ? unionBox(selectedObjs.map((Obj) => resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)))
+      : null
 
     function HandleStyle (Direction:string, R:{ width:number; height:number }) {
       return {
@@ -4679,36 +4777,58 @@ function WidgetView ({
     )
 
     return html`
-      <div class="bc-edit-layer" style=${GridStyle} onPointerDown=${() => onSelect(null)} onContextMenu=${(e:Event) => e.preventDefault()}>
+      <div class="bc-edit-layer" ref=${LayerRef} style=${GridStyle}
+        onPointerDown=${beginMarquee}
+        onPointerMove=${applyMarquee}
+        onPointerUp=${endMarquee}
+        onContextMenu=${(e:Event) => e.preventDefault()}>
         ${Objects.map((Obj) => {
           const R = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
           return html`
             <div key=${Obj.Id}
               class=${`bc-edit-hit${Obj.visible ? '' : ' invisible'}`}
               style=${{ left:R.left, top:R.top, width:R.width, height:R.height, zIndex:Obj.zIndex }}
-              onPointerDown=${(Event:PointerEvent) => { onSelect(Obj.Id); beginDrag(Event, Obj, 'move') }}
+              onPointerDown=${(Event:PointerEvent) => {
+                Event.stopPropagation()
+                const additive = Event.shiftKey || Event.metaKey
+                if (additive) { onSelect(Obj.Id, true); return }
+                if (selectedIds.includes(Obj.Id)) {       // drag the whole selection
+                  beginDrag(Event, 'move', '', Objects.filter((O) => selectedIds.includes(O.Id)))
+                } else {                                   // select only this, then drag
+                  onSelect(Obj.Id, false)
+                  beginDrag(Event, 'move', '', [ Obj ])
+                }
+              }}
               onPointerMove=${applyDrag}
               onPointerUp=${endDrag}
               onContextMenu=${(e:Event) => e.preventDefault()}
             ></div>
           `
         })}
-        ${(selectedObj != null) && (() => {
-          const R = resolveGeometry(selectedObj.Anchors, selectedObj.Offsets, CanvasW, CanvasH)
+        ${(selectedObjs.length > 1) && selectedObjs.map((Obj) => {
+          const R = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
           return html`
-            <div class="bc-selection-frame"
-              style=${{ left:R.left, top:R.top, width:R.width, height:R.height }}>
-              ${HandleDirs.map((Direction) => html`
-                <div key=${Direction} class="bc-handle" style=${HandleStyle(Direction,R)}
-                  onPointerDown=${(Event:PointerEvent) => beginDrag(Event, selectedObj, 'resize', Direction)}
-                  onPointerMove=${applyDrag}
-                  onPointerUp=${endDrag}
-                  onContextMenu=${(e:Event) => e.preventDefault()}
-                ></div>
-              `)}
-            </div>
+            <div key=${'member:'+Obj.Id} class="bc-selection-member"
+              style=${{ left:R.left, top:R.top, width:R.width, height:R.height }}></div>
           `
-        })()}
+        })}
+        ${(GroupBox != null) && html`
+          <div class="bc-selection-frame"
+            style=${{ left:GroupBox.left, top:GroupBox.top, width:GroupBox.width, height:GroupBox.height }}>
+            ${HandleDirs.map((Direction) => html`
+              <div key=${Direction} class="bc-handle" style=${HandleStyle(Direction,GroupBox)}
+                onPointerDown=${(Event:PointerEvent) => beginDrag(Event, 'resize', Direction, selectedObjs)}
+                onPointerMove=${applyDrag}
+                onPointerUp=${endDrag}
+                onContextMenu=${(e:Event) => e.preventDefault()}
+              ></div>
+            `)}
+          </div>
+        `}
+        ${(Marquee != null) && html`
+          <div class="bc-marquee"
+            style=${{ left:Marquee.left, top:Marquee.top, width:Marquee.width, height:Marquee.height }}></div>
+        `}
       </div>
     `
   }
@@ -4839,11 +4959,12 @@ function WidgetView ({
 /**** PropertiesPanel — inspects and edits the selected widget ****/
 
   function PropertiesPanel ({
-    Widget, CanvasW, CanvasH, onEdited,
+    Widget, SelectedCount = 0, CanvasW, CanvasH, onEdited,
     CardNames = [], CardIndex = 0, onDelete, onReorder, onMoveTo,
     Card = null, Deck = null, onOpenEditor, onBeforeEdit, onCopy,
   }:{
     Widget:   BC_Widget | null
+    SelectedCount?:number
     CanvasW:  number
     CanvasH:  number
     onEdited: () => void
@@ -4859,6 +4980,40 @@ function WidgetView ({
     onCopy?:  () => void
   }) {
     if (Widget == null) {
+
+    /**** multiple widgets selected — group actions only, no joint properties ****/
+
+      if (SelectedCount > 1) {
+        return html`
+          <div class="bc-props-panel">
+            <div class="bc-props-title">${SelectedCount} widgets selected</div>
+            <div class="bc-props-subtitle">multiple selection</div>
+            <div class="bc-props-hint">
+              select a single widget to inspect and edit its properties
+            </div>
+
+            <div class="bc-props-section">Arrange</div>
+            <div class="bc-props-row">
+              <label>Order</label>
+              <button class="bc-props-btn" title="to back"       onClick=${() => onReorder?.('back')}>⤓</button>
+              <button class="bc-props-btn" title="send backward" onClick=${() => onReorder?.('backward')}>↓</button>
+              <button class="bc-props-btn" title="bring forward" onClick=${() => onReorder?.('forward')}>↑</button>
+              <button class="bc-props-btn" title="to front"      onClick=${() => onReorder?.('front')}>⤒</button>
+            </div>
+            <div class="bc-props-row">
+              <label>Card</label>
+              <select value=${String(CardIndex)}
+                onChange=${(Event:Event) => onMoveTo?.(parseInt((Event.target as HTMLSelectElement).value,10))}>
+                ${CardNames.map((Name,i) => html`<option key=${i} value=${String(i)}>${Name}</option>`)}
+              </select>
+            </div>
+
+            <button class="bc-props-btn copy"   onClick=${onCopy}>Copy Widgets</button>
+            <button class="bc-props-btn delete" onClick=${onDelete}>Delete Widgets</button>
+          </div>
+        `
+      }
+
       if (Card == null) {
         return html`
           <div class="bc-props-panel">
@@ -5333,7 +5488,7 @@ function ColorAlphaRow (Label:string, Current:string, Commit:(Color:string) => v
 function CardView ({
   Card, Scale, CanvasW, CanvasH, makeContext,
   deckProxy, onCardProxy, onCardReady, onMessage, deckRenderSlot = null,
-  isEditing = false, selectedId = null, onSelect, onEdited, Grid, onBeforeEdit,
+  isEditing = false, selectedIds = [], onSelect, onSelectMany, onEdited, Grid, onBeforeEdit,
 }:{
   Card:        BC_Card
   Scale:       number
@@ -5346,8 +5501,9 @@ function CardView ({
   onMessage?:  (msg:string) => void       // bubbles a widget message up to the deck
   deckRenderSlot?: unknown                 // deck-level on('render') output, shown behind the card
   isEditing?:  boolean
-  selectedId?: string | null
-  onSelect?:   (Id:string | null) => void
+  selectedIds?:string[]
+  onSelect?:   (Id:string | null, additive:boolean) => void
+  onSelectMany?:(Ids:string[], additive:boolean) => void
   onEdited?:   () => void
   Grid?:       BC_Grid
   onBeforeEdit?:() => void
@@ -5497,8 +5653,9 @@ function CardView ({
             CanvasW=${CanvasW}
             CanvasH=${CanvasH}
             Scale=${Scale}
-            selectedId=${selectedId}
+            selectedIds=${selectedIds}
             onSelect=${onSelect ?? (() => undefined)}
+            onSelectMany=${onSelectMany ?? (() => undefined)}
             onEdited=${onEdited ?? (() => undefined)}
             Grid=${Grid}
             onBeforeEdit=${onBeforeEdit}
@@ -6011,18 +6168,38 @@ function DeckView ({
 
 /**** edit mode state ****/
 
-  const [Mode, setMode]             = useState<'browse' | 'edit'>('browse')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [Mode, setMode]               = useState<'browse' | 'edit'>('browse')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showMCPSettings, setShowMCPSettings] = useState(false)
   const isEditing = (Mode === 'edit') && ! isReadOnly
+
+  // the sole selected id, or null unless exactly one widget is selected
+  const soleSelectedId = (selectedIds.length === 1) ? selectedIds[0] : null
+
+  // click selection: replace, or toggle membership when additive (Shift/Cmd)
+  function selectWidget (Id:string | null, additive:boolean):void {
+    if (Id == null) { if (! additive) { setSelectedIds([]) } return }
+    if (additive) {
+      setSelectedIds((prev) =>
+        prev.includes(Id) ? prev.filter((x) => x !== Id) : [ ...prev, Id ]
+      )
+    } else {
+      setSelectedIds([ Id ])
+    }
+  }
+
+  // marquee selection: replace, or merge with the current selection when additive
+  function selectWidgets (Ids:string[], additive:boolean):void {
+    setSelectedIds((prev) => additive ? Array.from(new Set([ ...prev, ...Ids ])) : Ids)
+  }
 
   function toggleEditMode ():void {
     if (Mode === 'edit') { onDeckSave?.() }    // persist when leaving edit mode
     setMode((prev) => prev === 'edit' ? 'browse' : 'edit')
-    setSelectedId(null)
+    setSelectedIds([])
   }
 
-  useEffect(() => { setSelectedId(null) }, [CardIndex])  // card change deselects
+  useEffect(() => { setSelectedIds([]) }, [CardIndex])  // card change deselects
 
   useEffect(() => {                                       // persist last card index
     if (StorageKey) {
@@ -6176,7 +6353,7 @@ function DeckView ({
     const currentId = Deck.Cards[CardIndex].Id
     Deck.Cards.splice(Index,1)
     setHistory([])             // card indices in the history are no longer valid
-    setSelectedId(null)
+    setSelectedIds([])
 
     const newIndex = indexOfCard(currentId)     // the current card may have moved
     setCardIndex(newIndex >= 0 ? newIndex : clamp(Index, 0, Deck.Cards.length-1))
@@ -6225,12 +6402,15 @@ function DeckView ({
   }
 
   async function copySelectionToClipboard ():Promise<void> {
-    if (selectedId == null) { await copyCardToClipboard(); return }
+    if (selectedIds.length === 0) { await copyCardToClipboard(); return }
 
-    const Obj = Deck.Cards[CardIndex].Widgets.find((Obj) => Obj.Id === selectedId)
-    if (Obj == null) { return }
+    const Widgets = Deck.Cards[CardIndex].Widgets
+      .filter((Obj) => selectedIds.includes(Obj.Id))
+      .sort((a,b) => a.zIndex-b.zIndex)                  // keep the stacking order
+    if (Widgets.length === 0) { return }
 
-    const successful = await writeToClipboard(WidgetMIMEType, JSON.stringify(Obj))
+    // always serialise an array, even for a single widget, so paste is uniform
+    const successful = await writeToClipboard(WidgetMIMEType, JSON.stringify(Widgets))
     if (! successful) {
       await confirmWith('BrowserCard could not write to the clipboard.','OK')
     }
@@ -6238,7 +6418,7 @@ function DeckView ({
 
   async function cutSelectionToClipboard ():Promise<void> {
     await copySelectionToClipboard()
-    if (selectedId != null) {
+    if (selectedIds.length > 0) {
       deleteSelection()
     } else {
       await deleteCardAt(CardIndex)              // asks for confirmation first
@@ -6275,19 +6455,29 @@ function DeckView ({
       Deck.Cards.splice(CardIndex+1, 0, newCard)
       navigate({ type:'card-index', index:CardIndex+1 })
     } else {
-      if (! ValueIsWidgetJSON(Candidate)) { return }
+      // accept both a single widget (older clipboard) and an array of widgets
+      const Widgets = (Array.isArray(Candidate) ? Candidate : [ Candidate ]) as BC_Widget[]
+      if ((Widgets.length === 0) || ! Widgets.every(ValueIsWidgetJSON)) { return }
 
-      const maxZIndex = Card.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
-      const newWidget = Candidate as BC_Widget
-        newWidget.Id = newInternalId('widget')
-        newWidget.Name = uniqueNameIn(
-          newWidget.Name ?? 'Widget', new Set(Card.Widgets.map((Obj) => Obj.Name))
-        )
-        newWidget.zIndex = maxZIndex+1
-        newWidget.Number = maxZIndex+1
       captureUndo()
-      Card.Widgets.push(newWidget)
-      setSelectedId(newWidget.Id)
+      let maxZIndex   = Card.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
+      const usedNames = new Set(Card.Widgets.map((Obj) => Obj.Name))
+      const newIds:string[] = []
+
+      Widgets
+        .slice().sort((a,b) => (a.zIndex ?? 0)-(b.zIndex ?? 0))   // preserve order
+        .forEach((Widget) => {
+          const newWidget = Widget as BC_Widget
+            newWidget.Id   = newInternalId('widget')
+            newWidget.Name = uniqueNameIn(newWidget.Name ?? 'Widget', usedNames)
+            usedNames.add(newWidget.Name)
+            maxZIndex += 1
+            newWidget.zIndex = maxZIndex
+            newWidget.Number = maxZIndex
+          Card.Widgets.push(newWidget)
+          newIds.push(newWidget.Id)
+        })
+      setSelectedIds(newIds)
     }
     deckForceUpdate()
   }
@@ -6409,7 +6599,7 @@ function DeckView ({
     Object.assign(Deck, restored)        // keeps the object identity intact!
 
     lastUndoKeyRef.current = ''
-    setSelectedId(null)
+    setSelectedIds([])
     setHistory([])
     setCardIndex((prev) => clamp(prev, 0, Deck.Cards.length-1))
     setEditGeneration((n) => n+1)  // remounts CardView with fresh descriptors
@@ -6438,51 +6628,71 @@ function DeckView ({
     const newWidget = newWidgetOfType(Type, Card, CanvasW, CanvasH)
     captureUndo()
     Card.Widgets.push(newWidget)
-    setSelectedId(newWidget.Id)
+    setSelectedIds([ newWidget.Id ])
     deckForceUpdate()
   }
 
   function deleteSelection ():void {
-    if (selectedId == null) { return }
-    const Card  = Deck.Cards[CardIndex]
-    const Index = Card.Widgets.findIndex((Obj) => Obj.Id === selectedId)
-    if (Index >= 0) { captureUndo(); Card.Widgets.splice(Index,1) }
-    setSelectedId(null)
+    if (selectedIds.length === 0) { return }
+    const Card = Deck.Cards[CardIndex]
+    if (Card.Widgets.some((Obj) => selectedIds.includes(Obj.Id))) {
+      captureUndo()
+      for (let i = Card.Widgets.length-1; i >= 0; i--) {
+        if (selectedIds.includes(Card.Widgets[i].Id)) { Card.Widgets.splice(i,1) }
+      }
+    }
+    setSelectedIds([])
     deckForceUpdate()
   }
 
   function reorderSelection (Direction:BC_ArrangeDirection):void {
-    if (selectedId == null) { return }
-    const Card    = Deck.Cards[CardIndex]
-    const ordered = [ ...Card.Widgets ].sort((a,b) => a.zIndex-b.zIndex)
-    const Index   = ordered.findIndex((Obj) => Obj.Id === selectedId)
-    if (Index < 0) { return }
+    if (selectedIds.length === 0) { return }
+    const Card  = Deck.Cards[CardIndex]
+    const arr   = [ ...Card.Widgets ].sort((a,b) => a.zIndex-b.zIndex)
+    const isSel = (Obj:BC_Widget) => selectedIds.includes(Obj.Id)
+    if (! arr.some(isSel)) { return }
 
     captureUndo()
-    const [ Obj ] = ordered.splice(Index,1)
+    let result = arr
     switch (Direction) {
-      case 'front':    ordered.push(Obj);                 break
-      case 'back':     ordered.unshift(Obj);              break
-      case 'forward':  ordered.splice(Index+1, 0, Obj);   break
-      case 'backward': ordered.splice(Math.max(Index-1,0), 0, Obj); break
+      case 'front': result = [ ...arr.filter((O) => ! isSel(O)), ...arr.filter(isSel) ]; break
+      case 'back':  result = [ ...arr.filter(isSel), ...arr.filter((O) => ! isSel(O)) ]; break
+      case 'forward':                  // move the selected block one step to the front
+        for (let i = arr.length-2; i >= 0; i--) {
+          if (isSel(arr[i]) && ! isSel(arr[i+1])) { const t = arr[i]; arr[i] = arr[i+1]; arr[i+1] = t }
+        }
+        result = arr; break
+      case 'backward':                 // move the selected block one step to the back
+        for (let i = 1; i < arr.length; i++) {
+          if (isSel(arr[i]) && ! isSel(arr[i-1])) { const t = arr[i]; arr[i] = arr[i-1]; arr[i-1] = t }
+        }
+        result = arr; break
     }
-    ordered.forEach((Obj,i) => { Obj.zIndex = i+1; Obj.Number = i+1 })
+    result.forEach((Obj,i) => { Obj.zIndex = i+1; Obj.Number = i+1 })
     deckForceUpdate()
   }
 
   function moveSelectionToCard (targetIndex:number):void {
-    if ((selectedId == null) || (targetIndex === CardIndex)) { return }
+    if ((selectedIds.length === 0) || (targetIndex === CardIndex)) { return }
     const Card   = Deck.Cards[CardIndex]
     const Target = Deck.Cards[targetIndex]
     if (Target == null) { return }
 
-    const Index = Card.Widgets.findIndex((Obj) => Obj.Id === selectedId)
-    if (Index < 0) { return }
+    const Moving = Card.Widgets
+      .filter((Obj) => selectedIds.includes(Obj.Id))
+      .sort((a,b) => a.zIndex-b.zIndex)
+    if (Moving.length === 0) { return }
 
     captureUndo()
-    const [ Obj ] = Card.Widgets.splice(Index,1)
-    Target.Widgets.push(Obj)
-    setSelectedId(null)
+    for (let i = Card.Widgets.length-1; i >= 0; i--) {
+      if (selectedIds.includes(Card.Widgets[i].Id)) { Card.Widgets.splice(i,1) }
+    }
+    let maxZ = Target.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
+    Moving.forEach((Obj) => {
+      maxZ += 1; Obj.zIndex = maxZ; Obj.Number = maxZ
+      Target.Widgets.push(Obj)
+    })
+    setSelectedIds([])
     deckForceUpdate()
   }
 
@@ -6691,8 +6901,8 @@ function DeckView ({
         }
       }
 
-      if (isEditing && (selectedId != null)) {
-        if (e.key === 'Escape') { setSelectedId(null); return }
+      if (isEditing && (selectedIds.length > 0)) {
+        if (e.key === 'Escape') { setSelectedIds([]); return }
 
         if ((e.key === 'Delete') || (e.key === 'Backspace')) {
           e.preventDefault()
@@ -6700,24 +6910,25 @@ function DeckView ({
           return
         }
 
-        const Obj = Deck.Cards[CardIndex].Widgets.find((Obj) => Obj.Id === selectedId)
-        if (Obj == null) { return }
+        const Selected = Deck.Cards[CardIndex].Widgets.filter((Obj) => selectedIds.includes(Obj.Id))
+        if (Selected.length === 0) { return }
 
         const Delta = e.shiftKey ? 10 : 1
-        const { left,top,width,height } = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
-
-        let newLeft = left, newTop = top
+        let ddx = 0, ddy = 0
         switch (e.key) {
-          case 'ArrowLeft':  newLeft -= Delta; break
-          case 'ArrowRight': newLeft += Delta; break
-          case 'ArrowUp':    newTop  -= Delta; break
-          case 'ArrowDown':  newTop  += Delta; break
+          case 'ArrowLeft':  ddx = -Delta; break
+          case 'ArrowRight': ddx =  Delta; break
+          case 'ArrowUp':    ddy = -Delta; break
+          case 'ArrowDown':  ddy =  Delta; break
           default: return
         }
 
         e.preventDefault()
-        captureUndo('nudge:'+selectedId)
-        Obj.Offsets = computeOffsets(newLeft, newTop, width, height, Obj.Anchors, CanvasW, CanvasH)
+        captureUndo('nudge:'+selectedIds.join(','))   // one coalesced step for the group
+        Selected.forEach((Obj) => {
+          const { left,top,width,height } = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
+          Obj.Offsets = computeOffsets(left+ddx, top+ddy, width, height, Obj.Anchors, CanvasW, CanvasH)
+        })
         deckForceUpdate()
         return
       }
@@ -6727,7 +6938,7 @@ function DeckView ({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate, activeDialog, isEditing, selectedId, CardIndex, CanvasW, CanvasH, withChrome])
+  }, [navigate, activeDialog, isEditing, selectedIds, CardIndex, CanvasW, CanvasH, withChrome])
 
 /**** goBack ****/
 
@@ -6744,8 +6955,8 @@ function DeckView ({
   const deckRenderSlot = deckInstanceRef.current!.renderResult() ?? null
 
   const selectedWidget = (
-    isEditing && (selectedId != null)
-    ? Card.Widgets.find((Obj) => Obj.Id === selectedId) ?? null
+    isEditing && (soleSelectedId != null)         // properties only for a single widget
+    ? Card.Widgets.find((Obj) => Obj.Id === soleSelectedId) ?? null
     : null
   )
 
@@ -6810,8 +7021,9 @@ function DeckView ({
               onCardReady=${onCardReady}
               onMessage=${(msg:string) => void deckInstanceRef.current!.dispatch(msg)}
               isEditing=${isEditing}
-              selectedId=${selectedId}
-              onSelect=${setSelectedId}
+              selectedIds=${selectedIds}
+              onSelect=${selectWidget}
+              onSelectMany=${selectWidgets}
               onEdited=${deckForceUpdate}
               Grid=${Grid}
               onBeforeEdit=${() => captureUndo()}
@@ -6819,8 +7031,9 @@ function DeckView ({
           </div>
           ${isEditing && html`
             <${PropertiesPanel}
-              key=${(selectedId ?? 'card:'+Card.Id) + ':' + PanelGeneration}
+              key=${(soleSelectedId ?? (selectedIds.length > 1 ? 'multi' : 'card:'+Card.Id)) + ':' + PanelGeneration}
               Widget=${selectedWidget}
+              SelectedCount=${selectedIds.length}
               CanvasW=${CanvasW}
               CanvasH=${CanvasH}
               onEdited=${deckForceUpdate}

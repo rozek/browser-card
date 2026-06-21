@@ -69,7 +69,7 @@ Suggested scripts (add to `package.json`):
 | `newInternalId` | monotonic, type-prefixed (`bc-widget-n`), unique within a run |
 | `adjustIdCounterFor` | after loading a deck, the counter is lifted above the highest existing numeric id (no collisions on next insert) |
 | `normalizedName` / `_normalizedName` | dots replaced with hyphens; invalid names rejected |
-| `uniqueNameIn` | appends counters until unique against a given name set |
+| `uniqueNameIn` | appends a counter until unique against a given name set; a trailing `" n"`/`"-n"` is counted up instead of appended; honours a custom separator |
 
 ## 4. Deck/Card/Widget structural validation (pure)
 
@@ -170,9 +170,9 @@ Suggested scripts (add to `package.json`):
 
 | Test | Expectation |
 |------|-------------|
-| copy widget / card | writes JSON under the right MIME (`web application/x-browsercard-widget` / `…-card`) + `text/plain` fallback |
-| paste detection | a card vs. widget payload is recognized via custom MIME, else inferred from plain-text JSON |
-| paste effects | pasted card inserted after current; pasted widget gets fresh id, unique name, top z-index |
+| copy widget(s) / card | writes JSON under the right MIME (`web application/x-browsercard-widget` / `…-card`) + `text/plain` fallback; a widget selection is serialized as a JSON array |
+| paste detection | a card vs. widget(s) payload is recognized via custom MIME, else inferred from plain-text JSON (single widget object or widget array) |
+| paste effects | pasted card inserted after current; pasted widget(s) get fresh ids, unique names, top z-indices (relative arrangement preserved) and become the new selection |
 
 ## 15. Rendering & editing components (jsdom + testing-library)
 
@@ -182,7 +182,8 @@ Suggested scripts (add to `package.json`):
 | field write-back | typing into an editable field updates `me.Value` |
 | button/checkbox/radio | click dispatches `click`; `autoHilite` checkbox toggles `hilite` |
 | edit mode | selection frame + 8 handles appear; pointer drag/resize updates offsets (simulate pointer events); arrow-key nudge |
-| properties panel | editing a field updates the descriptor; anchor switch preserves geometry; "Configuration (JSON)" edits `me.Configuration` |
+| multi-selection | Shift/Cmd-click toggles widgets; rubber-band rectangle selects every overlapped widget; group move/resize applies to all; group delete/nudge; group bounding box + per-widget member outlines |
+| properties panel | editing a field updates the descriptor; anchor switch preserves geometry; "Configuration (JSON)" edits `me.Configuration`; with several widgets selected only the group actions are shown |
 | card/deck menus | new/duplicate/rename/move/delete card; insert widget; arrange/z-order; copy/paste |
 | `<bc-designer>` / `<bc-deck>` | custom elements register and mount; `<bc-deck>` renders chromeless (no menu/footer); CSS variables / `CardWidth`/`CardHeight` size the canvas |
 

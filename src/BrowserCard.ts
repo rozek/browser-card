@@ -4491,11 +4491,23 @@ function WidgetView ({
     '</svg>'
   )
 
-/**** uniqueNameIn — appends a counter until the name is unique ****/
+/**** uniqueNameIn — appends (or counts up) a counter until the name is unique ****/
 
-  export function uniqueNameIn (BaseName:string, existingNames:Set<string>):string {
-    let Name = BaseName, Counter = 1
-    while (existingNames.has(Name)) { Counter += 1; Name = `${BaseName} ${Counter}` }
+  export function uniqueNameIn (
+    BaseName:string, existingNames:Set<string>, Separator:string = ' '
+  ):string {
+    // if the base already ends with " n" or "-n", count that number up instead
+    // of appending a further suffix; otherwise append "<Separator><Counter>"
+    const Match = /^(.*?)([ -])(\d+)$/.exec(BaseName)
+    let Stem:string, Sep:string, Counter:number
+    if (Match != null) {
+      Stem = Match[1]; Sep = Match[2]; Counter = parseInt(Match[3],10)
+    } else {
+      Stem = BaseName; Sep = Separator; Counter = 1
+    }
+
+    let Name = BaseName
+    while (existingNames.has(Name)) { Counter += 1; Name = `${Stem}${Sep}${Counter}` }
     return Name
   }
 
@@ -4514,8 +4526,7 @@ function WidgetView ({
     const { BaseName, Width, Height } = Defaults[Type]
 
     const existingNames = new Set(Card.Widgets.map((Obj) => Obj.Name))
-    let Name = BaseName, Counter = 1
-    while (existingNames.has(Name)) { Counter += 1; Name = `${BaseName}-${Counter}` }
+    const Name = uniqueNameIn(BaseName, existingNames, '-')
 
     const maxZIndex = Card.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
 

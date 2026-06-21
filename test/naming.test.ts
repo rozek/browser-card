@@ -44,4 +44,23 @@ describe('uniqueNameIn', () => {
     expect(uniqueNameIn('Fresh', used)).toBe('Fresh')
     expect(uniqueNameIn('Button', used)).toBe('Button 3')
   })
+
+  it('honours a custom separator when appending', () => {
+    const used = new Set(['Field','Field-2'])
+    expect(uniqueNameIn('Field', used, '-')).toBe('Field-3')
+  })
+
+  it('counts up a trailing " n" instead of appending', () => {
+    const used = new Set(['Shape 3','Shape 4'])
+    expect(uniqueNameIn('Shape 3', used)).toBe('Shape 5')
+  })
+
+  it('counts up a trailing "-n" instead of appending', () => {
+    const used = new Set(['Picture-2'])
+    expect(uniqueNameIn('Picture-2', used)).toBe('Picture-3')
+  })
+
+  it('leaves a numbered name untouched when already unique', () => {
+    expect(uniqueNameIn('Label 7', new Set(['Label 1']))).toBe('Label 7')
+  })
 })

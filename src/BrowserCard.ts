@@ -4,7 +4,7 @@
 *                                                                              *
 *******************************************************************************/
 
-  const BC_Version = '0.0.35'
+  const BC_Version = '0.0.37'
 
   declare const download:Function
 
@@ -2181,8 +2181,8 @@ console.warn(ErrorToShow)          // please keep this line for easier debugging
 //                               data model                                   //
 //----------------------------------------------------------------------------//
 
-const DefaultDeckWidth  = 600
-const DefaultDeckHeight = 450
+const DefaultDeckWidth  = 800
+const DefaultDeckHeight = 600
 
 
 
@@ -2217,8 +2217,8 @@ export interface BC_Deck extends BC_Visual {
   SnapToGrid?:         boolean         // snap dragging to grid points (editing)
   GridWidth?:          number                              // grid raster in px
   GridHeight?:         number                                          // dto.
-  CardWidth?:          number      // native card canvas width (default: 600)
-  CardHeight?:         number      // native card canvas height (default: 450)
+  CardWidth?:          number      // native card canvas width (default: 800)
+  CardHeight?:         number      // native card canvas height (default: 600)
   localBehaviors?:     Record<string,string>   // name -> behaviour source text
 }
 
@@ -3317,417 +3317,10 @@ export function buildContext (
 //                               demo deck                                   //
 //----------------------------------------------------------------------------//
 
-const DemoDeck:BC_Deck = (() => {
-  const deckId = newInternalId('deck')
-  return {
-  Id: deckId,
-  Name: 'BrowserCard Demo',
-  readOnly: false,
-  swipeToAdjacentCard: true,
-  Script: '',
-
-  Cards: [
-
-    // card 1: start
-    {
-      Id: newInternalId('card'), Name: 'Start',
-      Color: null, Alpha: 1, dontSearch: false,
-      Script: '',
-      Widgets: [
-        {
-          Id: newInternalId('widget'), Name: 'Header', Number: 1,
-          Type: 'shape', zIndex: 1,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, Variant: 'rectangle',
-          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Title', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'BrowserCard',
-          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff',
-          Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'WelcomeText', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 165],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: false, sharedText: false,
-          Value: 'Welcome to BrowserCard!\n\nBrowserCard is a browser-based reinterpretation of the classic HyperCard concept. Create interactive card decks with cards, buttons, fields, shapes and widgets.\n\nClick one of the buttons below to learn more.',
-          FontSize: 11, FontWeight: 'normal', TextAlign: 'left', Color: '#1d3461',
-          Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Demo Widgets', Number: 3,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 116, 263, 33],
-          visible: true, Variant: 'rounded-rect',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => go(Card('Demo Widgets')))`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Script Demo', Number: 4,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [161, 116, 263, 33],
-          visible: true, Variant: 'rounded-rect',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => go(Card('Script Demo')))`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Widget Demo', Number: 5,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [293, 116, 263, 33],
-          visible: true, Variant: 'rounded-rect',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => go(Card('Widget Demo')))`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'About BrowserCard', Number: 6,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [424, 146, 263, 33],
-          visible: true, Variant: 'shadow',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => go(Card('About BrowserCard')))`,
-        },
-      ],
-    },
-
-    // card 2: demo objects
-    {
-      Id: newInternalId('card'), Name: 'Demo Widgets',
-      Color: null, Alpha: 1, dontSearch: false,
-      Script: '',
-      Widgets: [
-        {
-          Id: newInternalId('widget'), Name: 'Header', Number: 1,
-          Type: 'shape', zIndex: 1,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, Variant: 'rectangle',
-          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Title', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'Demo Widgets',
-          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff',
-          Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'BtnLabel', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 225, 51, 20],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'Button styles:',
-          FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
-        },
-        { Id: newInternalId('widget'), Name: 'Rounded Rect', Number: 3, Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 98, 75, 27], visible: true,
-          Variant: 'rounded-rect', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Rectangle', Number: 4, Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [140, 98, 75, 27], visible: true,
-          Variant: 'rectangle', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Shadow', Number: 5, Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [249, 98, 75, 27], visible: true,
-          Variant: 'shadow', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Standard', Number: 6, Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [359, 98, 75, 27], visible: true,
-          Variant: 'standard', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Transparent', Number: 7, Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [468, 98, 75, 27], visible: true,
-          Variant: 'transparent', showName: true, autoHilite: true, enabled: true, sharedHilite: false, Script: '' },
-        {
-          Id: newInternalId('widget'), Name: 'ShapeLabel', Number: 8,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 300, 117, 17],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'Shapes (filled):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
-        },
-        { Id: newInternalId('widget'), Name: 'Rectangle', Number: 9, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 105, 140, 54], visible: true,
-          Variant: 'rectangle', FillColor: '#dbeafe', BorderColor: '#3b82f6', BorderWidth: 2, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Oval', Number: 10, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [158, 105, 140, 54], visible: true,
-          Variant: 'oval', FillColor: '#fce7f3', BorderColor: '#ec4899', BorderWidth: 2, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Rounded Rectangle', Number: 11, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [285, 150, 140, 54], visible: true,
-          Variant: 'rounded-rectangle', FillColor: '#dcfce7', BorderColor: '#22c55e', BorderWidth: 2, Script: '' },
-        {
-          Id: newInternalId('widget'), Name: 'ShapeLabel2', Number: 12,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 300, 203, 17],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'Shapes (lines & polygons):', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
-        },
-        { Id: newInternalId('widget'), Name: 'Line', Number: 13, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 102, 225, 60], visible: true,
-          Variant: 'line', BorderColor: '#0284c7', BorderWidth: 2, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Arrow', Number: 14, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [140, 102, 225, 60], visible: true,
-          Variant: 'line', BorderColor: '#0369a1', BorderWidth: 2, ArrowEnd: true, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Arc', Number: 15, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [249, 102, 225, 60], visible: true,
-          Variant: 'arc', BorderColor: '#9333ea', BorderWidth: 2, ArrowEnd: true, Curvature: 0.4, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Triangle', Number: 16, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [359, 84, 225, 60], visible: true,
-          Variant: 'polygon', Sides: 3, FillColor: '#fef9c3', BorderColor: '#ca8a04', BorderWidth: 2, Script: '' },
-        { Id: newInternalId('widget'), Name: 'Hexagon', Number: 17, Type: 'shape', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [450, 90, 225, 60], visible: true,
-          Variant: 'polygon', Sides: 6, FillColor: '#ede9fe', BorderColor: '#7c3aed', BorderWidth: 2, Script: '' },
-        {
-          Id: newInternalId('widget'), Name: 'FieldLabel', Number: 18,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 225, 297, 17],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'Text fields:', FontSize: 10, FontWeight: 'bold', Color: '#1d3461', Script: '',
-        },
-        { Id: newInternalId('widget'), Name: 'OpaqueField', Number: 19, Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [30, 165, 320, 54], visible: true,
-          Variant: 'opaque', lockText: false, scrolling: true, showLines: true,
-          dontSearch: false, sharedText: false,
-          Value: 'Editable field\n(style: opaque, with lines)',
-          FontSize: 10, Color: '#222', Script: '' },
-        { Id: newInternalId('widget'), Name: 'ShadowField', Number: 20, Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [218, 165, 320, 54], visible: true,
-          Variant: 'shadow', lockText: true, scrolling: false, showLines: false,
-          dontSearch: false, sharedText: false,
-          Value: 'Locked text field\n(style: shadow)',
-          FontSize: 10, Color: '#444', Script: '' },
-      ],
-    },
-
-    // card 3: script demo
-    {
-      Id: newInternalId('card'), Name: 'Script Demo',
-      Color: null, Alpha: 1, dontSearch: false,
-      Script: '',
-      Widgets: [
-        {
-          Id: newInternalId('widget'), Name: 'Header', Number: 1,
-          Type: 'shape', zIndex: 1,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, Variant: 'rectangle',
-          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Title', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'Script Demo',
-          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Info', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 75],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: false, sharedText: false,
-          Value: 'This card demonstrates scripting. Each button has a script which runs when it is clicked.',
-          FontSize: 11, Color: '#1d3461', Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'AnswerBtn', Number: 3,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [60, 143, 150, 33],
-          visible: true, Variant: 'rounded-rect',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => answer('Hello from a script!', 'OK'))`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'InputBtn', Number: 4,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [229, 143, 150, 33],
-          visible: true, Variant: 'rounded-rect',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => ask('What is your name?', ''))`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Open URL', Number: 5,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [398, 143, 150, 33],
-          visible: true, Variant: 'shadow',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => openURL('https://github.com/rozek/webapp-crafter'))`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'NextCardBtn', Number: 6,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [229, 143, 210, 33],
-          visible: true, Variant: 'standard',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => go(nextCard))`,
-        },
-      ],
-    },
-
-    // card 4: widget demo
-    {
-      Id: newInternalId('card'), Name: 'Widget Demo',
-      Color: null, Alpha: 1, dontSearch: false,
-      Script: '',
-      Widgets: [
-        {
-          Id: newInternalId('widget'), Name: 'Header', Number: 1,
-          Type: 'shape', zIndex: 1,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, Variant: 'rectangle',
-          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Title', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'Widget Demo',
-          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Info', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 45],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: false, sharedText: false,
-          Value: 'BC_Widget: objects fully defined in Preact + htm with their own state.',
-          FontSize: 11, Color: '#1d3461', Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Counter', Number: 3,
-          Type: 'generic', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [150, 300, 113, 195],
-          visible: true, Configuration: { label:'Clicks' },
-          Script: `\
-on('render', () => {
-  const count = me.count ?? 0
-  const label = Configuration.label ?? 'Counter'
-  return html\`
-    <div style=\${{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', gap: '20px', height: '100%',
-      fontFamily: 'system-ui, sans-serif',
-      background: '#fff', borderRadius: '12px',
-      border: '2px solid #1d3461', boxShadow: '0 2px 12px rgba(0,0,0,.12)',
-    }}>
-      <div style=\${{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '1px' }}>\${label}</div>
-      <div style=\${{ fontSize: '54px', fontWeight: 'bold', color: '#1d3461', lineHeight: 1 }}>\${count}</div>
-      <div style=\${{ display: 'flex', gap: '12px' }}>
-        <button onClick=\${() => { me.count = count - 1 }}
-          style=\${{ padding: '10px 28px', fontSize: '17px', cursor: 'pointer',
-            borderRadius: '8px', border: '1px solid #ccc', background: '#f8f8f8' }}>−</button>
-        <button onClick=\${() => { me.count = 0 }}
-          style=\${{ padding: '10px 18px', fontSize: '11px', cursor: 'pointer',
-            borderRadius: '8px', border: '1px solid #ccc', background: '#f8f8f8', color: '#888' }}>Reset</button>
-        <button onClick=\${() => { me.count = count + 1 }}
-          style=\${{ padding: '10px 28px', fontSize: '17px', cursor: 'pointer',
-            borderRadius: '8px', border: '1px solid #ccc', background: '#f8f8f8' }}>+</button>
-      </div>
-    </div>
-  \`
-})`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Clock', Number: 4,
-          Type: 'generic', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [60, 225, 330, 75],
-          visible: true, Configuration: {},
-          Script: `\
-let _timer = null
-on('ready', () => { _timer = setInterval(() => { me._time = Date.now() }, 1000) })
-on('obsolete', () => { if (_timer != null) { clearInterval(_timer) } })
-on('render', () => {
-  const now = new Date(me._time ?? Date.now())
-  const pad = n => String(n).padStart(2, '0')
-  const time = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds())
-  return html\`
-    <div style=\${{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      height: '100%', fontFamily: 'monospace', fontSize: '27px',
-      fontWeight: 'bold', color: '#1d3461', letterSpacing: '4px',
-      background: '#fff', borderRadius: '10px', border: '2px solid #1d3461',
-    }}>\${time}</div>
-  \`
-})`,
-        },
-        {
-          Id: newInternalId('widget'), Name: 'StartBtn', Number: 5,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [413, 128, 383, 33],
-          visible: true, Variant: 'rounded-rect',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => go(Card('Start')))`,
-        },
-      ],
-    },
-
-    // card 5: about BrowserCard
-    {
-      Id: newInternalId('card'), Name: 'About BrowserCard',
-      Color: null, Alpha: 1, dontSearch: false,
-      Script: '',
-      Widgets: [
-        {
-          Id: newInternalId('widget'), Name: 'Header', Number: 1,
-          Type: 'shape', zIndex: 1,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 0, 40],
-          visible: true, Variant: 'rectangle',
-          FillColor: '#1d3461', BorderColor: 'transparent', BorderWidth: 0, Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'Title', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [0, 600, 8, 27],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: false, showLines: false,
-          dontSearch: true, sharedText: false,
-          Value: 'About BrowserCard',
-          FontSize: 18, FontWeight: 'bold', TextAlign: 'center', Color: '#ffffff', Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'InfoText', Number: 2,
-          Type: 'field', zIndex: 2,
-          Anchors: ['left-width', 'top-height'], Offsets: [60, 480, 56, 285],
-          visible: true, Variant: 'transparent',
-          lockText: true, scrolling: true, showLines: false,
-          dontSearch: false, sharedText: false,
-          Value: 'BrowserCard (BC) is a browser-based reinterpretation of NovoCard, which itself was a reinterpretation of HyperCard (Apple, 1987).\n\nConcept:\nBrowserCard lets you create interactive card decks. Each deck consists of cards which may contain buttons, text fields, shapes, pictures and widgets.\n\nScripting:\nScripts are plain JavaScript. Event handlers are registered with on(\'message\', () => ...). Available functions include go(), openURL(), answer(), ask(), card(), widget(), send(), print(), after() and every(). Available values: me, nextCard, prevCard, firstCard, lastCard.\n\nWidgets:\nBC_Widget is an object fully defined in Preact + htm with its own state. Its script registers on(\'render\', () => html`...`) and receives html, Configuration and dispatch in addition to the full script context.\n\nTechnology:\n- TypeScript + Preact + htm\n- custom web elements <bc-designer> and <bc-deck>\n- Vite as build tool\n- deck data in JSON format\n- persistence in IndexedDB (idb-keyval)',
-          FontSize: 11, Color: '#1d3461', Script: '',
-        },
-        {
-          Id: newInternalId('widget'), Name: 'StartBtn', Number: 3,
-          Type: 'button', zIndex: 3,
-          Anchors: ['left-width', 'top-height'], Offsets: [236, 128, 360, 33],
-          visible: true, Variant: 'rounded-rect',
-          showName: true, autoHilite: true, enabled: true, sharedHilite: false,
-          Script: `on('click', () => go(Card('Start')))`,
-        },
-      ],
-    },
-  ],
-  }
-})()
+// the built-in default deck is the "BrowserCard-Pitch" demo
+// (demos/BrowserCard-Pitch.json), embedded so the bundle stays self-contained
+const DemoDeckJSON = "{\"Id\":\"bc-deck-229\",\"Name\":\"BrowserCard-Pitch\",\"readOnly\":false,\"swipeToAdjacentCard\":true,\"Script\":\"\",\"Cards\":[{\"Id\":\"bc-card-230\",\"Name\":\"Card 1\",\"Color\":null,\"Alpha\":1,\"dontSearch\":false,\"Script\":\"\",\"Widgets\":[{\"Id\":\"bc-widget-231\",\"Name\":\"TitleView 2\",\"Number\":1,\"Type\":\"generic\",\"zIndex\":1,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[10,150,10,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/TitleView.js')\",\"Configuration\":{},\"Value\":\"BrowserCard\"},{\"Id\":\"bc-widget-232\",\"Name\":\"Label 2\",\"Number\":2,\"Type\":\"generic\",\"zIndex\":2,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[10,360,50,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/Label.js')\",\"Configuration\":{},\"Value\":\"Play with Code and Data directly in the Browser\"},{\"Id\":\"bc-widget-233\",\"Name\":\"StickyTextNote 2\",\"Number\":3,\"Type\":\"generic\",\"zIndex\":3,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[10,100,90,70],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/StickyTextNote.js')\",\"Configuration\":{},\"Value\":\"Hello, World!\"},{\"Id\":\"bc-widget-234\",\"Name\":\"TextView 2\",\"Number\":4,\"Type\":\"generic\",\"zIndex\":4,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[120,150,80,80],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"at first, it looks like yet another tool for \\\"sticky notes\\\", but...\"},{\"Id\":\"bc-widget-235\",\"Name\":\"TextView 3\",\"Number\":5,\"Type\":\"generic\",\"zIndex\":5,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[10,160,170,60],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"you can add arbitrary media, such as images...\"},{\"Id\":\"bc-widget-236\",\"Name\":\"Widget 2\",\"Number\":6,\"Type\":\"generic\",\"zIndex\":6,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[180,40,160,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/curvedLine.js')\",\"Configuration\":{\"Direction\":\"w\",\"clockwise\":true,\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-237\",\"Name\":\"ImageView 2\",\"Number\":7,\"Type\":\"generic\",\"zIndex\":7,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[10,100,230,100],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/ImageView.js')\",\"Configuration\":{\"scaling\":\"cover\",\"alignment\":\"center center\"},\"Value\":\"./img/Mandelbrot_240x240.png\"},{\"Id\":\"bc-widget-238\",\"Name\":\"TextView 4\",\"Number\":8,\"Type\":\"generic\",\"zIndex\":8,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[120,160,290,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"...complete web pages...\"},{\"Id\":\"bc-widget-239\",\"Name\":\"Widget 3\",\"Number\":9,\"Type\":\"generic\",\"zIndex\":9,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[120,40,250,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/curvedLine.js')\",\"Configuration\":{\"Direction\":\"s\",\"clockwise\":true,\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-240\",\"Name\":\"TextView 5\",\"Number\":10,\"Type\":\"generic\",\"zIndex\":10,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[160,140,230,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"...dynamic content...\"},{\"Id\":\"bc-widget-241\",\"Name\":\"WebView 2\",\"Number\":11,\"Type\":\"generic\",\"zIndex\":11,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[10,330,350,240],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/WebView.js')\",\"Configuration\":{\"scaling\":\"cover\",\"alignment\":\"center center\"},\"Value\":\"https://www.rozek.de\"},{\"Id\":\"bc-widget-242\",\"Name\":\"Widget 4\",\"Number\":12,\"Type\":\"generic\",\"zIndex\":12,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[290,30,230,110],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/straightLine.js')\",\"Configuration\":{\"Direction\":\"n\",\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-243\",\"Name\":\"SubtitleView 2\",\"Number\":13,\"Type\":\"generic\",\"zIndex\":13,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[270,100,200,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/SubtitleView.js')\\n\\non('ready', () => {\\n  const padded = (n) => String(n).padStart(2,'0')\\n  function updateClock () {\\n    const now = new Date()\\n    my.Value = (\\n      padded(now.getHours())   + ':' + \\n      padded(now.getMinutes()) + ':' + \\n      padded(now.getSeconds())\\n    )\\n  }\\n  updateClock()                          // show immediately, then keep current\\n  every(1000, updateClock)\\n})\",\"Configuration\":{},\"Value\":\"08:23:07\"},{\"Id\":\"bc-widget-244\",\"Name\":\"Widget 5\",\"Number\":14,\"Type\":\"generic\",\"zIndex\":14,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[300,60,160,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/curvedLine.js')\",\"Configuration\":{\"Direction\":\"e\",\"clockwise\":true,\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-245\",\"Name\":\"TextView 6\",\"Number\":15,\"Type\":\"generic\",\"zIndex\":15,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[370,170,140,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"...and even input controls!\"},{\"Id\":\"bc-widget-246\",\"Name\":\"TextlineInput 2\",\"Number\":16,\"Type\":\"generic\",\"zIndex\":16,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[370,170,180,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/nativeTextlineInput.js')\\n\\nmy.Value = undefined\\n\\non('update', () => {\\n  my.Value = my.Card.QRCodeValue\\n})\\n\\non('change', (Value) => {\\n  my.Card.QRCodeValue = Value\\n})\\n\",\"Configuration\":{\"Placeholder\":\"(enter text for QR code)\"},\"Value\":\"\"},{\"Id\":\"bc-widget-247\",\"Name\":\"Widget 6\",\"Number\":17,\"Type\":\"generic\",\"zIndex\":17,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[370,30,220,60],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/straightLine.js')\",\"Configuration\":{\"Direction\":\"s\",\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-248\",\"Name\":\"TextView 7\",\"Number\":18,\"Type\":\"generic\",\"zIndex\":18,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[400,160,220,60],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"Widgets automatically react on state changes\"},{\"Id\":\"bc-widget-249\",\"Name\":\"Widget 7\",\"Number\":19,\"Type\":\"generic\",\"zIndex\":19,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[550,50,180,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/straightLine.js')\",\"Configuration\":{\"Direction\":\"e\",\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-250\",\"Name\":\"TextView 8\",\"Number\":20,\"Type\":\"generic\",\"zIndex\":20,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[370,210,280,120],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"Use scripting to freely experiment with code and data - a bit like a 2D REPL or like interactive computing notebooks (without the need for a server)\"},{\"Id\":\"bc-widget-251\",\"Name\":\"Widget 8\",\"Number\":21,\"Type\":\"generic\",\"zIndex\":21,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[370,30,400,60],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/straightLine.js')\",\"Configuration\":{\"Direction\":\"s\",\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-252\",\"Name\":\"TextView 9\",\"Number\":22,\"Type\":\"generic\",\"zIndex\":22,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[400,140,400,60],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"Craft complete tools, if you like\"},{\"Id\":\"bc-widget-253\",\"Name\":\"TitleView 3\",\"Number\":23,\"Type\":\"generic\",\"zIndex\":23,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[360,250,470,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/TitleView.js')\",\"Configuration\":{},\"Value\":\"Temperature Converter\"},{\"Id\":\"bc-widget-254\",\"Name\":\"Label 3\",\"Number\":24,\"Type\":\"generic\",\"zIndex\":24,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[370,100,510,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/Label.js')\",\"Configuration\":{},\"Value\":\"°Celsius:\"},{\"Id\":\"bc-widget-255\",\"Name\":\"Label 4\",\"Number\":25,\"Type\":\"generic\",\"zIndex\":25,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[370,100,540,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/Label.js')\",\"Configuration\":{},\"Value\":\"°Fahrenheit:\"},{\"Id\":\"bc-widget-256\",\"Name\":\"NumberInput 2\",\"Number\":26,\"Type\":\"generic\",\"zIndex\":26,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[470,120,510,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/nativeNumberInput.js')\\n\\nmy.Value = 0\\n\\non('update', () => {\\n  my.Value = my.Card.Temperature ?? 0\\n})\\n\\non('change', (Value) => {\\n  my.Card.Temperature = Value\\n})\",\"Configuration\":{},\"Value\":5},{\"Id\":\"bc-widget-257\",\"Name\":\"NumberInput 3\",\"Number\":27,\"Type\":\"generic\",\"zIndex\":27,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[470,120,540,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/nativeNumberInput.js')\\n\\nmy.Value = 0\\n\\non('update', () => {\\n  my.Value = (my.Card.Temperature ?? 0) * 9/5 + 32\\n})\\n\\non('change', (Value) => {\\n  my.Card.Temperature = (Value-32) * 5/9\\n})\",\"Configuration\":{},\"Value\":41},{\"Id\":\"bc-widget-258\",\"Name\":\"Widget\",\"Number\":28,\"Type\":\"generic\",\"zIndex\":28,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[610,80,480,60],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/curvedLine.js')\",\"Configuration\":{\"Direction\":\"n\",\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-259\",\"Name\":\"TextView 10\",\"Number\":29,\"Type\":\"generic\",\"zIndex\":29,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[590,200,380,100],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"Now export your work as a self-contained web page and BrowserCard serves as a low-code application generator!\"},{\"Id\":\"bc-widget-260\",\"Name\":\"Widget-2\",\"Number\":30,\"Type\":\"generic\",\"zIndex\":30,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[610,160,150,160],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/QRCodeView.js')\\n\\nconst DefaultValue = 'https://github.com/rozek/browser-card'\\n\\nmy.Value = DefaultValue\\n\\non('update', () => {\\n  const Value = my.Card.QRCodeValue\\n  my.Value = (Value == null) || (Value === '') ? DefaultValue : Value\\n})\\n\",\"Configuration\":{\"ErrorCorrection\":\"M\",\"Border\":4,\"Color\":\"#000000\",\"Background\":\"#ffffff\"},\"Value\":\"https://github.com/rozek/browser-card\"},{\"Id\":\"bc-widget-261\",\"Name\":\"Widget 9\",\"Number\":31,\"Type\":\"generic\",\"zIndex\":31,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[670,30,320,60],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/straightLine.js')\",\"Configuration\":{\"Direction\":\"n\",\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}},{\"Id\":\"bc-widget-262\",\"Name\":\"HTMLView\",\"Number\":32,\"Type\":\"generic\",\"zIndex\":32,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[630,120,340,30],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/HTMLView.js')\",\"Configuration\":{},\"Value\":\"<span style=\\\"font-weight:bold; font-size:18px\\\">Have &nbsp; &nbsp; Fun!</span>\"},{\"Id\":\"bc-widget-263\",\"Name\":\"TextView 11\",\"Number\":33,\"Type\":\"generic\",\"zIndex\":33,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[530,260,30,100],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/MarkdownView.js')\",\"Configuration\":{},\"Value\":\"BrowserCard started as a small test for Anthropic Fable 5 (while it was available for non-US citizens), but soon turned out to be quite useful - try yourself!\"},{\"Id\":\"bc-widget-264\",\"Name\":\"Widget 10\",\"Number\":34,\"Type\":\"generic\",\"zIndex\":34,\"Anchors\":[\"left-width\",\"top-height\"],\"Offsets\":[280,240,70,40],\"visible\":true,\"Script\":\"await behaveLike('./behaviors/widgets/straightLine.js')\",\"Configuration\":{\"Direction\":\"ne\",\"ArrowHeads\":\"end\",\"Color\":\"#000000\",\"Thickness\":2}}],\"Temperature\":5,\"QRCodeValue\":\"\"}],\"SnapToGrid\":true,\"CardWidth\":800,\"CardHeight\":600}"
+const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
 
   const pristineDemoDeckJSON = JSON.stringify(DemoDeck)   // for "Reset", since
                                           // the singleton is mutated when edited
@@ -5077,7 +4670,7 @@ function WidgetView ({
             <div class="bc-props-section">Card Size (Deck)</div>
             <div class="bc-props-row">
               <label>Width</label>
-              <input type="number" min="50" value=${Deck.CardWidth ?? 600}
+              <input type="number" min="50" value=${Deck.CardWidth ?? 800}
                 onInput=${(Event:Event) => {
                   const newValue = parseFloat((Event.target as HTMLInputElement).value)
                   if (isFinite(newValue) && (newValue >= 50)) { updateDeck('CardWidth', newValue) }
@@ -5085,7 +4678,7 @@ function WidgetView ({
             </div>
             <div class="bc-props-row">
               <label>Height</label>
-              <input type="number" min="50" value=${Deck.CardHeight ?? 450}
+              <input type="number" min="50" value=${Deck.CardHeight ?? 600}
                 onInput=${(Event:Event) => {
                   const newValue = parseFloat((Event.target as HTMLInputElement).value)
                   if (isFinite(newValue) && (newValue >= 50)) { updateDeck('CardHeight', newValue) }

@@ -78,7 +78,7 @@ You rarely have to write this by hand: in the designer, open the "Deck" menu and
 
 ### Sizing
 
-A deck has a *native* canvas size, set in the designer via the deck properties `CardWidth`/`CardHeight` (default: 600x450). When a deck is displayed, the canvas is scaled proportionally to fit its element - so the element's CSS size (`style="width:...; height:..."`) determines what you see. If you want to *override* the native canvas size in a particular page, set the CSS variables `--canvas-width`/`--canvas-height` on the element:
+A deck has a *native* canvas size, set in the designer via the deck properties `CardWidth`/`CardHeight` (default: 800x600). When a deck is displayed, the canvas is scaled proportionally to fit its element - so the element's CSS size (`style="width:...; height:..."`) determines what you see. If you want to *override* the native canvas size in a particular page, set the CSS variables `--canvas-width`/`--canvas-height` on the element:
 
 ```html
 <bc-deck style="display:block; width:100%; height:100%;

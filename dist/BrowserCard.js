@@ -20184,7 +20184,8 @@ function oo(r) {
   return S.ValueIsPlainObject(r) && S.ValueIsString(r.Id) && S.ValueIsString(r.Name) && S.ValueIsArray(r.Widgets) && r.Widgets.every(ei);
 }
 function Mr(r) {
-  return S.ValueIsPlainObject(r) && S.ValueIsString(r.Name) && S.ValueIsArray(r.Cards) && r.Cards.every(oo);
+  return S.ValueIsPlainObject(r) && S.ValueIsString(r.Name) && S.ValueIsArray(r.Cards) && r.Cards.length >= 1 && // a deck must have at least one card
+  r.Cards.every(oo);
 }
 const ys = "web application/x-browsercard-card", ks = "web application/x-browsercard-widget";
 async function dc(r, e) {
@@ -22276,6 +22277,8 @@ function rd({
         new Set(N.Cards.map((ve) => ve.Name))
       ), _t(), N.Cards.splice(W + 1, 0, oe), rt({ type: "card-index", index: W + 1 });
     } else {
+      if (D == null)
+        return;
       const oe = Array.isArray(I) ? I : [I];
       if (oe.length === 0 || !oe.every(ei))
         return;

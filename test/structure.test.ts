@@ -26,6 +26,10 @@ describe('structural validators', () => {
     expect(ValueIsDeck(null)).toBe(false)
     expect(ValueIsDeck({ Name:'no cards' })).toBe(false)
   })
+  it('reject a deck without any card', () => {
+    const D:any = deck(); D.Cards = []
+    expect(ValueIsDeck(D)).toBe(false)
+  })
   it('survives a JSON round-trip', () => {
     const D = JSON.parse(JSON.stringify(deck()))
     expect(ValueIsDeck(D)).toBe(true)

@@ -3409,6 +3409,7 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
       ValueIsPlainObject(Value) &&
       ValueIsString(Value.Name) &&
       ValueIsArray(Value.Cards) &&
+      (Value.Cards.length >= 1) &&            // a deck must have at least one card
       (Value.Cards as any[]).every(ValueIsCardJSON)
     )
   }
@@ -6070,6 +6071,7 @@ function DeckView ({
       Deck.Cards.splice(CardIndex+1, 0, newCard)
       navigate({ type:'card-index', index:CardIndex+1 })
     } else {
+      if (Card == null) { return }       // no current card to paste the widget(s) onto
       // accept both a single widget (older clipboard) and an array of widgets
       const Widgets = (Array.isArray(Candidate) ? Candidate : [ Candidate ]) as BC_Widget[]
       if ((Widgets.length === 0) || ! Widgets.every(ValueIsWidgetJSON)) { return }

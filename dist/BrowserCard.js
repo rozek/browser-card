@@ -18587,7 +18587,7 @@ function B1(r) {
     ]
   };
 }
-const D5 = "0.0.37", G4 = S.ValueIsTextline, D1 = {
+const D5 = "0.0.38", G4 = S.ValueIsTextline, D1 = {
   h: tn,
   Fragment: In,
   render: Qr,

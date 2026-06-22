@@ -1,6 +1,6 @@
 {
   "name": "browser-card",
-  "version": "0.0.17",
+  "version": "0.0.38",
   "description": "a HyperCard reinterpretation for the web — build, script and share interactive card decks right in your browser, then embed them anywhere as a custom element",
   "license": "MIT",
   "author": "Andreas Rozek <a.rozek@gmx.de> (https://www.rozek.de)",

@@ -4,7 +4,7 @@
 *                                                                              *
 *******************************************************************************/
 
-  const BC_Version = '0.0.37'
+  const BC_Version = '0.0.38'
 
   declare const download:Function
 

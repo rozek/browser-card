@@ -5335,7 +5335,7 @@ function MenuBar ({
   onDeckSave, onDeckRevert, onDeckReset, onDeckExport, onDeckImport,
   onDeckExportText, onDeckImportText,
   onDeckEmbed, onDeckStandalone, onDeckImportURL, onMCPSettings,
-  onCardAdd, onCardDuplicate, onCardRename, onCardDelete, onCardMove,
+  onCardAdd, onCardDuplicate, onCardRename, onCardDelete,
   onCardCopy, onPaste,
   canUndo = false, canRedo = false, onUndo, onRedo,
 }:{
@@ -5367,7 +5367,6 @@ function MenuBar ({
   onCardDuplicate?: () => void
   onCardRename?:    () => void
   onCardDelete?:    () => void
-  onCardMove?:      (Delta:number) => void
   onCardCopy?:      () => void
   onPaste?:         () => void
   canUndo?:         boolean
@@ -5492,11 +5491,6 @@ function MenuBar ({
                 onClick=${() => { onCardCopy?.(); onOverlayToggle(null) }}>Copy Card</div>
               <div class="bc-dropdown-item"
                 onClick=${() => { onPaste?.(); onOverlayToggle(null) }}>Paste from Clipboard</div>
-              <div class="bc-dropdown-separator"></div>
-              <div class=${`bc-dropdown-item${isFirst ? ' disabled' : ''}`}
-                onClick=${() => { onCardMove?.(-1); onOverlayToggle(null) }}>Move Card backward</div>
-              <div class=${`bc-dropdown-item${isLast ? ' disabled' : ''}`}
-                onClick=${() => { onCardMove?.(1); onOverlayToggle(null) }}>Move Card forward</div>
               <div class="bc-dropdown-separator"></div>
               <div class=${`bc-dropdown-item${CardCount <= 1 ? ' disabled' : ''}`}
                 onClick=${() => { onCardDelete?.(); onOverlayToggle(null) }}>Delete Card…</div>
@@ -6615,7 +6609,6 @@ function DeckView ({
           onCardDuplicate=${() => duplicateCardAt(CardIndex)}
           onCardRename=${() => void renameCardAt(CardIndex)}
           onCardDelete=${() => void deleteCardAt(CardIndex)}
-          onCardMove=${(Delta:number) => moveCardAt(CardIndex,Delta)}
           onCardCopy=${() => void copyCardToClipboard()}
           onPaste=${() => void pasteFromClipboard()}
           canUndo=${UndoRef.current.length > 0}

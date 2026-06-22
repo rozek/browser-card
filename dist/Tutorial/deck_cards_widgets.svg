@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 170" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#9AA0A8"/>
+    </marker>
+  </defs>
+
+  <!-- ===== Stage 1: DECK (a stack of cards) ===== -->
+  <rect x="12" y="20" width="80" height="100" rx="11" fill="#EDEFF2" stroke="#8A929B" stroke-width="2.5"/>
+  <rect x="40" y="44" width="44" height="62" rx="7" fill="#FFFFFF" stroke="#D2D6DB" stroke-width="2"/>
+  <rect x="33" y="38" width="44" height="62" rx="7" fill="#FFFFFF" stroke="#D2D6DB" stroke-width="2"/>
+  <rect x="26" y="32" width="44" height="62" rx="7" fill="#FFFFFF" stroke="#6E7681" stroke-width="2.5"/>
+  <rect x="32" y="38" width="26" height="6" rx="3" fill="#6E7681"/>
+  <rect x="32" y="49" width="32" height="4" rx="2" fill="#DADDE1"/>
+  <rect x="32" y="57" width="32" height="4" rx="2" fill="#DADDE1"/>
+  <rect x="32" y="72" width="18" height="16" rx="3" fill="#EDEFF2" stroke="#A7ADB5" stroke-width="1.3"/>
+  <rect x="54" y="78" width="12" height="8" rx="4" fill="#6E7681"/>
+  <text x="52" y="150" text-anchor="middle" font-size="13" font-weight="400" fill="#2B2F36">Deck</text>
+
+  <line x1="96" y1="70" x2="118" y2="70" stroke="#9AA0A8" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- ===== Stage 2: CARD (one active card, with its widgets) ===== -->
+  <rect x="124" y="28" width="64" height="84" rx="9" fill="#FFFFFF" stroke="#6E7681" stroke-width="2.5"/>
+  <rect x="131" y="36" width="40" height="10" rx="3.5" fill="#6E7681"/>
+  <rect x="131" y="51" width="50" height="5" rx="2.5" fill="#DADDE1"/>
+  <rect x="131" y="60" width="50" height="5" rx="2.5" fill="#DADDE1"/>
+  <rect x="131" y="72" width="26" height="26" rx="4" fill="#EDEFF2" stroke="#A7ADB5" stroke-width="1.5"/>
+  <circle cx="138" cy="80" r="2.6" fill="#A7ADB5"/>
+  <path d="M133 96l6-8 4 5 4-5 6 8z" fill="#A7ADB5"/>
+  <rect x="162" y="84" width="20" height="13" rx="6.5" fill="#6E7681"/>
+  <text x="156" y="150" text-anchor="middle" font-size="13" font-weight="400" fill="#2B2F36">Card</text>
+
+  <line x1="192" y1="70" x2="216" y2="70" stroke="#9AA0A8" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- ===== Stage 3: WIDGETS (the same widgets, without the card frame) ===== -->
+  <rect x="220" y="36" width="40" height="10" rx="3.5" fill="#6E7681"/>
+  <rect x="220" y="51" width="50" height="5" rx="2.5" fill="#DADDE1"/>
+  <rect x="220" y="60" width="50" height="5" rx="2.5" fill="#DADDE1"/>
+  <rect x="220" y="72" width="26" height="26" rx="4" fill="#EDEFF2" stroke="#A7ADB5" stroke-width="1.5"/>
+  <circle cx="227" cy="80" r="2.6" fill="#A7ADB5"/>
+  <path d="M222 96l6-8 4 5 4-5 6 8z" fill="#A7ADB5"/>
+  <rect x="251" y="84" width="20" height="13" rx="6.5" fill="#6E7681"/>
+  <text x="245" y="150" text-anchor="middle" font-size="13" font-weight="400" fill="#2B2F36">Widgets</text>
+</svg>

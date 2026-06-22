@@ -145,6 +145,7 @@
           style=${{
             width:'100%', height:'100%', overflow:'auto',
             padding:'0px', textAlign:'left',
+            color:(my.Color ?? Configuration?.Color),
           }}
           ref=${(Element) => runMermaidWithin(Element)}
           dangerouslySetInnerHTML=${{ __html:renderedContent }}

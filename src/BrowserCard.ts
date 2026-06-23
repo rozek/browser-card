@@ -2288,7 +2288,7 @@ export interface BC_Widget extends BC_Visual {
   Offsets:  BC_Offsets
   visible:  boolean
   // stacking order is the widget's position in its card's "Widgets" array
-  // (back to front) - exposed to scripts as the 1-based, writable "Index"
+  // (back to front) - exposed to scripts as the 0-based, writable "Index"
   // computed at render time from Anchors + Offsets + canvas dimensions:
   x?:               BC_Location
   y?:               BC_Location
@@ -3775,9 +3775,9 @@ export function makeWidgetProxy (
         case 'Card':   return cardProxy
         case 'trigger':   return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.trigger  (Event, ...ArgList)
         case 'triggered': return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.triggered(Event, ...ArgList)
-        case 'Index': {                  // 1-based position in the card's stack
+        case 'Index': {                  // 0-based position in the card's stack
           const Widgets = (cardProxy as Indexable).Widgets as BC_Widget[]
-          return Widgets.indexOf(target)+1
+          return Widgets.indexOf(target)
         }
         case 'x':      { const { left }   = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return left   }
         case 'y':      { const { top }    = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return top    }
@@ -3815,7 +3815,7 @@ export function makeWidgetProxy (
           const Widgets = (cardProxy as Indexable).Widgets as BC_Widget[]
           const from    = Widgets.indexOf(target)
           if (from < 0) { return true }
-          const to = Math.max(0, Math.min(Widgets.length-1, Math.round(Number(value))-1))
+          const to = Math.max(0, Math.min(Widgets.length-1, Math.round(Number(value))))
           if (to !== from) {
             Widgets.splice(from, 1)
             Widgets.splice(to, 0, target)

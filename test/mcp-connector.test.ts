@@ -384,8 +384,9 @@ describe('MCPConnector — tool handlers', () => {
       const resp = await invoke(ws, 'list_cards')
       const list = resp.result as any[]
       expect(list).toHaveLength(2)
-      expect(list[0]).toMatchObject({ id:'bc-card-1', name:'Card 1', index:0, widget_count:1 })
-      expect(list[1]).toMatchObject({ id:'bc-card-2', name:'Card 2', index:1, widget_count:0, has_script:true })
+      expect(list[0]).toMatchObject({ id:'bc-card-1', name:'Card 1', widget_count:1 })
+      expect(list[1]).toMatchObject({ id:'bc-card-2', name:'Card 2', widget_count:0, has_script:true })
+      expect('index' in list[0]).toBe(false)
     })
   })
 
@@ -489,6 +490,17 @@ describe('MCPConnector — tool handlers', () => {
       expect(newId).toMatch(/^bc-widget-/)
       expect(newId).not.toBe('bc-widget-1')
       expect(Deck.Cards[0].Widgets.find((w) => w.Id === newId)).toBeDefined()
+    })
+  })
+
+  it('widget_add with index inserts at the given stacking position', async () => {
+    await withConnector(async (ws, _ctx, Deck) => {
+      const resp = await invoke(ws, 'widget_add', {
+        card_id:'bc-card-1', type:'field', index:0,    // insert at the back
+      })
+      const newId = resp.result as string
+      expect(Deck.Cards[0].Widgets[0].Id).toBe(newId)             // now first
+      expect(Deck.Cards[0].Widgets[1].Id).toBe('bc-widget-1')     // pushed back
     })
   })
 
@@ -616,6 +628,31 @@ describe('MCPConnector — tool handlers', () => {
       expect(Deck.Cards[0].Widgets).toHaveLength(0)
       expect(Deck.Cards[1].Widgets).toHaveLength(1)
       expect(Deck.Cards[1].Widgets[0].Id).toBe('bc-widget-1')
+    })
+  })
+
+  it('widget_reorder moves a widget within its card (0-based stacking)', async () => {
+    await withConnector(async (ws, _ctx, Deck) => {
+      Deck.Cards[0].Widgets.push({
+        Id:'bc-widget-2', Name:'button 2', Type:'button',
+        Anchors:['left-width','top-height'] as any, Offsets:[0,1,0,1] as any,
+        visible:true, Script:'',
+      } as any)
+      // widget-1 starts at index 0 (back); move it to the front (index 1)
+      const resp = await invoke(ws, 'widget_reorder', {
+        card_id:'bc-card-1', widget_id:'bc-widget-1', new_index:1,
+      })
+      expect(resp.error).toBeNull()
+      expect(Deck.Cards[0].Widgets.map((w) => w.Id)).toEqual([ 'bc-widget-2','bc-widget-1' ])
+    })
+  })
+
+  it('widget_reorder returns an error for an unknown widget', async () => {
+    await withConnector(async (ws) => {
+      const resp = await invoke(ws, 'widget_reorder', {
+        card_id:'bc-card-1', widget_id:'bc-widget-99', new_index:0,
+      })
+      expect(typeof resp.error).toBe('string')
     })
   })
 

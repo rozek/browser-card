@@ -302,6 +302,7 @@ export class MCPConnector {
       case (Method === 'widget_add'):      return this.#WidgetAdd(Params)
       case (Method === 'widget_delete'):   return this.#WidgetDelete(Params)
       case (Method === 'widget_transfer'): return this.#WidgetTransfer(Params)
+      case (Method === 'widget_reorder'):  return this.#WidgetReorder(Params)
       case (Method === 'widget_get_rect'): return this.#WidgetGetRect(Params)
       case (Method === 'widget_set_rect'): return this.#WidgetSetRect(Params)
       case (Method === 'script_get'):      return this.#ScriptGet(Params)
@@ -360,10 +361,9 @@ export class MCPConnector {
   //--------------------------------------------------------------------------//
 
   #listCards () {
-    return this.#ctx.getDeck().Cards.map((Card, Index) => ({
+    return this.#ctx.getDeck().Cards.map((Card) => ({   // position = array order
       id:           Card.Id,
       name:         Card.Name,
-      index:        Index,
       widget_count: Card.Widgets.length,
       has_script:   Card.Script.trim() !== '',
     }))
@@ -550,6 +550,7 @@ export class MCPConnector {
     const Type   = Params.type as string
     const Props  = (Params.props ?? {}) as Record<string,unknown>
     const Rect   = Params.rect as { x:number, y:number, width:number, height:number } | undefined
+    const Index  = Params.index as number | undefined   // 0-based stacking position
     let NewID    = ''
 
     this.#ctx.mutateDeck((Deck) => {
@@ -577,7 +578,9 @@ export class MCPConnector {
         Script:  Props.Script  ?? '',
       } as unknown as BC_Widget
 
-      Card.Widgets.push(NewWidget)
+      Index == null
+        ? Card.Widgets.push(NewWidget)
+        : Card.Widgets.splice(Math.max(0, Math.min(Card.Widgets.length, Math.round(Index))), 0, NewWidget)
     })
     return NewID
   }
@@ -605,6 +608,22 @@ export class MCPConnector {
       if (Idx < 0) { throw new Error(`widget not found: ${Params.widget_id}`) }
       const [ Widget ] = Src.Widgets.splice(Idx, 1)
       Dst.Widgets.push(Widget)
+    })
+    return null
+  }
+
+  #WidgetReorder (Params: Record<string,unknown>):null {
+    const CardID   = Params.card_id as string
+    const WidgetID = Params.widget_id as string
+    const NewIndex = Params.new_index as number   // 0-based stacking position
+    this.#ctx.mutateDeck((Deck) => {
+      const Card = Deck.Cards.find((c) => c.Id === CardID)
+      if (Card == null) { throw new Error(`card not found: ${CardID}`) }
+      const Idx = Card.Widgets.findIndex((w) => w.Id === WidgetID)
+      if (Idx < 0) { throw new Error(`widget not found: ${WidgetID}`) }
+      const [ Widget ] = Card.Widgets.splice(Idx, 1)
+      const Target = Math.max(0, Math.min(Card.Widgets.length, Math.round(NewIndex)))
+      Card.Widgets.splice(Target, 0, Widget)
     })
     return null
   }

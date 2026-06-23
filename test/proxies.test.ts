@@ -49,7 +49,7 @@ describe('makeWidgetProxy', () => {
     expect(await proxy.triggered('whatever')).toBeUndefined()   // no $Script yet
   })
 
-  it('Index is the 1-based stack position and is writable (reorders the card)', () => {
+  it('Index is the 0-based stack position and is writable (reorders the card)', () => {
     const A:any = { Id:'bc-widget-1', Name:'A', Type:'shape',
       Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'' }
     const B:any = { Id:'bc-widget-2', Name:'B', Type:'shape',
@@ -60,10 +60,10 @@ describe('makeWidgetProxy', () => {
     const SizeRef = { current:{ W:600, H:450 } }
     const proxyA = makeWidgetProxy(A, SizeRef as any, {} as any, cardProxy, () => {})
 
-    expect(proxyA.Index).toBe(1)
-    proxyA.Index = 2                              // move A to the top of the stack
+    expect(proxyA.Index).toBe(0)
+    proxyA.Index = 1                              // move A to the top of the stack
     expect(Widgets.map((w) => w.Id)).toEqual([ 'bc-widget-2','bc-widget-1' ])
-    expect(proxyA.Index).toBe(2)
+    expect(proxyA.Index).toBe(1)
     expect(rerender).toHaveBeenCalled()
   })
 })

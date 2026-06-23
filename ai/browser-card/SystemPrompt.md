@@ -94,7 +94,7 @@ All widgets share these common properties:
 | `Anchors` | [hAnchor, vAnchor] | Geometry anchor mode (see Geometry section) |
 | `Offsets` | [n0, n1, n2, n3] | Geometry offset values (see Geometry section) |
 
-> **Stacking order = array order.** A widget's stacking is its position in the card's `Widgets` array: earlier entries are at the back, later entries in front. There is no `zIndex` or `Number` property — to control stacking, order the widgets in the array accordingly. Scripts can read and set the 1-based position via `my.Index` (assigning `my.Index = 1` sends the widget to the back).
+> **Stacking order = array order.** A widget's stacking is its position in the card's `Widgets` array: earlier entries are at the back, later entries in front. There is no `zIndex` or `Number` property — to control stacking, order the widgets in the array accordingly. Scripts can read and set the 0-based position via `my.Index` (assigning `my.Index = 0` sends the widget to the back).
 
 > **Reserved properties — never include these.** BrowserCard manages them internally; they are ignored on load and stripped on save:
 > - **`Id`** (on decks, cards, and widgets) — fresh IDs are generated automatically on every load. Reference elements by their `Name`, never by `Id`.
@@ -367,7 +367,7 @@ CardCount()    // Total number of cards
 my.Value = 'Hello'               // Update property -> triggers re-render + persistence
 my.Width = 200                  // Update geometry -> triggers layout
 my.own.counter = 0              // Transient (private) state - no re-render, no persistence
-my.Index = 1                    // 1-based stacking position (read/write); 1 = back, last = front
+my.Index = 0                    // 0-based stacking position (read/write); 0 = back, last = front
 I.changeGeometryTo(x, y, w, h) // Update position/size from pixel values
 my.Card                         // Proxy for the widget's own card (read/write)
 my.Deck                         // Proxy for the deck (read/write)

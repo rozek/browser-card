@@ -77,9 +77,7 @@ All widgets share these common properties:
 ```json
 {
   "Name": "My Widget",
-  "Number": 1,
   "Type": "button",
-  "zIndex": 1,
   "visible": true,
   "Script": "",
   "Anchors": ["left-width", "top-height"],
@@ -90,16 +88,17 @@ All widgets share these common properties:
 | Property | Type | Description |
 |---|---|---|
 | `Name` | string | Unique name within the card |
-| `Number` | number | Drawing order (1 = bottom, higher = on top) |
 | `Type` | string | Widget type (see below) |
-| `zIndex` | number | CSS stacking order |
 | `visible` | boolean | Visibility (`true` = visible) |
 | `Script` | string | Widget-level JavaScript script |
 | `Anchors` | [hAnchor, vAnchor] | Geometry anchor mode (see Geometry section) |
 | `Offsets` | [n0, n1, n2, n3] | Geometry offset values (see Geometry section) |
 
+> **Stacking order = array order.** A widget's stacking is its position in the card's `Widgets` array: earlier entries are at the back, later entries in front. There is no `zIndex` or `Number` property — to control stacking, order the widgets in the array accordingly. Scripts can read and set the 1-based position via `my.Index` (assigning `my.Index = 1` sends the widget to the back).
+
 > **Reserved properties — never include these.** BrowserCard manages them internally; they are ignored on load and stripped on save:
 > - **`Id`** (on decks, cards, and widgets) — fresh IDs are generated automatically on every load. Reference elements by their `Name`, never by `Id`.
+> - **`zIndex`, `Number`** — obsolete; stacking is derived from the array order (see above).
 > - **Computed geometry** — `x`, `y`, `Width`, `Height`, `Position`, `Size`, `Geometry` — derived at render time from `Anchors` + `Offsets` + the canvas dimensions. A widget's position and size are defined **solely** by `Anchors` and `Offsets`.
 
 ---
@@ -368,6 +367,7 @@ CardCount()    // Total number of cards
 my.Value = 'Hello'               // Update property -> triggers re-render + persistence
 my.Width = 200                  // Update geometry -> triggers layout
 my.own.counter = 0              // Transient (private) state - no re-render, no persistence
+my.Index = 1                    // 1-based stacking position (read/write); 1 = back, last = front
 I.changeGeometryTo(x, y, w, h) // Update position/size from pixel values
 my.Card                         // Proxy for the widget's own card (read/write)
 my.Deck                         // Proxy for the deck (read/write)
@@ -634,9 +634,7 @@ on('ready', () => {
       "Widgets": [
         {
           "Name": "Title",
-          "Number": 1,
           "Type": "field",
-          "zIndex": 1,
           "visible": true,
           "Script": "",
           "Anchors": ["left-right", "top-height"],
@@ -655,9 +653,7 @@ on('ready', () => {
         },
         {
           "Name": "NextButton",
-          "Number": 2,
           "Type": "button",
-          "zIndex": 2,
           "visible": true,
           "Script": "on('click', () => go(nextCard))",
           "Anchors": ["left-width", "height-bottom"],
@@ -684,7 +680,7 @@ on('ready', () => {
 1. **JSON must be valid** - use `null` not `undefined`, quote all string values
 2. **No `Id` fields** - never author deck/card/widget IDs; BrowserCard assigns and strips them automatically
 3. **Geometry** - always provide both `Anchors` (2-element array) and `Offsets` (4-element array); never the computed fields (`x`, `y`, `Width`, `Height`, `Position`, `Size`, `Geometry`)
-4. **Widget `Number`** - start at 1, increment per card; determines drawing order (back to front)
+4. **Stacking** - the order of widgets in the `Widgets` array is the stacking order (first = back, last = front); there is no `zIndex` or `Number`
 5. **Scripts** - empty string `""` for no script; valid JavaScript string for active scripts; use `\n` for line breaks within JSON strings
 6. **Colors** - use hex `"#rrggbb"` or CSS color names; `null` for "no color"
 7. **Text content** - use `\n` for newlines within field `Value` values
@@ -706,6 +702,6 @@ When creating a new deck:
 
 When modifying an existing deck:
 1. Locate the elements to change by their `Name`
-2. Keep `Number` values consistent (re-number if inserting/deleting widgets)
+2. To restack widgets, reorder them within the `Widgets` array (first = back, last = front)
 3. Maintain the `Widgets` key name for widget arrays
 4. Test scripts for correctness before finalizing

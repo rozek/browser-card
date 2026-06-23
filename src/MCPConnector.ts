@@ -39,7 +39,7 @@ const CardSchemaKeys = new Set([
 ])
 
 const WidgetSchemaKeys = new Set([
-  'Id','Name','Number','Type','Variant','zIndex','Anchors','Offsets',
+  'Id','Name','Type','Variant','Anchors','Offsets',
   'visible','Script','Value',
   'showName','autoHilite','enabled','sharedHilite','Hilite','IconId',
   'lockText','scrolling','showLines','dontSearch','sharedText',
@@ -565,16 +565,12 @@ export class MCPConnector {
       const Offs         = offsetsFromRect(
         DefaultRect.x, DefaultRect.y, DefaultRect.width, DefaultRect.height, Anc, W, H
       )
-      const MaxNum = Card.Widgets.reduce((m, w) => Math.max(m, w.Number ?? 0), 0)
-
-      const NewWidget = {
+      const NewWidget = {               // appended last ⇒ on top of the stack
         ...WidgetDefaults[Type] ?? {},
         ...Props,
         Id:      NewID,
-        Name:    (Props.Name as string) ?? `${Type} ${MaxNum+1}`,
-        Number:  MaxNum+1,
+        Name:    (Props.Name as string) ?? `${Type} ${Card.Widgets.length+1}`,
         Type,
-        zIndex:  MaxNum+1,
         Anchors: Anc,
         Offsets: Offs,
         visible: Props.visible ?? true,

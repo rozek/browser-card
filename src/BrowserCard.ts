@@ -2282,13 +2282,13 @@ type BC_WidgetVariant  = BC_ButtonVariant | BC_FieldVariant | BC_ShapeVariant | 
 // Subtype interfaces (BC_Button, BC_Field, BC_Shape, BC_Picture) are narrower views
 // of BC_Widget and are used only for type-safe access in internal behaviors.
 export interface BC_Widget extends BC_Visual {
-  Id:       string    // 'bc-widget-1', 'bc-widget-2', ...
-  Number:   number
+  Id:       string    // 'bc-widget-1', 'bc-widget-2', ... (runtime-internal)
   Type:     BC_WidgetType
-  zIndex:   number
   Anchors:  BC_Anchors
   Offsets:  BC_Offsets
   visible:  boolean
+  // stacking order is the widget's position in its card's "Widgets" array
+  // (back to front) - exposed to scripts as the 1-based, writable "Index"
   // computed at render time from Anchors + Offsets + canvas dimensions:
   x?:               BC_Location
   y?:               BC_Location
@@ -2366,7 +2366,7 @@ type BC_DeckProxy   = BC_Deck   & BC_Triggerable & {
   Console_CharLimit:           number
 }
 type BC_CardProxy   = BC_Card   & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[] }
-type BC_WidgetProxy = BC_Widget & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy }
+type BC_WidgetProxy = BC_Widget & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; Index:number }
 type BC_Proxy = BC_DeckProxy | BC_CardProxy | BC_WidgetProxy
 
 //----------------------------------------------------------------------------//
@@ -2659,6 +2659,11 @@ const Styles = `
   .bc-card-counter {
     font-size: 12px; color: rgba(255,255,255,0.55);
     min-width: 80px; text-align: center;
+  }
+  .bc-mcp-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; flex-shrink: 0;
+    margin-left: 6px;
   }
 
   /* ---- bc-dialog ---------------------------------------------------------- */
@@ -3593,10 +3598,25 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
     return Clone
   }
 
-/**** prepareLoadedDeck — assigns fresh ids and drops computed geometry ****/
+/**** normalizeWidgetOrder — migrate legacy "zIndex"/"Number" to array order ****/
+
+  export function normalizeWidgetOrder (Deck:Indexable):void {
+    Deck.Cards?.forEach((Card:Indexable) => {
+      const Widgets = Card.Widgets as Indexable[] | undefined
+      if (Widgets == null) { return }
+      const hasLegacyOrder = Widgets.some((W) => typeof W.zIndex === 'number')
+      if (hasLegacyOrder) {              // Array.sort is stable - ties keep their order
+        Widgets.sort((a,b) => (((a.zIndex as number) ?? 0)-((b.zIndex as number) ?? 0)))
+      }
+      Widgets.forEach((W) => { delete W.zIndex; delete W.Number })   // now array-derived
+    })
+  }
+
+/**** prepareLoadedDeck — assigns fresh ids and drops computed/legacy fields ****/
 
   export function prepareLoadedDeck (Deck:BC_Deck):void {
     stripComputedGeometry(Deck as Indexable)
+    normalizeWidgetOrder(Deck as Indexable)
     ;(Deck as Indexable).Id = newInternalId('deck')
     Deck.Cards.forEach((Card) => {
       ;(Card as Indexable).Id = newInternalId('card')
@@ -3755,6 +3775,10 @@ export function makeWidgetProxy (
         case 'Card':   return cardProxy
         case 'trigger':   return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.trigger  (Event, ...ArgList)
         case 'triggered': return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.triggered(Event, ...ArgList)
+        case 'Index': {                  // 1-based position in the card's stack
+          const Widgets = (cardProxy as Indexable).Widgets as BC_Widget[]
+          return Widgets.indexOf(target)+1
+        }
         case 'x':      { const { left }   = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return left   }
         case 'y':      { const { top }    = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return top    }
         case 'Width':  { const { width }  = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return width  }
@@ -3787,6 +3811,18 @@ export function makeWidgetProxy (
             'use changeGeometryTo() to change a widget\'s geometry'
           )
           return true
+        case 'Index': {               // moves the widget within its card's stack
+          const Widgets = (cardProxy as Indexable).Widgets as BC_Widget[]
+          const from    = Widgets.indexOf(target)
+          if (from < 0) { return true }
+          const to = Math.max(0, Math.min(Widgets.length-1, Math.round(Number(value))-1))
+          if (to !== from) {
+            Widgets.splice(from, 1)
+            Widgets.splice(to, 0, target)
+            ;(cardProxy as Indexable).rerender()       // re-render card ⇒ restack
+          }
+          return true
+        }
       }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
@@ -3891,11 +3927,11 @@ export function makeDeckProxy (
 
 /**** RectStyle ****/
 
-function RectStyle (Obj:BC_Widget, containerW:number, containerH:number) {
+function RectStyle (Obj:BC_Widget, StackIndex:number, containerW:number, containerH:number) {
   const { left, top, width, height } = resolveGeometry(Obj.Anchors, Obj.Offsets, containerW, containerH)
   return {
     left, top, width, height,
-    zIndex:  Obj.zIndex,
+    zIndex:  StackIndex,                  // derived from the widget's array position
     display: Obj.visible ? undefined : 'none',
     ...visualPropsToCSS(Obj),
     ...widgetPropsToCSS(Obj),
@@ -4184,11 +4220,13 @@ function WidgetView ({
     ? { overflow:'visible' }
     : { overflow:'hidden' }
   )
+  const StackIndex = ((cardProxy as Indexable).Widgets as BC_Widget[]).indexOf(Obj)+1
+
   return html`
     <div
       ref=${viewRef}
       class=${`bc-widget${Obj.Type === 'shape' ? ' bc-shape' : ''}`}
-      style=${{ ...RectStyle(Obj, containerW, containerH), ...extraStyle }}
+      style=${{ ...RectStyle(Obj, StackIndex, containerW, containerH), ...extraStyle }}
     >
       ${renderSlot}
     </div>
@@ -4263,11 +4301,8 @@ function WidgetView ({
     const existingNames = new Set(Card.Widgets.map((Obj) => Obj.Name))
     const Name = uniqueNameIn(BaseName, existingNames, '-')
 
-    const maxZIndex = Card.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
-
-    const Widget:BC_Widget = {
-      Id:newInternalId('widget'), Name:Name,
-      Number:maxZIndex+1, Type:Type, zIndex:maxZIndex+1,
+    const Widget:BC_Widget = {            // appended last ⇒ on top of the stack
+      Id:newInternalId('widget'), Name:Name, Type:Type,
       Anchors:[ 'left-width','top-height' ],
       Offsets:[
         Math.round((CanvasW-Width)/2), Width,
@@ -4528,12 +4563,12 @@ function WidgetView ({
         onPointerMove=${applyMarquee}
         onPointerUp=${endMarquee}
         onContextMenu=${(e:Event) => e.preventDefault()}>
-        ${Objects.map((Obj) => {
+        ${Objects.map((Obj, StackIndex) => {
           const R = resolveGeometry(Obj.Anchors, Obj.Offsets, CanvasW, CanvasH)
           return html`
             <div key=${Obj.Id}
               class=${`bc-edit-hit${Obj.visible ? '' : ' invisible'}`}
-              style=${{ left:R.left, top:R.top, width:R.width, height:R.height, zIndex:Obj.zIndex }}
+              style=${{ left:R.left, top:R.top, width:R.width, height:R.height, zIndex:StackIndex+1 }}
               onPointerDown=${(Event:PointerEvent) => {
                 Event.stopPropagation()
                 const additive = Event.shiftKey || Event.metaKey
@@ -5107,7 +5142,6 @@ function WidgetView ({
         <div class="bc-props-section">General</div>
         ${TextlineRow('Name','Name')}
         ${CheckboxRow('visible','visible')}
-        ${NumberRow('z-Index','zIndex',0)}
 
         <div class="bc-props-section">Geometry</div>
         <div class="bc-props-row">
@@ -5669,7 +5703,7 @@ function MenuBar ({
 function BottomBar ({
   CardIndex, CardCount,
   onFirst, onPrev, onNext, onLast, onBack, historyLen, onForward, futureLen,
-  consoleShown = false, onConsoleToggle, onScreenshot,
+  consoleShown = false, onConsoleToggle, onScreenshot, mcpStatus = 'inactive',
 }:{
   CardIndex:  number
   CardCount:  number
@@ -5684,9 +5718,15 @@ function BottomBar ({
   consoleShown?:    boolean
   onConsoleToggle?: () => void
   onScreenshot?:    () => void
+  mcpStatus?:       'inactive' | 'connecting' | 'connected'
 }) {
   const isFirst = CardIndex === 0
   const isLast  = CardIndex === CardCount-1
+  const McpAppearance = {
+    inactive:   { Color:'#8e8e93', Title:'MCP Broker: not configured' },
+    connecting: { Color:'#ff9500', Title:'MCP Broker: connecting…' },
+    connected:  { Color:'#34c759', Title:'MCP Broker: connected' },
+  }[mcpStatus]
   return html`
     <div class="bc-bottom-bar">
       <div class="bc-bottom-bar-history">
@@ -5710,6 +5750,11 @@ function BottomBar ({
         style=${{ fontSize:13, minWidth:40 }}
         onClick=${onConsoleToggle} title="toggle console"
       >⌨</button>
+      <span
+        class="bc-mcp-dot"
+        title=${McpAppearance.Title}
+        style=${{ background: McpAppearance.Color }}
+      />
     </div>
   `
 }
@@ -6153,8 +6198,8 @@ function DeckView ({
     if (selectedIds.length === 0) { await copyCardToClipboard(); return }
 
     const Widgets = Deck.Cards[CardIndex].Widgets
-      .filter((Obj) => selectedIds.includes(Obj.Id))
-      .sort((a,b) => a.zIndex-b.zIndex)                  // keep the stacking order
+      .filter((Obj) => selectedIds.includes(Obj.Id))    // filter keeps the array
+                                                        // order = stacking order
     if (Widgets.length === 0) { return }
 
     // always serialise an array, even for a single widget, so paste is uniform
@@ -6209,23 +6254,17 @@ function DeckView ({
       if ((Widgets.length === 0) || ! Widgets.every(ValueIsWidgetJSON)) { return }
 
       captureUndo()
-      let maxZIndex   = Card.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
       const usedNames = new Set(Card.Widgets.map((Obj) => Obj.Name))
       const newIds:string[] = []
 
-      Widgets
-        .slice().sort((a,b) => (a.zIndex ?? 0)-(b.zIndex ?? 0))   // preserve order
-        .forEach((Widget) => {
-          const newWidget = Widget as BC_Widget
-            newWidget.Id   = newInternalId('widget')
-            newWidget.Name = uniqueNameIn(newWidget.Name ?? 'Widget', usedNames)
-            usedNames.add(newWidget.Name)
-            maxZIndex += 1
-            newWidget.zIndex = maxZIndex
-            newWidget.Number = maxZIndex
-          Card.Widgets.push(newWidget)
-          newIds.push(newWidget.Id)
-        })
+      Widgets.forEach((Widget) => {       // clipboard array is already in stacking
+        const newWidget = Widget as BC_Widget         // order; appending keeps it
+          newWidget.Id   = newInternalId('widget')
+          newWidget.Name = uniqueNameIn(newWidget.Name ?? 'Widget', usedNames)
+          usedNames.add(newWidget.Name)
+        Card.Widgets.push(newWidget)
+        newIds.push(newWidget.Id)
+      })
       setSelectedIds(newIds)
     }
     deckForceUpdate()
@@ -6414,7 +6453,7 @@ function DeckView ({
   function reorderSelection (Direction:BC_ArrangeDirection):void {
     if (selectedIds.length === 0) { return }
     const Card  = Deck.Cards[CardIndex]
-    const arr   = [ ...Card.Widgets ].sort((a,b) => a.zIndex-b.zIndex)
+    const arr   = [ ...Card.Widgets ]              // array order = stacking order
     const isSel = (Obj:BC_Widget) => selectedIds.includes(Obj.Id)
     if (! arr.some(isSel)) { return }
 
@@ -6434,7 +6473,7 @@ function DeckView ({
         }
         result = arr; break
     }
-    result.forEach((Obj,i) => { Obj.zIndex = i+1; Obj.Number = i+1 })
+    Card.Widgets.splice(0, Card.Widgets.length, ...result)   // rewrite order in place
     deckForceUpdate()
   }
 
@@ -6445,19 +6484,14 @@ function DeckView ({
     if (Target == null) { return }
 
     const Moving = Card.Widgets
-      .filter((Obj) => selectedIds.includes(Obj.Id))
-      .sort((a,b) => a.zIndex-b.zIndex)
+      .filter((Obj) => selectedIds.includes(Obj.Id))   // keeps the stacking order
     if (Moving.length === 0) { return }
 
     captureUndo()
     for (let i = Card.Widgets.length-1; i >= 0; i--) {
       if (selectedIds.includes(Card.Widgets[i].Id)) { Card.Widgets.splice(i,1) }
     }
-    let maxZ = Target.Widgets.reduce((max,Obj) => Math.max(max,Obj.zIndex), 0)
-    Moving.forEach((Obj) => {
-      maxZ += 1; Obj.zIndex = maxZ; Obj.Number = maxZ
-      Target.Widgets.push(Obj)
-    })
+    Moving.forEach((Obj) => { Target.Widgets.push(Obj) })   // appended ⇒ on top
     setSelectedIds([])
     deckForceUpdate()
   }
@@ -6950,6 +6984,11 @@ function DeckView ({
           consoleShown=${showConsole}
           onConsoleToggle=${() => setShowConsole((prev) => ! prev)}
           onScreenshot=${() => void captureScreenshot()}
+          mcpStatus=${
+            connector == null ? 'inactive' :
+            connector.connectionStatus.url === '' ? 'inactive' :
+            (connector.connectionStatus.connected ? 'connected' : 'connecting')
+          }
         />`}
         <${Dialog}
           State=${activeDialog}

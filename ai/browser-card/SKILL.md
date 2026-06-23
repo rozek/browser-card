@@ -40,7 +40,7 @@ If an existing deck file is to be changed:
 - Set all required fields — omit nothing
 
 **Modifications:**
-- Re-number widget `Number` values as needed
+- To restack widgets, reorder them within the card's `Widgets` array (first = back, last = front)
 - Identify and reference elements by their `Name`
 
 **Always verify:**

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   newInternalId, prepareLoadedDeck, stripInternalIds, stripComputedGeometry,
-  normalizedName, uniqueNameIn,
+  normalizeWidgetOrder, normalizedName, uniqueNameIn,
 } from '../src/BrowserCard'
 
 describe('newInternalId', () => {
@@ -23,6 +23,31 @@ const sampleDeck = ():any => ({
       Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'',
       x:5, y:6, Width:10, Height:20, Position:[5,6], Size:[10,20],
       Geometry:{}, changeGeometryTo:() => [0,0,0,0] }] }],
+})
+
+describe('normalizeWidgetOrder', () => {
+  it('orders widgets by legacy zIndex, then drops zIndex/Number', () => {
+    const Deck:any = { Name:'D', Cards:[{ Name:'C', Widgets:[
+      { Name:'top',    Type:'shape', Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Number:3, zIndex:3 },
+      { Name:'bottom', Type:'shape', Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Number:1, zIndex:1 },
+      { Name:'middle', Type:'shape', Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Number:2, zIndex:2 },
+    ] }] }
+    normalizeWidgetOrder(Deck)
+    expect(Deck.Cards[0].Widgets.map((w:any) => w.Name)).toEqual([ 'bottom','middle','top' ])
+    for (const w of Deck.Cards[0].Widgets) {
+      expect('zIndex' in w).toBe(false)
+      expect('Number' in w).toBe(false)
+    }
+  })
+
+  it('leaves array order untouched when no legacy zIndex is present', () => {
+    const Deck:any = { Name:'D', Cards:[{ Name:'C', Widgets:[
+      { Name:'first',  Type:'shape', Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true },
+      { Name:'second', Type:'shape', Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true },
+    ] }] }
+    normalizeWidgetOrder(Deck)
+    expect(Deck.Cards[0].Widgets.map((w:any) => w.Name)).toEqual([ 'first','second' ])
+  })
 })
 
 describe('prepareLoadedDeck', () => {

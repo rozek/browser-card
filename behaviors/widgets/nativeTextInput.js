@@ -42,7 +42,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-nativetextinput-style', TextStyle)
 
     on('render', () => {
@@ -90,7 +90,7 @@
           ref=${applyState}
           onInput=${(Event) => {
             my.Value = Event.target.value
-            dispatch('change', Event.target.value)
+            trigger('change', Event.target.value)
           }}
           onBlur=${(Event) => { Event.target.value = resolvedValue() }}
         ></textarea>

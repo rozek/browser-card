@@ -12,20 +12,43 @@ describe('ScriptInstance', () => {
     expect(new ScriptInstance().renderResult()).toBeNull()
   })
 
-  it('dispatch invokes a handler and returns true; false when missing', async () => {
+  it('triggered invokes a handler and returns its result; undefined when missing', async () => {
     const inst = new ScriptInstance()
-    const spy  = vi.fn()
+    const spy  = vi.fn(() => 99)
     inst.on('click', spy)
-    expect(await inst.dispatch('click', 42)).toBe(true)
+    expect(await inst.triggered('click', 42)).toBe(99)
     expect(spy).toHaveBeenCalledWith(42)
-    expect(await inst.dispatch('nope')).toBe(false)
+    expect(await inst.triggered('nope')).toBeUndefined()
+  })
+
+  it('trigger is a synonym for triggered', async () => {
+    const inst = new ScriptInstance()
+    inst.on('click', () => 5)
+    expect(await inst.trigger('click')).toBe(5)
+  })
+
+  it('bubbles an unhandled event up to the linked parent', async () => {
+    const child  = new ScriptInstance()
+    const parent = new ScriptInstance()
+    parent.on('msg', () => 'from-parent')
+    child.linkToParent(() => parent)
+    expect(await child.triggered('msg')).toBe('from-parent')
+  })
+
+  it('a local handler takes precedence over the parent', async () => {
+    const child  = new ScriptInstance()
+    const parent = new ScriptInstance()
+    child .on('msg', () => 'from-child')
+    parent.on('msg', () => 'from-parent')
+    child.linkToParent(() => parent)
+    expect(await child.triggered('msg')).toBe('from-child')
   })
 
   it('a later on() replaces the earlier handler', async () => {
     const inst = new ScriptInstance()
     const a = vi.fn(), b = vi.fn()
     inst.on('m', a); inst.on('m', b)
-    await inst.dispatch('m')
+    await inst.triggered('m')
     expect(a).not.toHaveBeenCalled()
     expect(b).toHaveBeenCalled()
   })
@@ -33,7 +56,7 @@ describe('ScriptInstance', () => {
   it('run() compiles a script that registers handlers', async () => {
     const inst = new ScriptInstance()
     await inst.run("on('click', () => 7)", ['on'], [inst.on.bind(inst)])
-    expect(await inst.dispatch('click')).toBe(true)
+    expect(await inst.triggered('click')).toBe(7)
   })
 
   it('isolates errors in a script (no throw)', async () => {
@@ -41,10 +64,16 @@ describe('ScriptInstance', () => {
     await expect(inst.run("this is ((( not valid", ['on'], [inst.on.bind(inst)])).resolves.toBeUndefined()
   })
 
-  it('isolates errors thrown inside a handler', async () => {
+  it('forwards errors thrown inside a handler to the caller', async () => {
     const inst = new ScriptInstance()
     inst.on('boom', () => { throw new Error('x') })
-    expect(await inst.dispatch('boom')).toBe(false)
+    await expect(inst.triggered('boom')).rejects.toThrow('x')
+  })
+
+  it('fireLocal runs a local handler only and swallows its errors', async () => {
+    const inst = new ScriptInstance()
+    inst.on('boom', () => { throw new Error('x') })
+    await expect(inst.fireLocal('boom')).resolves.toBeUndefined()
   })
 
   it('after()/every() timers are cancelled on teardown', async () => {
@@ -63,12 +92,12 @@ describe('ScriptInstance', () => {
     }
   })
 
-  it('teardown dispatches obsolete, then clears handlers', async () => {
+  it('teardown fires obsolete, then clears handlers', async () => {
     const inst = new ScriptInstance()
     const obsolete = vi.fn()
     inst.on('obsolete', obsolete)
     await inst.teardown()
     expect(obsolete).toHaveBeenCalled()
-    expect(await inst.dispatch('obsolete')).toBe(false)   // handlers cleared
+    expect(await inst.triggered('obsolete')).toBeUndefined()   // handlers cleared
   })
 })

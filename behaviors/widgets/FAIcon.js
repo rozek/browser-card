@@ -2,7 +2,7 @@
 
 // "Icon" is the icon name (e.g. "fa-home"), "Color" its foreground colour. if
 // "hilite" is set, the CSS class "active" is added. The icon is clickable (and
-// dispatches 'click') unless "disabled". The FontAwesome stylesheet and webfont
+// triggers 'click') unless "disabled". The FontAwesome stylesheet and webfont
 // are served same-origin from the "fontawesome/" folder beside BrowserCard.js -
 // no third-party network requests.
 
@@ -247,7 +247,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     const BC = globalThis.BC
 
     const CSSHref = (
@@ -277,7 +277,7 @@
           class=${ClassName}
           aria-hidden="true"
           style=${{ color:Color, cursor:(disabled ? 'not-allowed' : 'pointer'), opacity:(disabled ? 0.3 : 1) }}
-          onClick=${() => { if (! disabled) { dispatch('click') } }}
+          onClick=${() => { if (! disabled) { trigger('click') } }}
         ></fa-icon>
       `
     })

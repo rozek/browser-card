@@ -6,7 +6,7 @@
 // keeping its aspect ratio ("contain") and centred in the widget. without
 // "Color" it is shown greyscale; with "Color" it is tinted in that colour (via
 // a mask - works for monochrome icons with transparency). if "hilite" is set,
-// the CSS class "active" is added (highlight box). it dispatches 'click' unless
+// the CSS class "active" is added (highlight box). it triggers 'click' unless
 // "disabled".
 
 /**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
@@ -60,7 +60,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-icon-style', IconStyle)
 
     const BC = globalThis.BC
@@ -97,7 +97,7 @@
         <icon
           class=${Hilite ? 'active' : undefined}
           style=${{ cursor:(disabled ? 'not-allowed' : 'pointer'), opacity:(disabled ? 0.3 : 1) }}
-          onClick=${() => { if (! disabled) { dispatch('click') } }}
+          onClick=${() => { if (! disabled) { trigger('click') } }}
         >${Visual}</icon>
       `
     })

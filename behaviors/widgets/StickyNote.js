@@ -164,7 +164,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration, saveDeck }) {
+  export default async function ({ on, my, html, trigger, Configuration, saveDeck }) {
     injectStyleRuleOnce('bc-stickynote-style', StickyNoteStyle)
 
     /**** Markdown rendering (reusing the BrowserCard toolkit) ****/
@@ -414,7 +414,7 @@
 
       Editor.addEventListener('input', () => {
         my.Value = Editor.value
-        dispatch('change', Editor.value)
+        trigger('change', Editor.value)
         scheduleSave()
       })
       Close.addEventListener('pointerdown', (Event) => Event.stopPropagation())

@@ -150,7 +150,7 @@
           "Number": 6,
           "zIndex": 6,
           "visible": true,
-          "Script": "on('click', () => send('Dice','roll'))",
+          "Script": "on('click', () => Widget('Dice').triggered('roll'))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -175,7 +175,7 @@
           "Number": 7,
           "zIndex": 7,
           "visible": true,
-          "Script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center', gap:'14px',\n      width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{\n        display:'grid', gridTemplateColumns:'repeat(3,10px)', gridTemplateRows:'repeat(3,10px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa',\n        border:'1px solid #ccd', borderRadius:'8px',\n      }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => html`\n          <div key=${i} style=${{\n            width:'10px', height:'10px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent',\n          }}></div>\n        `)}\n      </div>\n      <div style=${{ fontSize:'11px', color:'#667' }}>\n        widgets receive<br/>messages via <b>send()</b>\n      </div>\n    </div>\n  `\n})",
+          "Script": "on('roll', () => { me._value = 1 + Math.floor(Math.random()*6) })\non('render', () => {\n  const value = me._value ?? 6\n  const Pips = [[],[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]][value]\n  return html`\n    <div style=${{\n      display:'flex', alignItems:'center', justifyContent:'center', gap:'14px',\n      width:'100%', height:'100%', background:'#fff',\n      border:'2px solid #1d3461', borderRadius:'10px',\n    }}>\n      <div style=${{\n        display:'grid', gridTemplateColumns:'repeat(3,10px)', gridTemplateRows:'repeat(3,10px)',\n        gap:'3px', padding:'6px', background:'#f4f6fa',\n        border:'1px solid #ccd', borderRadius:'8px',\n      }}>\n        ${[0,1,2,3,4,5,6,7,8].map((i) => html`\n          <div key=${i} style=${{\n            width:'10px', height:'10px', borderRadius:'50%',\n            background:Pips.includes(i) ? '#1d3461' : 'transparent',\n          }}></div>\n        `)}\n      </div>\n      <div style=${{ fontSize:'11px', color:'#667' }}>\n        widgets receive<br/>messages via <b>triggered()</b>\n      </div>\n    </div>\n  `\n})",
           "Anchors": [
             "left-width",
             "top-height"

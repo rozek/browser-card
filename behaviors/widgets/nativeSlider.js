@@ -49,7 +49,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-nativeslider-style', SliderStyle)
 
     on('render', () => {
@@ -95,7 +95,7 @@
           ref=${syncWhenUnfocused}
           onInput=${(Event) => {
             const Number = Event.target.valueAsNumber
-            if (isFinite(Number)) { my.Value = String(Number); dispatch('change', Number) }
+            if (isFinite(Number)) { my.Value = String(Number); trigger('change', Number) }
           }}
           onBlur=${(Event) => { Event.target.value = String(resolvedValue()) }}
         />

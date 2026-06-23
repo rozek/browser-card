@@ -68,7 +68,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration, saveDeck }) {
+  export default async function ({ on, my, html, trigger, Configuration, saveDeck }) {
     injectStyleRuleOnce('bc-stickynotemenu-style', StickyNoteMenuStyle)
 
     /**** uniqueName / freshWidgetId - collision-free name and id ****/

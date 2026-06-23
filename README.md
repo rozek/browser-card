@@ -16,7 +16,7 @@ Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.h
 
 **Build decks visually.** A deck is a document made of cards, and cards carry widgets: buttons (8 styles, incl. checkboxes and radio buttons), text fields (editable or locked, with or without ruled lines), shapes (rectangles, ovals, lines, arcs and polygons - with arrowheads, if you like), pictures, and fully custom widgets. Switch the designer into edit mode and place widgets by dragging, resize them with eight handles, nudge them pixel-wise with the arrow keys, or let them snap to a configurable grid. Select several widgets at once - Shift/Cmd-click to add or remove individual ones, or rubber-band a rectangle over the canvas - then move, resize, copy, cut or delete them together. A properties panel lets you inspect and edit every detail - including an anchor-based geometry system that keeps widgets in place (or lets them stretch) when a deck is shown at a different size (the panel edits a single widget; with several selected it offers the shared group actions).
 
-**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `Widget()` and message them with `send()`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.Count` and the widget re-renders.
+**Script everything with plain JavaScript.** Every visual - deck, card or widget - has an asynchronous script, written in ordinary JavaScript with a tiny, HyperCard-inspired API. Register handlers with `on('click', ...)`, navigate with `go(nextCard)` or `go('Card Name')`, open dialogs with `await answer('Really?', 'Yes', 'No')` and `await ask('Your name?')`, print to a built-in console, start self-cleaning timers with `after()` and `every()`, access other widgets via `Widget()` and fire events on them with `Widget(...).triggered(...)`. Custom widgets render themselves with [Preact](https://preactjs.com) + [htm](https://github.com/developit/htm) templates - reactive state included: assign to `my.Count` and the widget re-renders.
 
 **Stay organized.** The decks panel lists every deck stored in your browser - create, open, rename or delete them there, and optionally enable "remember last deck on reload" (off by default) so the designer reopens the deck you last worked on after a page reload, if it still exists. The card browser shows live wireframe thumbnails of all cards in the current deck and lets you add, duplicate, rename, reorder and delete cards. Everything you do in edit mode is auto-saved to IndexedDB and protected by a 100-step undo/redo (Ctrl/Cmd+Z / Shift+Z).
 
@@ -141,7 +141,7 @@ on('render', () => {                              // a custom widget: a counter
 
 Use `my.own` for *transient* script-private state: writes to `my.own.whatever` neither re-render nor persist.
 
-Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. A custom widget additionally receives `dispatch(msg)` (to send messages to itself and its card) and `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
+Custom widgets ("generic" widgets) render themselves: register `on('render', ...)` and return an [htm](https://github.com/developit/htm) template (`html\`...\``) - Preact takes care of efficient updates. Like every visual, a custom widget can fire events with `trigger(msg, ...)` / `await triggered(msg, ...)` (bubbling up to itself, its card, then the deck) and receives `Configuration` - a read-only JSON object you edit as "Configuration (JSON)" in the properties panel. `Configuration` lets the same widget script be reused with different settings:
 
 ```javascript
 on('render', () => html`<div>Hello, ${Configuration.Name ?? 'world'}!</div>`)
@@ -189,15 +189,17 @@ on('render', () => html`<div>${new Date(my.Time ?? Date.now()).toLocaleTimeStrin
 
 ### Talking to other widgets
 
-`Widget(nameOrIndex)` returns the reactive proxy of another widget on the current card; `send(target, msg, ...args)` delivers a message to its script:
+`Widget(nameOrIndex)` returns the reactive proxy of another widget on the current card. Every proxy (and `me`, `my.Card`, `my.Deck`) carries `trigger(event, ...args)` / `await triggered(event, ...args)`, so you fire an event straight on the target:
 
 ```javascript
 // in the script of widget "Sender":
-on('click', () => send('Display', 'showValue', 42))
+on('click', () => Widget('Display').triggered('showValue', 42))
 
 // in the script of widget "Display":
 on('showValue', (Value) => { my.shownValue = Value })
 ```
+
+The event still bubbles up from the target (widget → card → deck) to the first matching handler, and `triggered` resolves with that handler's return value.
 
 ### Imports and behaviors
 
@@ -214,7 +216,7 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `ready` | once all inner visuals have been instantiated and initialized | fires inside-out: widgets → card → deck. a card is re-mounted on every navigation, so this fires on each visit |
 | `obsolete` | right before the visual is removed (navigation, deletion, script change) | for cleanup; `after()`/`every()` timers are cancelled automatically afterwards |
 | `click` | a button (or auto-hiliting picture) was clicked | bubbles up the hierarchy: the widget's script, then its card's, then the deck's |
-| *custom* | whatever you `send()` or `dispatch()` | handler arguments = the extra `send()` / `dispatch()` arguments |
+| *custom* | whatever you `trigger()`/`triggered()` (on the current visual or another proxy) | handler arguments = the extra `trigger()`/`triggered()` arguments |
 
 ### Functions
 
@@ -226,8 +228,9 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | `CardNumber()` | 1-based number of the current card (live) |
 | `CardCount()` | number of cards in the deck |
 | `Widget(NameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
-| `await send(Target, Msg, ...Args)` | sends a message to another widget's script (name, index or proxy); resolves with `false` if no handler exists |
-| `dispatch(Msg, ...Args)` | *(widgets only)* sends a message up the hierarchy: the widget's own script, then its card's, then the deck's; extra arguments are passed to each handler |
+| `trigger(Event, ...Args)` | fires an event on the current visual; it bubbles up (widget → card → deck) to the **first** matching handler. Extra arguments are passed to the handler |
+| `await triggered(Event, ...Args)` | like `trigger`, but resolves with the handler's return value (`undefined` if none matched); a handler's exception propagates to the caller |
+| `Widget(...).trigger(Event, ...)` / `.triggered(...)` | the same two methods exist on every proxy (`me`, `Widget(...)`, `my.Card`, `my.Deck`), so you can fire an event on **another** visual and let it bubble up from there |
 | `await answer(Message, ...Buttons)` | shows a dialog; resolves with the label of the clicked button |
 | `await ask(Prompt, Default?)` | shows an input dialog; resolves with the input or `null` on cancel |
 | `openURL(URL)` | opens a URL in a new tab |
@@ -277,7 +280,7 @@ Well-designed custom widget behaviors follow a simple convention that decouples 
 
 - **`on('update', ...)`** — called synchronously before every render. Use it to pull the "outer" value (from `my.Card` or `my.Deck`) into the widget's own local state. This ensures the widget always displays the current external value, even if it was changed from elsewhere.
 
-- **`dispatch('change', value)`** — dispatched whenever the user makes an input. The card (or deck) script listens for this and stores the new value in its own state.
+- **`trigger('change', value)`** (or `await triggered('change', value)`) — fired whenever the user makes an input. The event bubbles up until a handler is found, so the card (or deck) script can listen for it and store the new value in its own state.
 
 This separation means the widget behavior doesn't need to know who owns the value - it just reads from a well-known property and announces changes. The consumer decides where to persist them.
 
@@ -302,7 +305,7 @@ on('render', () => {
       style=${{ width:'100%', height:'100%', boxSizing:'border-box', padding:'4px 6px', fontSize:'inherit' }}
       onInput=${(e) => {
         const n = e.target.valueAsNumber
-        if (!isNaN(n)) { my.Value = n; dispatch('change', n) }
+        if (!isNaN(n)) { my.Value = n; trigger('change', n) }
       }}
     />
   `

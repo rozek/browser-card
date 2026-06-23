@@ -1,6 +1,6 @@
 /**** nativeButton - wraps a native <button> ****/
 
-// "Value" is the (HTML) label. Clicks are dispatched as 'click' so the widget's
+// "Value" is the (HTML) label. Clicks are triggered as 'click' so the widget's
 // own script can handle them with on('click', () => ...). Lock it via
 // my.disabled = true (or the Configuration field "disabled")
 
@@ -29,7 +29,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-nativebutton-style', ButtonStyle)
 
     on('render', () => {
@@ -38,7 +38,7 @@
         <button
           type="button"
           disabled=${disabled}
-          onClick=${() => { if (! disabled) { dispatch('click') } }}
+          onClick=${() => { if (! disabled) { trigger('click') } }}
           dangerouslySetInnerHTML=${{ __html:String(my.Value ?? '') }}
         ></button>
       `

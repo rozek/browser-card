@@ -41,4 +41,11 @@ describe('makeWidgetProxy', () => {
     expect((proxy as any).own.tmp).toBe(123)
     expect(forceUpdate).not.toHaveBeenCalled()
   })
+
+  it('exposes trigger/triggered that are null-safe before a script is attached', async () => {
+    const { proxy } = setup()
+    expect(typeof proxy.trigger).toBe('function')
+    expect(typeof proxy.triggered).toBe('function')
+    expect(await proxy.triggered('whatever')).toBeUndefined()   // no $Script yet
+  })
 })

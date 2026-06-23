@@ -8,7 +8,7 @@
 // occupied by tabs. between any two tabs there are 20px of room. underneath the
 // active tab a 2px thick dark grey strip is rendered, underneath inactive tabs
 // this strip is transparent. clicking a clickable tab writes its index back to
-// "Value" and dispatches 'change'.
+// "Value" and triggers 'change'.
 
   const StripColor = '#555555'  // dark grey strip underneath the active tab
   const TabGap     = '20px'     // room between any two neighbouring tabs
@@ -39,7 +39,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     on('render', () => {
       const Tabs     = TabList(my.Tabs ?? Configuration?.Tabs)
       const active   = IndexOf(my.Value ?? Configuration?.Value ?? 0)
@@ -71,7 +71,7 @@
               }}
               onClick=${
                 Tab.clickable
-                ? (() => { my.Value = Index; dispatch('change', Index) })
+                ? (() => { my.Value = Index; trigger('change', Index) })
                 : undefined
               }
               dangerouslySetInnerHTML=${{ __html:Tab.Content }}

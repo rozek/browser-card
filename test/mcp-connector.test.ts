@@ -565,11 +565,11 @@ describe('MCPConnector — tool handlers', () => {
     })
   })
 
-  it('live_send constructs a send() call and delegates to evalInContext', async () => {
+  it('live_send constructs a Widget().triggered() call and delegates to evalInContext', async () => {
     await withConnector(async (ws, ctx) => {
       await invoke(ws, 'live_send', { target:'button 1', message:'click', args:[1, 'a'] })
       expect(ctx.evalInContext).toHaveBeenCalledWith(
-        `send("button 1", "click", 1, "a")`
+        `Widget("button 1")?.triggered("click", 1, "a")`
       )
     })
   })

@@ -2,7 +2,7 @@
 
 // "Value" holds the state: 'on'/'true' = checked, 'off'/'false' = unchecked,
 // '-' = indeterminate. User toggles write 'on'/'off' back to "Value" and
-// dispatch 'change'; lock via my.disabled = true (or Configuration field
+// trigger 'change'; lock via my.disabled = true (or Configuration field
 // "disabled")
 
 /**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
@@ -29,7 +29,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-nativecheckbox-style', CheckboxStyle)
 
     on('render', () => {
@@ -47,7 +47,7 @@
           onChange=${(Event) => {
             const isChecked = Event.target.checked
             my.Value = (isChecked ? 'on' : 'off')
-            dispatch('change', isChecked)
+            trigger('change', isChecked)
           }}
         />
       `

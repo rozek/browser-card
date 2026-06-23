@@ -48,7 +48,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-nativenumberinput-style', NumberStyle)
 
     on('render', () => {
@@ -102,7 +102,7 @@
           ref=${applyState}
           onInput=${(Event) => {
             my.Value = Event.target.value
-            dispatch('change', Event.target.valueAsNumber)
+            trigger('change', Event.target.valueAsNumber)
           }}
           onBlur=${(Event) => { Event.target.value = resolvedValue() }}
         />

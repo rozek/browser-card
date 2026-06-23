@@ -31,25 +31,22 @@ Ask only for missing information that would lead to fundamentally different solu
 
 If an existing deck file is to be changed:
 1. Read the file and parse it as JSON
-2. Note the highest existing ID numbers for deck, cards, and widgets
-3. Understand the structure — existing cards, widgets, scripts
+2. Understand the structure — existing cards, widgets, scripts (identify elements by `Name`)
 
 ### Step 3 — Generate or update the deck JSON
 
 **New decks:**
 - Create the full JSON structure according to the SystemPrompt
-- Assign IDs sequentially starting from 1
 - Set all required fields — omit nothing
 
 **Modifications:**
-- Preserve all existing IDs — never change them
-- New elements get IDs higher than the current maximum
 - Re-number widget `Number` values as needed
+- Identify and reference elements by their `Name`
 
 **Always verify:**
 - `Widgets` (not `objects`) as the key for widget arrays in cards
 - `Anchors` is a 2-element array, `Offsets` is a 4-element array
-- All IDs are unique throughout the entire deck
+- None of the reserved properties are present (see the "Reserved properties" note in the SystemPrompt)
 - Valid JSON syntax (no trailing commas, no undefined values)
 
 ### Step 4 — Add scripts
@@ -60,10 +57,10 @@ Write meaningful scripts for interactive elements:
 - Cards: initialization via `on('open', ...)`, global card logic
 - Deck/card level: initialization via `on('ready', ...)`, global logic
 - Use `on('click', ...)`, `on('open', ...)`, `on('ready', ...)`, `on('update', ...)`, `on('render', ...)` and the full API from the SystemPrompt
-- `dispatch(msg, ...args)` passes arguments to handlers — use for event-driven value propagation
+- `triggered(msg, ...args)` / `trigger(msg, ...args)` fire an event on the current Visual; it bubbles up (widget → card → deck) to the first matching handler and returns its result — use for event-driven value propagation. The same methods exist on every proxy, so `Widget('Other').triggered(msg, ...args)` fires an event on another widget
 - Access the current card from a widget script via `my.Card`, the deck via `my.Deck`
 - **Do not** use `Card()` without arguments — it returns `null`. `Card('Name')` / `Card(N)` is navigation only
-- **Widget behavior pattern:** custom input widgets use `on('update', ...)` to pull state from `my.Card` before render, and `dispatch('change', value)` to notify the card of user input — see the "Widget Behavior Pattern" section in the SystemPrompt for a full `NumberInput` example
+- **Widget behavior pattern:** custom input widgets use `on('update', ...)` to pull state from `my.Card` before render, and `trigger('change', value)` (or `await triggered('change', value)`) to notify the card of user input — the event bubbles up to the first matching handler — see the "Widget Behavior Pattern" section in the SystemPrompt for a full `NumberInput` example
 - **Built-in behaviors:** before writing custom render code, check whether a built-in behavior fits — `TitleView`, `SubtitleView`, `Label`, `TextView`, `FineprintView`, `MarkdownView`, `HTMLView`, `SVGView`, `ImageView`, `WebView`, `QRCodeView`, `Icon`, `FAIcon`, `TabStrip`, `PseudoDropDown`, `PseudoFileInput`, `nativeButton`, `nativeCheckbox`, `nativeRadiobutton`, `nativeDropDown`, `nativeNumberInput`, `nativeSlider`, `nativeTextlineInput`, `nativeTextInput`, `horizontalSeparator`, `verticalSeparator`, `straightLine`, `curvedLine`, `StickyNote`, `StickyTextNote`, `StickyNoteMenu`, etc. — see "Built-in Widget Behavior Catalog" in the SystemPrompt
 - **Local behaviors:** store reusable behavior functions inline in the deck with `defineLocalBehavior('Name', fn)` and load them with `await behaveLike(localBehavior('Name'))`
 - **Do not import Preact** — use the injected `html` tag and `preact` object (e.g. `preact.useState(...)`) instead
@@ -80,12 +77,13 @@ Write meaningful scripts for interactive elements:
 
 | Rule | Details |
 |---|---|
-| Unique IDs | All `bc-deck-N`, `bc-card-N`, `bc-widget-N` unique within the deck |
+| No reserved properties | Never include `Id` or computed geometry fields — BrowserCard manages them |
 | Valid JSON | No trailing commas, no comments, correct types |
 | Anchor completeness | `Anchors` + `Offsets` present on every widget |
 | Required fields | All properties marked `required` in the SystemPrompt must be set |
 | Sensible defaults | Empty scripts as `""`, missing optional colors as `null` |
 | Widget array key | Always `"Widgets"` in cards, never `"objects"` |
+| Unique names | Every card and widget needs a unique `Name` (the scripting handle) |
 
 ---
 

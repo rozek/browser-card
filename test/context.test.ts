@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { buildContext, ScriptInstance } from '../src/BrowserCard'
+import { buildContext, buildScriptParams, ScriptInstance } from '../src/BrowserCard'
 
 function makeCtx (overrides:any = {}) {
   const Cards = [{ Name:'A' },{ Name:'B' },{ Name:'C' }] as any
@@ -50,19 +50,13 @@ describe('buildContext - dialogs resolve with values', () => {
   })
 })
 
-describe('buildContext - Widget() & send()', () => {
+describe('buildContext - Widget()', () => {
   it('Widget() finds a widget on the current card by name/index', () => {
     const me:any = { Card:{ WidgetList:[ { Name:'X' }, { Name:'Y' } ] } }
     const { ctx } = makeCtx({ me })
     expect(ctx.Widget('Y')).toMatchObject({ Name:'Y' })
     expect(ctx.Widget(1)).toMatchObject({ Name:'X' })
     expect(ctx.Widget('Z')).toBeNull()
-  })
-  it('send() resolves false when the target has no script instance', async () => {
-    const me:any = { Card:{ WidgetList:[ { Name:'X' } ] } }
-    const { ctx } = makeCtx({ me })
-    expect(await ctx.send('X','click')).toBe(false)
-    expect(await ctx.send('missing','click')).toBe(false)
   })
 })
 
@@ -84,12 +78,44 @@ describe('buildContext - me / my / I are synonyms', () => {
     const seen:any = {}
     const Args   = [inst.on.bind(inst), ...Object.values(ctx), seen]
     await inst.run("on('t', () => { seen.me = me; seen.my = my; seen.I = I })", Params, Args)
-    await inst.dispatch('t')
+    await inst.triggered('t')
     expect(seen.me).toBe(me)
     expect(seen.my).toBe(me)
     expect(seen.I).toBe(me)
   })
 })
+
+describe('buildScriptParams - trigger/triggered bindings', () => {
+  it('injects "trigger" and "triggered" so scripts can fire events', async () => {
+    const { ctx } = makeCtx()
+    const inst = new ScriptInstance()
+    const { Params, Args } = buildScriptParams(inst, ctx, 'card')
+    expect(Params).toContain('trigger')
+    expect(Params).toContain('triggered')
+
+    await inst.run(
+      "on('ping', (n) => n*2); on('go', async () => await triggered('ping', 21))",
+      Params, Args
+    )
+    expect(await inst.triggered('go')).toBe(42)   // script reached the binding
+  })
+
+  it('a script-triggered event bubbles up to the linked parent', async () => {
+    const { ctx } = makeCtx()
+    const parent = new ScriptInstance()
+    parent.on('save', () => 'saved-by-parent')
+    const child = new ScriptInstance()
+    child.linkToParent(() => parent)
+    const { Params, Args } = buildScriptParams(child, ctx, 'widget')
+
+    await inst_run_unhandled(child, Params, Args)
+    expect(await child.triggered('save')).toBe('saved-by-parent')
+  })
+})
+
+async function inst_run_unhandled (inst:ScriptInstance, Params:string[], Args:unknown[]) {
+  await inst.run("on('local', () => 1)", Params, Args)   // no 'save' handler here
+}
 
 describe('buildContext - console', () => {
   it('print/println/clearConsole delegate to the deck console', () => {

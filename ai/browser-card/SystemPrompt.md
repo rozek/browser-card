@@ -18,7 +18,6 @@ BrowserCard runs entirely in the browser - no server required. Decks are stored 
 
 ```json
 {
-  "Id": "bc-deck-1",
   "Name": "My Deck",
   "readOnly": false,
   "swipeToAdjacentCard": true,
@@ -34,7 +33,6 @@ BrowserCard runs entirely in the browser - no server required. Decks are stored 
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `Id` | string | required | Unique identifier, format: `"bc-deck-N"` |
 | `Name` | string | required | Display name of the deck |
 | `readOnly` | boolean | `false` | Prevent editing |
 | `swipeToAdjacentCard` | boolean | `false` | Enable swipe navigation |
@@ -52,7 +50,6 @@ BrowserCard runs entirely in the browser - no server required. Decks are stored 
 
 ```json
 {
-  "Id": "bc-card-1",
   "Name": "Card 1",
   "Color": null,
   "Alpha": 1,
@@ -64,7 +61,6 @@ BrowserCard runs entirely in the browser - no server required. Decks are stored 
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `Id` | string | required | Unique identifier, format: `"bc-card-N"` |
 | `Name` | string | required | Display name |
 | `Color` | string \| null | `null` | Background color (hex `"#rrggbb"` or CSS name) |
 | `Alpha` | number | `1` | Background transparency (0 = transparent, 1 = opaque) |
@@ -80,7 +76,6 @@ All widgets share these common properties:
 
 ```json
 {
-  "Id": "bc-widget-1",
   "Name": "My Widget",
   "Number": 1,
   "Type": "button",
@@ -94,7 +89,6 @@ All widgets share these common properties:
 
 | Property | Type | Description |
 |---|---|---|
-| `Id` | string | Unique identifier, format: `"bc-widget-N"` |
 | `Name` | string | Unique name within the card |
 | `Number` | number | Drawing order (1 = bottom, higher = on top) |
 | `Type` | string | Widget type (see below) |
@@ -103,6 +97,10 @@ All widgets share these common properties:
 | `Script` | string | Widget-level JavaScript script |
 | `Anchors` | [hAnchor, vAnchor] | Geometry anchor mode (see Geometry section) |
 | `Offsets` | [n0, n1, n2, n3] | Geometry offset values (see Geometry section) |
+
+> **Reserved properties — never include these.** BrowserCard manages them internally; they are ignored on load and stripped on save:
+> - **`Id`** (on decks, cards, and widgets) — fresh IDs are generated automatically on every load. Reference elements by their `Name`, never by `Id`.
+> - **Computed geometry** — `x`, `y`, `Width`, `Height`, `Position`, `Size`, `Geometry` — derived at render time from `Anchors` + `Offsets` + the canvas dimensions. A widget's position and size are defined **solely** by `Anchors` and `Offsets`.
 
 ---
 
@@ -345,11 +343,19 @@ Widget('MyWidget')      // Get widget proxy by name
 Widget(2)               // Get widget proxy by 1-based index
 ```
 
-**Messaging:**
+**Messaging / events:**
 ```javascript
-await send('TargetWidget', 'msgName', arg1, arg2)  // send message with args to named widget
-dispatch('eventName', value)                        // bubble event with args up to card/deck (widget only)
+trigger('eventName', value)                          // fire an event on the current Visual (use without await for fire-and-forget)
+await triggered('eventName', value)                  // same, but resolves with the handler's result
+await Widget('Other').triggered('msgName', a, b)    // fire an event on another widget (any proxy: me, Widget(...), my.Card, my.Deck)
 ```
+
+Events **bubble up** the hierarchy: a matching handler is looked for in the targeted Visual first;
+if none matches, the search continues one level up (widget → active card → deck). The **first**
+matching handler runs and its return value becomes the result; with no handler anywhere the result
+is `undefined`. An exception thrown by a handler propagates back to the caller. The bare
+`trigger`/`triggered` act on the current Visual; the **same two methods exist on every proxy**
+(`me`, `Widget(...)`, `my.Card`, `my.Deck`), so you can fire an event on any other Visual.
 
 **Card info:**
 ```javascript
@@ -422,7 +428,7 @@ await behaveLike(localBehavior('MyCounter'))
 Well-designed custom widget behaviors decouple internal rendering from external (Card/Deck) state using two conventions:
 
 - **`on('update', fn)`** - called synchronously before every render. Pull the current external value into the widget's local state so `'render'` always has the latest data.
-- **`dispatch('change', value)`** - called after user input. The card or deck script listens and saves the value to its own state.
+- **`trigger('change', value)`** (or `await triggered('change', value)`) - called after user input. The event bubbles up until a handler is found, so the card or deck script can listen and save the value to its own state. `triggered` additionally returns the handler's result.
 
 Example - a `NumberInput` widget behavior:
 
@@ -441,7 +447,7 @@ on('render', () => {
       style=${{ width:'100%', height:'100%', boxSizing:'border-box', padding:'4px 6px' }}
       onInput=${(e) => {
         const n = e.target.valueAsNumber
-        if (!isNaN(n)) { my.Value = n; dispatch('change', n) }
+        if (!isNaN(n)) { my.Value = n; trigger('change', n) }
       }}
     />
   `
@@ -482,11 +488,11 @@ Bare names resolve to: `https://rozek.github.io/browser-card/behaviors/widgets/<
 
 | Behavior | Description |
 |---|---|
-| `Icon` | Clickable 24x24 icon from `my.Icon` or `Configuration.Icon`; bare name resolves to `icons/<name>.png` beside `BrowserCard.js`; `my.Color`/`Configuration.Color` tints it (monochrome mask); `my.hilite` adds CSS class `active`; `my.disabled`/`Configuration.disabled` locks it; dispatches `'click'` |
+| `Icon` | Clickable 24x24 icon from `my.Icon` or `Configuration.Icon`; bare name resolves to `icons/<name>.png` beside `BrowserCard.js`; `my.Color`/`Configuration.Color` tints it (monochrome mask); `my.hilite` adds CSS class `active`; `my.disabled`/`Configuration.disabled` locks it; triggers `'click'` |
 | `FAIcon` | Same as `Icon` but uses FontAwesome 4.7.0 icon names (e.g. `"fa-home"`); assets served same-origin from `fontawesome/` folder |
-| `PseudoDropDown` | Icon + transparent overlaid `<select>` for dropdown menus; `my.Options`/`Configuration.Options` is a list or space-separated string of `value` or `value:label` entries (leading `-` disables the entry); selected value written to `my.Value`; dispatches `'change'`; `my.disabled` locks it |
-| `PseudoFileInput` | Icon + hidden `<input type="file">`; click opens the OS file picker; `my.multiple`/`Configuration.multiple` allows multiple files; `my.FileTypes`/`Configuration.FileTypes` sets the `accept` filter; dispatches `'change'` with an array of `File` objects; `my.disabled` locks it |
-| `TabStrip` | Horizontal row of selectable tabs; `my.Tabs`/`Configuration.Tabs` is an array of HTML-content strings (leading `-` makes a tab non-clickable); `my.Value`/`Configuration.Value` is the active tab index; `my.GapIndex`/`Configuration.GapIndex` inserts a flexible spacer before that tab index; active tab marked with a 2 px dark-grey underline; dispatches `'change'` with the new index |
+| `PseudoDropDown` | Icon + transparent overlaid `<select>` for dropdown menus; `my.Options`/`Configuration.Options` is a list or space-separated string of `value` or `value:label` entries (leading `-` disables the entry); selected value written to `my.Value`; triggers `'change'`; `my.disabled` locks it |
+| `PseudoFileInput` | Icon + hidden `<input type="file">`; click opens the OS file picker; `my.multiple`/`Configuration.multiple` allows multiple files; `my.FileTypes`/`Configuration.FileTypes` sets the `accept` filter; triggers `'change'` with an array of `File` objects; `my.disabled` locks it |
+| `TabStrip` | Horizontal row of selectable tabs; `my.Tabs`/`Configuration.Tabs` is an array of HTML-content strings (leading `-` makes a tab non-clickable); `my.Value`/`Configuration.Value` is the active tab index; `my.GapIndex`/`Configuration.GapIndex` inserts a flexible spacer before that tab index; active tab marked with a 2 px dark-grey underline; triggers `'change'` with the new index |
 
 ### Separators
 
@@ -510,35 +516,35 @@ Three complementary behaviors for a free-form sticky-note canvas on a card. Acti
 
 | Behavior | Description |
 |---|---|
-| `StickyTextNote` | Movable, resizable sticky note with a plain-text `<textarea>`; drag title bar to move, drag bottom-right handle to resize (min 80×60 px); `my.Value` holds the text; tab character disables line-wrapping; Tab key inserts a literal tab; focused title bar turns orange; dispatches `'change'`; respects `Card.SnapToGrid`/`Card.GridWidth`/`Card.GridHeight` |
+| `StickyTextNote` | Movable, resizable sticky note with a plain-text `<textarea>`; drag title bar to move, drag bottom-right handle to resize (min 80×60 px); `my.Value` holds the text; tab character disables line-wrapping; Tab key inserts a literal tab; focused title bar turns orange; triggers `'change'`; respects `Card.SnapToGrid`/`Card.GridWidth`/`Card.GridHeight` |
 | `StickyNote` | Like `StickyTextNote` but the body renders `my.Value` as Markdown (uses the BrowserCard toolkit: highlight.js, KaTeX, Mermaid); double-click on title bar or body opens a floating Markdown-editor dialog (draggable, resizable, closeable); `Configuration.Value` as default content |
 | `StickyNoteMenu` | Collapsible 40 px toolbar that manages `StickyNote`/`StickyTextNote` widgets on the card; collapsed = 40×40 pill with a left caret; click to expand leftward showing 6 icon buttons: add new `StickyNote`, delete active note, bring to front, raise one, lower one, send to back; always start collapsed via `on('ready', ...)` |
 
 ### Native Form Controls
 
-All native input behaviors read parameters from `my.*` first, falling back to `Configuration.*`. `my.Value` is the primary value channel. All dispatch `'change'` with the new value after user interaction. `my.disabled`/`Configuration.disabled` disables; `my.readonly`/`Configuration.readonly` makes it read-only.
+All native input behaviors read parameters from `my.*` first, falling back to `Configuration.*`. `my.Value` is the primary value channel. All trigger `'change'` with the new value after user interaction. `my.disabled`/`Configuration.disabled` disables; `my.readonly`/`Configuration.readonly` makes it read-only.
 
 | Behavior | Wraps | Key parameters |
 |---|---|---|
-| `nativeButton` | `<button>` | `my.Value` as label; dispatches `'click'` |
-| `nativeCheckbox` | `<input type="checkbox">` | `my.Value`: `'on'`/`'true'` = checked, `'off'`/`'false'` = unchecked, `'-'` = indeterminate; dispatches `'change'` |
-| `nativeRadiobutton` | `<input type="radio">` | Same state convention as `nativeCheckbox`; dispatches `'change'` |
-| `nativeDropDown` | `<select>` | `my.Value` = selected value; `Options` list or space-separated string of `value` or `value:label` pairs (leading `-` disables); dispatches `'change'` |
-| `nativeSlider` | `<input type="range">` | `Value`, `Minimum`, `Maximum`, `Stepping` (`'any'` allowed), `Hashmarks` (array or string of values or `value=label` pairs for datalist ticks); dispatches `'change'` |
-| `nativeNumberInput` | `<input type="number">` | `Value`, `Minimum`, `Maximum`, `Stepping`, `Placeholder`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeTextlineInput` | `<input type="text">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `SpellChecking`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeTextInput` | `<textarea>` | `Value`, `Placeholder`, `minLength`, `maxLength`, `LineWrapping`, `Resizability`, `SpellChecking`, `invalid`; dispatches `'change'` |
-| `nativePasswordInput` | `<input type="password">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `invalid`; dispatches `'change'` |
-| `nativeEMailAddressInput` | `<input type="email">` | `Value`, `multiple`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeURLInput` | `<input type="url">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativePhoneNumberInput` | `<input type="tel">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeSearchInput` | `<input type="search">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `SpellChecking`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeColorInput` | `<input type="color">` | `Value` as `"#rrggbb"`; `Suggestions`; dispatches `'change'` |
-| `nativeDateInput` | `<input type="date">` | `Value` as `"YYYY-MM-DD"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeTimeInput` | `<input type="time">` | `Value` as `"HH:MM"` or `"HH:MM:SS"`; `withSeconds`, `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeDateTimeInput` | `<input type="datetime-local">` | `Value` as `"YYYY-MM-DDTHH:MM"`; `withSeconds`, `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeMonthInput` | `<input type="month">` | `Value` as `"YYYY-MM"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
-| `nativeWeekInput` | `<input type="week">` | `Value` as `"YYYY-Wnn"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; dispatches `'change'` |
+| `nativeButton` | `<button>` | `my.Value` as label; triggers `'click'` |
+| `nativeCheckbox` | `<input type="checkbox">` | `my.Value`: `'on'`/`'true'` = checked, `'off'`/`'false'` = unchecked, `'-'` = indeterminate; triggers `'change'` |
+| `nativeRadiobutton` | `<input type="radio">` | Same state convention as `nativeCheckbox`; triggers `'change'` |
+| `nativeDropDown` | `<select>` | `my.Value` = selected value; `Options` list or space-separated string of `value` or `value:label` pairs (leading `-` disables); triggers `'change'` |
+| `nativeSlider` | `<input type="range">` | `Value`, `Minimum`, `Maximum`, `Stepping` (`'any'` allowed), `Hashmarks` (array or string of values or `value=label` pairs for datalist ticks); triggers `'change'` |
+| `nativeNumberInput` | `<input type="number">` | `Value`, `Minimum`, `Maximum`, `Stepping`, `Placeholder`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeTextlineInput` | `<input type="text">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `SpellChecking`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeTextInput` | `<textarea>` | `Value`, `Placeholder`, `minLength`, `maxLength`, `LineWrapping`, `Resizability`, `SpellChecking`, `invalid`; triggers `'change'` |
+| `nativePasswordInput` | `<input type="password">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `invalid`; triggers `'change'` |
+| `nativeEMailAddressInput` | `<input type="email">` | `Value`, `multiple`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeURLInput` | `<input type="url">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativePhoneNumberInput` | `<input type="tel">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeSearchInput` | `<input type="search">` | `Value`, `Placeholder`, `minLength`, `maxLength`, `Pattern`, `SpellChecking`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeColorInput` | `<input type="color">` | `Value` as `"#rrggbb"`; `Suggestions`; triggers `'change'` |
+| `nativeDateInput` | `<input type="date">` | `Value` as `"YYYY-MM-DD"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeTimeInput` | `<input type="time">` | `Value` as `"HH:MM"` or `"HH:MM:SS"`; `withSeconds`, `Minimum`, `Maximum`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeDateTimeInput` | `<input type="datetime-local">` | `Value` as `"YYYY-MM-DDTHH:MM"`; `withSeconds`, `Minimum`, `Maximum`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeMonthInput` | `<input type="month">` | `Value` as `"YYYY-MM"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; triggers `'change'` |
+| `nativeWeekInput` | `<input type="week">` | `Value` as `"YYYY-Wnn"`; `Minimum`, `Maximum`, `Suggestions`, `invalid`; triggers `'change'` |
 | `nativeProgressbar` | `<progress>` | `Value`, `Maximum` from `my.*` or `Configuration`; without `Value` -> indeterminate (animated) |
 | `nativeGauge` | `<meter>` | `Value`, `Minimum`, `lowerBound`, `Optimum`, `upperBound`, `Maximum` from `my.*` or `Configuration` |
 
@@ -582,9 +588,9 @@ on('update', () => {
 })
 on('render', () => html`<div style=${{ padding:'8px' }}>${my.displayText}</div>`)
 
-// Generic widget: dispatch an event with args
+// Generic widget: trigger an event with args
 on('render', () => html`
-  <button onClick=${() => { my.Value = (my.Value ?? 0) + 1; dispatch('change', my.Value) }}>
+  <button onClick=${() => { my.Value = (my.Value ?? 0) + 1; trigger('change', my.Value) }}>
     Count: ${my.Value ?? 0}
   </button>
 `)
@@ -608,21 +614,10 @@ on('ready', () => {
 
 ---
 
-## ID Assignment Rules
-
-- Deck IDs: `"bc-deck-N"` - N is a unique integer across all decks
-- Card IDs: `"bc-card-N"` - N is a unique integer across all cards in the deck
-- Widget IDs: `"bc-widget-N"` - N is a unique integer across all widgets in the entire deck
-- **All IDs must be unique within the deck file**
-- Start IDs at 1 and increment sequentially
-
----
-
 ## Complete Minimal Example
 
 ```json
 {
-  "Id": "bc-deck-1",
   "Name": "Hello World",
   "readOnly": false,
   "swipeToAdjacentCard": false,
@@ -631,7 +626,6 @@ on('ready', () => {
   "CardHeight": 450,
   "Cards": [
     {
-      "Id": "bc-card-1",
       "Name": "Home",
       "Color": "#f0f0f0",
       "Alpha": 1,
@@ -639,7 +633,6 @@ on('ready', () => {
       "Script": "",
       "Widgets": [
         {
-          "Id": "bc-widget-1",
           "Name": "Title",
           "Number": 1,
           "Type": "field",
@@ -661,7 +654,6 @@ on('ready', () => {
           "Color": "#333333"
         },
         {
-          "Id": "bc-widget-2",
           "Name": "NextButton",
           "Number": 2,
           "Type": "button",
@@ -690,8 +682,8 @@ on('ready', () => {
 ## Rules and Constraints
 
 1. **JSON must be valid** - use `null` not `undefined`, quote all string values
-2. **IDs must be unique** within the deck - never reuse an ID
-3. **Geometry** - always provide both `Anchors` (2-element array) and `Offsets` (4-element array)
+2. **No `Id` fields** - never author deck/card/widget IDs; BrowserCard assigns and strips them automatically
+3. **Geometry** - always provide both `Anchors` (2-element array) and `Offsets` (4-element array); never the computed fields (`x`, `y`, `Width`, `Height`, `Position`, `Size`, `Geometry`)
 4. **Widget `Number`** - start at 1, increment per card; determines drawing order (back to front)
 5. **Scripts** - empty string `""` for no script; valid JavaScript string for active scripts; use `\n` for line breaks within JSON strings
 6. **Colors** - use hex `"#rrggbb"` or CSS color names; `null` for "no color"
@@ -705,16 +697,15 @@ on('ready', () => {
 ## Workflow Guidelines
 
 When creating a new deck:
-1. Define the deck structure with ID, name, and canvas dimensions
+1. Define the deck structure with name and canvas dimensions
 2. Plan the card sequence (navigation flow)
 3. Design each card's layout with appropriate widgets
 4. Use anchor-based geometry for responsive placement
 5. Add scripts for interactive behavior - prefer behaviors from the catalog where applicable
-6. Assign sequential, unique IDs throughout
+6. Give every card and widget a clear, unique `Name` (the handle used in scripts)
 
 When modifying an existing deck:
-1. Preserve all existing IDs - never change them
-2. New elements get IDs higher than the current maximum
-3. Keep `Number` values consistent (re-number if inserting/deleting widgets)
-4. Maintain the `Widgets` key name for widget arrays
-5. Test scripts for correctness before finalizing
+1. Locate the elements to change by their `Name`
+2. Keep `Number` values consistent (re-number if inserting/deleting widgets)
+3. Maintain the `Widgets` key name for widget arrays
+4. Test scripts for correctness before finalizing

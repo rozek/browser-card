@@ -2560,7 +2560,7 @@
             46,
             60
           ],
-          "Value": "widgets talk to each other: send('Dice','roll') delivers a message to the script of the dice widget:",
+          "Value": "widgets talk to each other: Widget('Dice').triggered('roll') delivers a message to the script of the dice widget:",
           "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -2604,7 +2604,7 @@
           "Number": 95,
           "zIndex": 95,
           "visible": true,
-          "Script": "on('click', () => send('Dice','roll'))",
+          "Script": "on('click', () => Widget('Dice').triggered('roll'))",
           "Anchors": [
             "left-width",
             "top-height"
@@ -2622,7 +2622,7 @@
           "autoHilite": true,
           "enabled": true,
           "sharedHilite": false,
-          "Value": "send('Dice','roll') ▶"
+          "Value": "Widget('Dice').triggered('roll') ▶"
         },
         {
           "Id": "bc-widget-7096",

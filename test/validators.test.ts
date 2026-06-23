@@ -4,6 +4,7 @@ import {
   ValueIsAnchors, ValueIsOffsets, ValueIsColor,
   ValueIsTime, ValueIsDate, ValueIsMonth,
   ValueIsSerializableValue, ValueIsSerializableObject,
+  ValueIsWidgetJSON, ValueIsCardJSON, ValueIsDeck,
   acceptableNumberInRange, acceptableInteger, acceptableBoolean, acceptableColor,
 } from '../src/BrowserCard'
 
@@ -64,6 +65,26 @@ describe('serializable validators', () => {
   })
   it('rejects functions', () => {
     expect(ValueIsSerializableValue({ f:() => 1 })).toBe(false)
+  })
+})
+
+describe('deck/card/widget validators accept id-less JSON', () => {
+  const Widget = { Type:'button', Anchors:['left-width','top-height'], Offsets:[0,1,0,1] }
+  const Card   = { Name:'C', Widgets:[ Widget ] }
+  const Deck   = { Name:'D', Cards:[ Card ] }
+
+  it('ValueIsWidgetJSON does not require an Id', () => {
+    expect(ValueIsWidgetJSON(Widget)).toBe(true)
+    expect(ValueIsWidgetJSON({ ...Widget, Id:'bc-widget-1' })).toBe(true)
+    expect(ValueIsWidgetJSON({ Anchors:Widget.Anchors, Offsets:Widget.Offsets })).toBe(false)
+  })
+  it('ValueIsCardJSON does not require an Id', () => {
+    expect(ValueIsCardJSON(Card)).toBe(true)
+    expect(ValueIsCardJSON({ Widgets:[] })).toBe(false)   // still needs a Name
+  })
+  it('ValueIsDeck accepts a fully id-less deck (as written by #saveDeck)', () => {
+    expect(ValueIsDeck(Deck)).toBe(true)
+    expect(ValueIsDeck({ Name:'D', Cards:[] })).toBe(false)   // needs >= 1 card
   })
 })
 

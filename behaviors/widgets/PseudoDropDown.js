@@ -6,7 +6,7 @@
 // is shown greyscale. a transparent native <select> overlays the icon, so a
 // click opens the menu built from "Options" (values or "value:label" pairs; a
 // leading "-" disables an entry). the picked value is written back to Value
-// and dispatched as 'change'. "disabled" blocks it.
+// and triggered as 'change'. "disabled" blocks it.
 
 /**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
@@ -91,7 +91,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-pseudodropdown-style', PseudoDropDownStyle)
 
     const BC = globalThis.BC
@@ -134,7 +134,7 @@
             value=${selected}
             onChange=${(Event) => {
               my.Value = Event.target.value
-              dispatch('change', Event.target.value)
+              trigger('change', Event.target.value)
             }}
           >
             ${Options.map((Option) => html`

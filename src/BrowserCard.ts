@@ -2350,7 +2350,13 @@ interface BC_Picture extends BC_Widget { Type: 'picture'; Variant: BC_PictureVar
 
 // forward declarations (mutually recursive)
 // 'own' is a plain object for script-private state; writes to it do NOT trigger a re-render
-type BC_DeckProxy   = BC_Deck   & {
+// "trigger"/"triggered" fire an event on the proxied Visual, bubbling up to the
+// first matching handler (see ScriptInstance.triggered)
+type BC_Triggerable = {
+  trigger:   (Event:string, ...ArgList:unknown[]) => Promise<any>
+  triggered: (Event:string, ...ArgList:unknown[]) => Promise<any>
+}
+type BC_DeckProxy   = BC_Deck   & BC_Triggerable & {
   own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy
   [$Console]:           string
   [$rerender]:          () => void
@@ -2359,8 +2365,8 @@ type BC_DeckProxy   = BC_Deck   & {
   Console_LineLimit:           number
   Console_CharLimit:           number
 }
-type BC_CardProxy   = BC_Card   & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[] }
-type BC_WidgetProxy = BC_Widget & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy }
+type BC_CardProxy   = BC_Card   & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[] }
+type BC_WidgetProxy = BC_Widget & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy }
 type BC_Proxy = BC_DeckProxy | BC_CardProxy | BC_WidgetProxy
 
 //----------------------------------------------------------------------------//
@@ -2648,7 +2654,8 @@ const Styles = `
   .bc-nav-btn:active:not(:disabled) { background: rgba(255,255,255,0.18); }
   .bc-nav-btn:disabled { opacity: 0.30; cursor: default; }
   .bc-nav-btn.active   { background: rgba(255,255,255,0.14); }
-  .bc-bottom-bar-center { display: flex; gap: 4px; }
+  .bc-bottom-bar-center  { display: flex; gap: 4px; }
+  .bc-bottom-bar-history { display: flex; gap: 4px; }
   .bc-card-counter {
     font-size: 12px; color: rgba(255,255,255,0.55);
     min-width: 80px; text-align: center;
@@ -3031,7 +3038,6 @@ interface BC_ScriptContext {
   CardNumber:   () => number                        // 1-based index of the card
   CardCount:    () => number
   Widget:       (nameOrIndex:string|number) => BC_WidgetProxy | null
-  send:         (Target:string|number|BC_WidgetProxy, msg:string, ...ArgList:unknown[]) => Promise<boolean>
   print:        (...ArgList:unknown[]) => void
   println:      (...ArgList:unknown[]) => void
   clearConsole: () => void
@@ -3090,17 +3096,48 @@ export class ScriptInstance {
     }
   }
 
-/**** dispatch — asynchronously invokes the named handler ****/
+/**** linkToParent — registers a provider of the next Visual up the hierarchy ****/
+//    the provider is evaluated lazily (on every "triggered" call), so the parent
+//    Instance need not exist yet at the time the link is established
 
-  async dispatch (msg:string, ...callArgs:unknown[]):Promise<boolean> {
-    const Handler = this.#handlers.get(msg)
-    if (Handler == null) { return false }
+  #ParentInstanceOf:(() => ScriptInstance | null | undefined) | null = null
+
+  linkToParent (Provider:(() => ScriptInstance | null | undefined) | null):void {
+    this.#ParentInstanceOf = Provider
+  }
+
+/**** triggered — invokes the matching handler, bubbling up if none is found ****/
+//    a matching handler is first looked for in the current Visual - if present,
+//    it is called and its result returned. otherwise the search continues (recur-
+//    sively) one level up (widgets search in the active card, cards in the deck).
+//    without any handler the result is "undefined". an exception thrown by a
+//    handler is forwarded to the original trigger
+
+  async triggered (Event:string, ...ArgList:unknown[]):Promise<any> {
+    const Handler = this.#handlers.get(Event)
+    if (Handler != null) { return await Handler(...ArgList) }
+
+    const ParentInstance = this.#ParentInstanceOf?.()
+    if (ParentInstance != null) { return await ParentInstance.triggered(Event, ...ArgList) }
+
+    return undefined
+  }
+
+/**** trigger — synonym for "triggered" ****/
+
+  trigger (Event:string, ...ArgList:unknown[]):Promise<any> {
+    return this.triggered(Event, ...ArgList)
+  }
+
+/**** fireLocal — invokes a local handler only (no bubbling); used for lifecycle ****/
+
+  async fireLocal (Event:string, ...ArgList:unknown[]):Promise<void> {
+    const Handler = this.#handlers.get(Event)
+    if (Handler == null) { return }
     try {
-      await Handler(...callArgs)
-      return true
+      await Handler(...ArgList)
     } catch (Signal) {
-      console.warn(`[BrowserCard] handler "${msg}" error:`, Signal)
-      return false
+      console.warn(`[BrowserCard] handler "${Event}" error:`, Signal)
     }
   }
 
@@ -3163,10 +3200,11 @@ export class ScriptInstance {
 /**** BehaviorAPI — named-parameter interface for internal behaviors ****/
 
 interface BehaviorAPI {
-  on:       ScriptInstance['on']
-  me:       BC_WidgetProxy | null
-  html:     typeof html
-  dispatch: (msg:string, ...args:unknown[]) => void
+  on:        ScriptInstance['on']
+  me:        BC_WidgetProxy | null
+  html:      typeof html
+  trigger:   ScriptInstance['trigger']            // triggers an event on this Visual,
+  triggered: ScriptInstance['triggered']          // bubbling up until a handler is found
 }
 
 type InternalBehaviorFn = (api:BehaviorAPI) => Promise<void>
@@ -3193,24 +3231,27 @@ export function buildScriptParams (
   VisualType: 'deck' | 'card' | 'widget',
   Extra?:     Record<string, unknown>,
 ):{ Params:string[]; Args:unknown[] } {
-  const boundOn     = Instance.on   .bind(Instance)
-  const boundAfter  = Instance.after.bind(Instance)
-  const boundEvery  = Instance.every.bind(Instance)
+  const boundOn        = Instance.on       .bind(Instance)
+  const boundAfter     = Instance.after    .bind(Instance)
+  const boundEvery     = Instance.every    .bind(Instance)
+  const boundTrigger   = Instance.trigger  .bind(Instance)
+  const boundTriggered = Instance.triggered.bind(Instance)
   const extraKeys   = Extra != null ? Object.keys(Extra)   : []
   const extraValues = Extra != null ? Object.values(Extra) : []
 
   const api:BehaviorAPI = {
-    on:       boundOn,
-    me:       Context.me as BC_WidgetProxy | null,
-    html:     Context.html,
-    dispatch: (Extra?.dispatch as (msg:string) => void) ?? (() => undefined),
+    on:        boundOn,
+    me:        Context.me as BC_WidgetProxy | null,
+    html:      Context.html,
+    trigger:   boundTrigger,
+    triggered: boundTriggered,
   }
 
   const Params:string[] = [
-    'on','after','every', ...Object.keys(Context), ...extraKeys, 'behaveLike'
+    'on','after','every','trigger','triggered', ...Object.keys(Context), ...extraKeys, 'behaveLike'
   ]
   const Args:unknown[] = [
-    boundOn, boundAfter, boundEvery,
+    boundOn, boundAfter, boundEvery, boundTrigger, boundTriggered,
     ...Object.values(Context), ...extraValues, null
   ]
 
@@ -3321,17 +3362,6 @@ export function buildContext (
 
     Widget: widgetLookup,
 
-    async send (Target, msg, ...ArgList) {
-      const Widget = (
-        (typeof Target === 'string') || (typeof Target === 'number')
-        ? widgetLookup(Target)
-        : Target
-      )
-      const Instance = (Widget as Indexable)?.[$Script] as ScriptInstance | undefined
-      if (Instance == null) { return false }
-      return Instance.dispatch(msg, ...ArgList)
-    },
-
     print:        ConsoleFns.print,
     println:      ConsoleFns.println,
     clearConsole: ConsoleFns.clearConsole,
@@ -3428,17 +3458,17 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
 /**** ValueIsWidgetJSON/CardJSON/Deck — light structural checks ****/
 
   export function ValueIsWidgetJSON (Value:any):boolean {
-    return (
+    return (                              // "Id" is runtime-only - assigned on load
       ValueIsPlainObject(Value) &&
-      ValueIsString(Value.Id) && ValueIsString(Value.Type) &&
+      ValueIsString(Value.Type) &&
       ValueIsAnchors(Value.Anchors) && ValueIsOffsets(Value.Offsets)
     )
   }
 
   export function ValueIsCardJSON (Value:any):boolean {
-    return (
+    return (                              // "Id" is runtime-only - assigned on load
       ValueIsPlainObject(Value) &&
-      ValueIsString(Value.Id) && ValueIsString(Value.Name) &&
+      ValueIsString(Value.Name) &&
       ValueIsArray(Value.Widgets) &&
       (Value.Widgets as any[]).every(ValueIsWidgetJSON)
     )
@@ -3553,6 +3583,14 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
         ComputedWidgetFields.forEach((Key) => { delete Widget[Key] })
       })
     })
+  }
+
+/**** serializableDeck — a clone without runtime ids or computed geometry ****/
+
+  export function serializableDeck (Deck:BC_Deck):BC_Deck {
+    const Clone = stripInternalIds(Deck)            // also deep-clones via JSON
+    stripComputedGeometry(Clone as Indexable)
+    return Clone
   }
 
 /**** prepareLoadedDeck — assigns fresh ids and drops computed geometry ****/
@@ -3704,7 +3742,7 @@ export function makeWidgetProxy (
   forceUpdate: () => void,
 ):BC_WidgetProxy {
   let _own:Record<string,unknown> | null = null
-  let _Script:unknown = null         // ScriptInstance of this widget, for send()
+  let _Script:unknown = null         // ScriptInstance of this widget, for trigger/triggered
   let _View:Element | undefined      // the widget's wrapper DOM element, once mounted
   return new Proxy(Obj, {
     get (target, key) {
@@ -3715,6 +3753,8 @@ export function makeWidgetProxy (
         case 'View':   return _View
         case 'Deck': return deckProxy
         case 'Card':   return cardProxy
+        case 'trigger':   return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.trigger  (Event, ...ArgList)
+        case 'triggered': return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.triggered(Event, ...ArgList)
         case 'x':      { const { left }   = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return left   }
         case 'y':      { const { top }    = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return top    }
         case 'Width':  { const { width }  = resolveGeometry(target.Anchors, target.Offsets, SizeRef.current.W, SizeRef.current.H); return width  }
@@ -3765,10 +3805,12 @@ export function makeCardProxy (
   forceUpdate:   () => void,
 ):BC_CardProxy {
   let _own:Record<string,unknown> | null = null
+  let _Script:unknown = null         // ScriptInstance of this card, for event bubbling
   let _View:Element | undefined      // the card's DOM element (.bc-card-canvas)
   let proxy:BC_CardProxy
   proxy = new Proxy(Card, {
     get (target, key) {
+      if (key === $Script) { return _Script }
       if (key === $View) { return _View }
       switch (key) {
         case 'own':        return (_own ??= {})
@@ -3776,11 +3818,14 @@ export function makeCardProxy (
         case 'Deck':     return deckProxy
         case 'Card':       return proxy
         case 'WidgetList': return widgetListRef.current
+        case 'trigger':    return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.trigger  (Event, ...ArgList)
+        case 'triggered':  return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.triggered(Event, ...ArgList)
         case 'rerender':   return forceUpdate         // force a re-render of this card and its widgets
         default:           return Reflect.get(target, key)
       }
     },
     set (target, key, value) {
+      if (key === $Script) { _Script = value; return true }
       if (key === $View) { _View = value as Element | undefined; return true }
       if (key === 'View') { return true }                // me.View is read-only
       if (key === 'own') { _own = value as Record<string,unknown>; return true }
@@ -3801,6 +3846,7 @@ export function makeDeckProxy (
   forceUpdate:  () => void,
 ):BC_DeckProxy {
   let _own:Record<string,unknown> | null = null
+  let _Script:unknown = null         // ScriptInstance of this deck, for event bubbling
   let _View:Element | undefined      // the deck's DOM element (.bc-app)
   let _console           = ''
   let _consoleLineCount  = 0
@@ -3808,6 +3854,7 @@ export function makeDeckProxy (
   let proxy:BC_DeckProxy
   proxy = new Proxy(Deck, {
     get (target, key) {
+      if (key === $Script)            { return _Script }
       if (key === $rerender)          { return forceUpdate }
       if (key === $View)              { return _View }
       if (key === $Console)           { return _console }
@@ -3818,12 +3865,15 @@ export function makeDeckProxy (
         case 'View':              return _View
         case 'Deck':            return proxy
         case 'Card':              return cardProxyRef.current!
+        case 'trigger':           return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.trigger  (Event, ...ArgList)
+        case 'triggered':         return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.triggered(Event, ...ArgList)
         case 'Console_LineLimit': return Reflect.get(target, key) ?? Default_LineLimit
         case 'Console_CharLimit': return Reflect.get(target, key) ?? Default_CharLimit
         default:                  return Reflect.get(target, key)
       }
     },
     set (target, key, value) {
+      if (key === $Script)          { _Script = value; return true }
       if (key === $View)            { _View = value as Element | undefined; return true }
       if (key === 'View')           { return true }     // me.View is read-only
       if (key === 'own')            { _own = value as Record<string,unknown>; return true }
@@ -3945,14 +3995,14 @@ function shapeContent (Obj:BC_Shape, W:number, H:number):unknown {
 
 /**** internal behaviors for intrinsic widget types ****/
 
-_InternalBehaviors.set('button', async ({ on, me, html, dispatch }) => {
+_InternalBehaviors.set('button', async ({ on, me, html, trigger }) => {
   const O = me as BC_Button
   function onClick ():void {
     if (
       (O.autoHilite === true) &&
       ((O.Variant === 'checkbox') || (O.Variant === 'radio'))
     ) { O.Hilite = ! O.Hilite }              // a radio group is up to the script
-    dispatch('click')
+    trigger('click')
   }
   on('render', () => {
     const Label = (              // "Value" takes precedence over the mere name
@@ -4027,7 +4077,7 @@ _InternalBehaviors.set('picture', async ({ on, me, html }) => {
 
 function WidgetView ({
   Obj, containerW, containerH, makeContext,
-  deckProxy, cardProxy, onWidgetProxy, onReady, onMessage,
+  deckProxy, cardProxy, onWidgetProxy, onReady,
 }:{
   Obj:           BC_Widget
   containerW:    number
@@ -4037,7 +4087,6 @@ function WidgetView ({
   cardProxy:     BC_CardProxy
   onWidgetProxy: (id:string, proxy:BC_WidgetProxy) => void
   onReady:       (id:string) => void
-  onMessage?:    (msg:string) => void
 }) {
   const [, setTick]      = useState(0)
   const isRenderingRef   = useRef(false)
@@ -4063,20 +4112,17 @@ function WidgetView ({
 
   const onReadyRef     = useRef(onReady)
   onReadyRef.current   = onReady
-  const onMessageRef   = useRef(onMessage)
-  onMessageRef.current = onMessage
 
   // context built once at mount; captures stable callbacks (navigate, dialogs)
   const ContextRef = useRef<BC_ScriptContext | null>(null)
   if (ContextRef.current == null) { ContextRef.current = makeContext(proxy) }
 
-  // extra bindings: Configuration (custom-widget config) and dispatch
+  // extra binding: Configuration (custom-widget config) - events are fired via the
+  // universal "trigger"/"triggered" bindings (see buildScriptParams)
   const ExtraRef = useRef<Record<string, unknown> | undefined>(undefined)
   if (ExtraRef.current == null) {
-    const inst = instanceRef.current!
     ExtraRef.current = {
       Configuration: Obj.Configuration ?? {},
-      dispatch: (msg:string, ...args:unknown[]) => { void inst.dispatch(msg, ...args); onMessageRef.current?.(msg) },
     }
   }
 
@@ -4091,7 +4137,10 @@ function WidgetView ({
     ExtraRef.current!.Configuration = Obj.Configuration ?? {}   // refresh on re-run
     const { Params, Args } = buildScriptParams(inst, ContextRef.current!, 'widget', ExtraRef.current)
 
-    ;(proxy as Indexable)[$Script] = inst              // makes send() reach this widget
+    ;(proxy as Indexable)[$Script] = inst              // makes Widget(...).triggered() reach this widget
+    inst.linkToParent(                                 // bubble unhandled events up
+      () => (cardProxy as Indexable)[$Script] as ScriptInstance | null ?? null
+    )
     onWidgetProxy(Obj.Id, proxy)
 
   // syntax-check the user script first - a broken script must not prevent the
@@ -4113,11 +4162,7 @@ function WidgetView ({
     })
     .then(async () => {
       forceUpdate()
-      try {
-        await inst.dispatch('ready')
-      } catch (Signal) {
-        console.warn('[BrowserCard] widget "ready" handler error:', Signal)
-      }
+      await inst.fireLocal('ready')                    // lifecycle - local, no bubbling
       onReadyRef.current(Obj.Id)
     })
 
@@ -5187,11 +5232,11 @@ function ColorAlphaRow (Label:string, Current:string, Commit:(Color:string) => v
 /**** CardView — Preact component for a Card; manages the card script lifecycle ****/
 
 // CardView is instantiated from outside (Deck) and instantiates its Objects in turn.
-// It dispatches 'ready' once both its own script and all child scripts have completed.
+// It fires 'ready' once both its own script and all child scripts have completed.
 
 function CardView ({
   Card, Scale, CanvasW, CanvasH, makeContext,
-  deckProxy, onCardProxy, onCardReady, onMessage, deckRenderSlot = null,
+  deckProxy, onCardProxy, onCardReady, deckRenderSlot = null,
   isEditing = false, selectedIds = [], onSelect, onSelectMany, onEdited, Grid, onBeforeEdit,
 }:{
   Card:        BC_Card
@@ -5202,7 +5247,6 @@ function CardView ({
   deckProxy:   BC_DeckProxy
   onCardProxy: (proxy:BC_CardProxy) => void
   onCardReady: () => void
-  onMessage?:  (msg:string) => void       // bubbles a widget message up to the deck
   deckRenderSlot?: unknown                 // deck-level on('render') output, shown behind the card
   isEditing?:  boolean
   selectedIds?:string[]
@@ -5220,8 +5264,6 @@ function CardView ({
 
   const onCardReadyRef   = useRef(onCardReady)
   onCardReadyRef.current = onCardReady
-  const onMessageRef     = useRef(onMessage)
-  onMessageRef.current   = onMessage
 
   const allObjects = useMemo(
     () => Card.Widgets,
@@ -5266,7 +5308,7 @@ function CardView ({
       .map((Obj) => (Obj as BC_Widget).Id)
     if (CurrentIds.every((Id) => ReadyIds.has(Id))) {
       readyFiredRef.current = true
-      void instanceRef.current!.dispatch('ready').then(() => onCardReadyRef.current())
+      void instanceRef.current!.fireLocal('ready').then(() => onCardReadyRef.current())
     }
   }
 
@@ -5283,11 +5325,6 @@ function CardView ({
       .filter((p): p is BC_WidgetProxy => p != null)
   }, [])
 
-  const onWidgetMessage = useCallback((msg:string) => {
-    void instanceRef.current!.dispatch(msg)
-    onMessageRef.current?.(msg)
-  }, [])
-
   // card script context: me = cardProxy
   const CardContextRef = useRef<BC_ScriptContext | null>(null)
   if (CardContextRef.current == null) {
@@ -5298,6 +5335,10 @@ function CardView ({
     onCardProxy(cardProxy)
 
     const inst = instanceRef.current!
+    ;(cardProxy as Indexable)[$Script] = inst          // lets widgets bubble up to here
+    inst.linkToParent(                                 // and this card up to the deck
+      () => (deckProxy as Indexable)[$Script] as ScriptInstance | null ?? null
+    )
     const { Params, Args } = buildScriptParams(inst, CardContextRef.current!, 'card')
 
     scriptDoneRef.current = false
@@ -5353,7 +5394,6 @@ function CardView ({
             cardProxy=${cardProxy}
             onWidgetProxy=${onWidgetProxy}
             onReady=${onChildReady}
-            onMessage=${onWidgetMessage}
           />
         `)}
         ${isEditing && html`
@@ -5628,7 +5668,7 @@ function MenuBar ({
 
 function BottomBar ({
   CardIndex, CardCount,
-  onFirst, onPrev, onNext, onLast, onBack, historyLen,
+  onFirst, onPrev, onNext, onLast, onBack, historyLen, onForward, futureLen,
   consoleShown = false, onConsoleToggle, onScreenshot,
 }:{
   CardIndex:  number
@@ -5639,6 +5679,8 @@ function BottomBar ({
   onLast:     () => void
   onBack:     () => void
   historyLen: number
+  onForward:  () => void
+  futureLen:  number
   consoleShown?:    boolean
   onConsoleToggle?: () => void
   onScreenshot?:    () => void
@@ -5647,7 +5689,10 @@ function BottomBar ({
   const isLast  = CardIndex === CardCount-1
   return html`
     <div class="bc-bottom-bar">
-      <button class="bc-nav-btn" onClick=${onBack} disabled=${historyLen === 0} title="Back">◁</button>
+      <div class="bc-bottom-bar-history">
+        <button class="bc-nav-btn" onClick=${onBack}    disabled=${historyLen === 0} title="Back">◁</button>
+        <button class="bc-nav-btn" onClick=${onForward} disabled=${futureLen === 0}  title="Forward">▷</button>
+      </div>
       <div class="bc-bottom-bar-center">
         <button class="bc-nav-btn" onClick=${onFirst} disabled=${isFirst} title="First Card">«</button>
         <button class="bc-nav-btn" onClick=${onPrev}  disabled=${isFirst} title="Previous Card">‹</button>
@@ -5862,6 +5907,7 @@ function DeckView ({
   const bumpVersion = () => setVersion((n) => n+1)
   const [CardIndex, setCardIndex]         = useState(Math.min(initialCardIndex, effectiveDeck?.Cards.length - 1 || 0))
   const [History, setHistory]             = useState<number[]>([])
+  const [Future,  setFuture]              = useState<number[]>([])
   const [activeOverlay, setActiveOverlay] = useState<Overlay>(null)
   const [activeDialog, setActiveDialog]   = useState<DialogState>(null)
   const [Scale, setScale]                 = useState(1)
@@ -6053,6 +6099,7 @@ function DeckView ({
     const currentId = Deck.Cards[CardIndex].Id
     Deck.Cards.splice(Index,1)
     setHistory([])             // card indices in the history are no longer valid
+    setFuture([])
     setSelectedIds([])
 
     const newIndex = indexOfCard(currentId)     // the current card may have moved
@@ -6069,6 +6116,7 @@ function DeckView ({
     const [ Card ]  = Deck.Cards.splice(Index,1)
     Deck.Cards.splice(newIndex, 0, Card)
     setHistory([])             // card indices in the history are no longer valid
+    setFuture([])
     setCardIndex(Math.max(0, indexOfCard(currentId)))
     deckForceUpdate()
   }
@@ -6318,6 +6366,7 @@ function DeckView ({
     lastUndoKeyRef.current = ''
     setSelectedIds([])
     setHistory([])
+    setFuture([])
     setCardIndex((prev) => clamp(prev, 0, Deck.Cards.length-1))
     setEditGeneration((n) => n+1)  // remounts CardView with fresh descriptors
     setPanelGeneration((n) => n+1)
@@ -6488,6 +6537,7 @@ function DeckView ({
       const addHistory = (next:number) => {
         if (next !== prev) {
           setHistory((h) => [...h, prev])
+          setFuture([])                      // a fresh navigation invalidates the forward list
           cardReadyDoneRef.current = false   // new card needs to fire ready again
         }
         return next
@@ -6546,7 +6596,7 @@ function DeckView ({
 
   function checkDeckReady () {
     if (deckScriptDoneRef.current && cardReadyDoneRef.current) {
-      void deckInstanceRef.current!.dispatch('ready')
+      void deckInstanceRef.current!.fireLocal('ready')
     }
   }
 
@@ -6563,6 +6613,7 @@ function DeckView ({
 
   useEffect(() => {
     const inst = deckInstanceRef.current!
+    ;(deckProxy as Indexable)[$Script] = inst          // top of the hierarchy - no parent
     const ctx  = buildContext(
       Deck, Deck.Cards, deckProxy,
       navigate,
@@ -6665,7 +6716,20 @@ function DeckView ({
     if (History.length === 0) { return }
     const Prev = History[History.length-1]
     setHistory((h) => h.slice(0, -1))
+    setFuture((f) => [...f, CardIndex])      // remember where we came from
+    cardReadyDoneRef.current = false
     setCardIndex(Prev)
+  }
+
+/**** goForward ****/
+
+  function goForward () {
+    if (Future.length === 0) { return }
+    const Next = Future[Future.length-1]
+    setFuture((f) => f.slice(0, -1))
+    setHistory((h) => [...h, CardIndex])     // step becomes part of the back list again
+    cardReadyDoneRef.current = false
+    setCardIndex(Next)
   }
 
 /**** render ****/
@@ -6737,7 +6801,6 @@ function DeckView ({
               deckProxy=${deckProxy}
               onCardProxy=${onCardProxy}
               onCardReady=${onCardReady}
-              onMessage=${(msg:string) => void deckInstanceRef.current!.dispatch(msg)}
               isEditing=${isEditing}
               selectedIds=${selectedIds}
               onSelect=${selectWidget}
@@ -6882,6 +6945,8 @@ function DeckView ({
           onLast=${ () => navigate({ type:'last'  })}
           onBack=${goBack}
           historyLen=${History.length}
+          onForward=${goForward}
+          futureLen=${Future.length}
           consoleShown=${showConsole}
           onConsoleToggle=${() => setShowConsole((prev) => ! prev)}
           onScreenshot=${() => void captureScreenshot()}
@@ -7153,7 +7218,7 @@ class BC_Designer extends HTMLElement {
     if (this.#Deck == null) { return }
 
     const DeckName  = this.#Deck.Name ?? 'Deck'
-    const escapedSrc = escapedForSingleQuotedAttr(JSON.stringify(this.#Deck))
+    const escapedSrc = escapedForSingleQuotedAttr(JSON.stringify(serializableDeck(this.#Deck)))
     const ModuleURL  = BC_ModuleURL
     const Width      = this.#Deck.CardWidth  ?? DefaultDeckWidth
     const Height     = this.#Deck.CardHeight ?? DefaultDeckHeight
@@ -7190,7 +7255,7 @@ class BC_Designer extends HTMLElement {
     if (this.#Deck == null) { return }
 
     const DeckName  = this.#Deck.Name ?? 'Deck'
-    const escapedSrc = escapedForSingleQuotedAttr(JSON.stringify(this.#Deck))
+    const escapedSrc = escapedForSingleQuotedAttr(JSON.stringify(serializableDeck(this.#Deck)))
 
     const Page = (
 `<!DOCTYPE html>
@@ -7348,8 +7413,7 @@ class BC_Designer extends HTMLElement {
   async #saveDeck ():Promise<void> {
     if ((this.#Deck == null) || this.#isReadOnly) { return }
     try {
-      const Serialization = stripInternalIds(this.#Deck)   // ids are runtime-only
-      stripComputedGeometry(Serialization as Indexable)     // recomputed on render
+      const Serialization = serializableDeck(this.#Deck)   // strips ids + geometry
       await set(this.#StorageKey, Serialization, DeckStore)
     } catch (Signal) {
       console.warn('[BrowserCard] could not persist deck:', Signal)
@@ -7395,7 +7459,7 @@ class BC_Designer extends HTMLElement {
     if (this.#Deck == null) { return }
     downloadFile(
       (this.#Deck.Name ?? 'Deck') + '.json',
-      JSON.stringify(this.#Deck,null,2), 'application/json'
+      JSON.stringify(serializableDeck(this.#Deck),null,2), 'application/json'
     )
   }
 

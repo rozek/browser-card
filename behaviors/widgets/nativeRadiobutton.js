@@ -1,7 +1,7 @@
 /**** nativeRadiobutton - wraps a native radio button ****/
 
 // "Value" holds the state: 'on'/'true' = selected, 'off'/'false' = not selected.
-// selecting writes 'on'/'off' back to "Value" and dispatches 'change'; lock it
+// selecting writes 'on'/'off' back to "Value" and triggers 'change'; lock it
 // via my.disabled = true (or the Configuration field "disabled").
 
 /**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
@@ -28,7 +28,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-nativeradiobutton-style', RadiobuttonStyle)
 
     on('render', () => {
@@ -44,7 +44,7 @@
           onChange=${(Event) => {
             const isChecked = Event.target.checked
             my.Value = (isChecked ? 'on' : 'off')
-            dispatch('change', isChecked)
+            trigger('change', isChecked)
           }}
         />
       `

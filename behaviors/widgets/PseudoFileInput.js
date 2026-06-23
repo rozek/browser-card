@@ -6,7 +6,7 @@
 // in "Color" if set (via a mask, for monochrome icons). a
 // click opens a hidden <input type="file">; "multiple" allows several files,
 // "FileTypes" sets the accept filter (string or array), "disabled" blocks it.
-// the chosen files are dispatched as 'change' (an array of File objects).
+// the chosen files are triggered as 'change' (an array of File objects).
 
 /**** injectStyleRuleOnce - adds a <style> rule to the document head once ****/
 
@@ -67,7 +67,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-pseudofileinput-style', PseudoFileStyle)
 
     const BC = globalThis.BC
@@ -111,7 +111,7 @@
             disabled=${disabled}
             accept=${Acceptables}
             onChange=${(Event) => {
-              dispatch('change', Array.from(Event.target.files ?? []))
+              trigger('change', Array.from(Event.target.files ?? []))
             }}
           />
         </label>

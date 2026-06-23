@@ -109,10 +109,11 @@ Suggested scripts (add to `package.json`):
 | Test | Expectation |
 |------|-------------|
 | `run` + `on` | a script registers handlers; running an empty script is a no-op |
-| `dispatch` | invokes the registered handler with arguments; returns `false` when none exists |
+| `triggered` / `trigger` | invokes the registered handler with arguments and returns its result; `undefined` when none exists; bubbles up to a linked parent (`linkToParent`); a handler's exception propagates to the caller |
+| `fireLocal` | invokes a local handler only (no bubbling) and swallows its errors - used for lifecycle events (`ready`) |
 | `renderResult` | returns the `render` handler's result synchronously; `null` if absent |
 | handler replacement | a second `on('msg', …)` replaces the first |
-| error isolation | a throwing handler/script is caught and logged, does not break the instance |
+| error isolation | a throwing script is caught and logged, does not break the instance (note: `triggered` deliberately re-throws handler errors) |
 | syntax-error guard | a widget with a syntactically invalid script still runs its intrinsic behavior |
 | timer auto-cleanup | `after`/`every` timers registered in a script are cancelled on `teardown` (assert with fake timers) |
 | teardown order | `obsolete` fires; handlers cleared synchronously so a re-run can re-register |
@@ -125,7 +126,7 @@ Suggested scripts (add to `package.json`):
 | `CardNumber()` / `CardCount()` | reflect current index (live) and total |
 | `go(target)` | resolves card ref / name / 1-based number / `nextCard` etc. to the right `BC_NavTarget` |
 | `Widget(nameOrIndex)` | finds a widget proxy on the current card |
-| `await send(target, msg, …)` | delivers to the target widget's instance; resolves `false` if missing |
+| `trigger` / `triggered` bindings | `buildScriptParams` injects both so scripts can fire events on the current visual (and they bubble up to a linked parent) |
 | `await answer(...)` / `await ask(...)` | resolve with the chosen button / entered text / `null` on cancel (drive the dialog callback) |
 | `print`/`println`/`clearConsole` | mutate the deck console buffer |
 
@@ -139,13 +140,16 @@ Suggested scripts (add to `package.json`):
 | `me.own` | reads/writes a private object **without** triggering re-render or persistence |
 | `me.Configuration` | exposes the widget's config object |
 | `me.Deck` / `me.Card` / `me.Card.WidgetList` | resolve to the right proxies / ordered widget list |
+| `me.trigger` / `me.triggered` | every proxy exposes both, delegating to its `$Script` instance; null-safe before a script is attached |
 
-## 11. Message bubbling
+## 11. Event bubbling
 
 | Test | Expectation |
 |------|-------------|
-| widget `dispatch('click')` | reaches the widget's own, then the card's, then the deck's script (assert all three handlers fire, in order) |
-| `send()` | targeted - does **not** bubble |
+| widget `triggered('click')` with no local handler | bubbles widget → card → deck and runs the **first** matching handler only (not all three) |
+| local handler precedence | a handler on the widget itself wins; the card/deck handler does **not** also fire |
+| `Widget('X').triggered(...)` | fires on the target widget and bubbles up from there; resolves with the handler's result (`undefined` if none) |
+| lifecycle `ready` (`fireLocal`) | fires locally on each visual and does **not** bubble |
 
 ## 12. Persistence (fake-indexeddb)
 
@@ -180,7 +184,7 @@ Suggested scripts (add to `package.json`):
 |------|-------------|
 | widget rendering per type | button (8 variants), field (locked/editable, lines), shape (rect/oval/poly/line/arc, arrowheads as `<polygon>`), picture (object-fit per variant), custom widget |
 | field write-back | typing into an editable field updates `me.Value` |
-| button/checkbox/radio | click dispatches `click`; `autoHilite` checkbox toggles `hilite` |
+| button/checkbox/radio | click triggers `click`; `autoHilite` checkbox toggles `hilite` |
 | edit mode | selection frame + 8 handles appear; pointer drag/resize updates offsets (simulate pointer events); arrow-key nudge |
 | multi-selection | Shift/Cmd-click toggles widgets; rubber-band rectangle selects every overlapped widget; group move/resize applies to all; group delete/nudge; group bounding box + per-widget member outlines |
 | properties panel | editing a field updates the descriptor; anchor switch preserves geometry; "Configuration (JSON)" edits `me.Configuration`; with several widgets selected only the group actions are shown |
@@ -238,7 +242,7 @@ Test each handler against a stubbed `BCMCPContext` that returns controlled fixtu
 | `extras_set` | writes the key-value pairs; schema keys rejected |
 | `extras_delete` | removes the key; no-op for non-existent keys |
 | `live_eval` | calls `ctx.evalInContext(expr)` and returns the result |
-| `live_send` | constructs a `send(…)` expression and delegates to `evalInContext` |
+| `live_send` | constructs a `Widget(…).triggered(…)` expression and delegates to `evalInContext` |
 | `live_screenshot` | throws a descriptive error when `globalThis.html2canvas` is absent |
 
 ### 17d. `MCPSettingsDialog` (jsdom + testing-library)

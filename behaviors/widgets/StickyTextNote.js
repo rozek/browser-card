@@ -5,7 +5,7 @@
 // the inner area hands the input focus to the textarea; while focused the title
 // bar turns orange (the note keeps the same thin border as "StickyNote"). "Value"
 // holds the displayed text and is written back on every edit ('change' is
-// dispatched). if "Value" contains a tab character the text is not wrapped,
+// triggered). if "Value" contains a tab character the text is not wrapped,
 // otherwise it is; the tab width is 10px. while moving or resizing the note
 // consults its "Card": if "Card.SnapToGrid" is exactly true, positions and
 // sizes are forced onto multiples of "Card.GridWidth"/"Card.GridHeight"
@@ -84,7 +84,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration, saveDeck }) {
+  export default async function ({ on, my, html, trigger, Configuration, saveDeck }) {
     injectStyleRuleOnce('bc-stickytextnote-style', StickyTextNoteStyle)
 
     /**** activate - records this note as the card's active note ****/
@@ -177,7 +177,7 @@
       Area.selectionStart = Area.selectionEnd = Start+1  // caret right after tab
 
       my.Value = next
-      dispatch('change', next)
+      trigger('change', next)
       scheduleSave()
     }
 
@@ -198,7 +198,7 @@
             onKeyDown=${insertTab}
             onInput=${(Event) => {
               my.Value = Event.target.value
-              dispatch('change', Event.target.value)
+              trigger('change', Event.target.value)
               scheduleSave()
             }}
           ></textarea>

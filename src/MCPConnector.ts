@@ -731,7 +731,7 @@ export class MCPConnector {
     const Args    = (Params.args as unknown[]) ?? []
     const argStr  = Args.length > 0 ? ', ' + Args.map((a) => JSON.stringify(a)).join(', ') : ''
     return this.#ctx.evalInContext(
-      `send(${JSON.stringify(Target)}, ${JSON.stringify(Message)}${argStr})`
+      `Widget(${JSON.stringify(Target)})?.triggered(${JSON.stringify(Message)}${argStr})`
     )
   }
 

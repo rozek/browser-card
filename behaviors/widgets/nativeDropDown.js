@@ -53,7 +53,7 @@
 
 /**** actual behavior script ****/
 
-  export default async function ({ on, my, html, dispatch, Configuration }) {
+  export default async function ({ on, my, html, trigger, Configuration }) {
     injectStyleRuleOnce('bc-nativedropdown-style', DropDownStyle)
 
     on('render', () => {
@@ -75,7 +75,7 @@
           value=${Selected}
           onChange=${(Event) => {
             my.Value = Event.target.value
-            dispatch('change', Event.target.value)
+            trigger('change', Event.target.value)
           }}
         >
           ${Options.map((Option) => html`

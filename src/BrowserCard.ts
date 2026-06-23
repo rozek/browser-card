@@ -640,20 +640,38 @@ debugger
 /**** ValueIsSerializableValue ****/
 
   export function ValueIsSerializableValue (Value:any):boolean {
+    return ValueIsSerializableValueWithout(Value,new WeakSet<object>())
+  }
+
+/**** ValueIsSerializableValueWithout - recursion with cycle detection ****/
+
+  function ValueIsSerializableValueWithout (
+    Value:any, Seen:WeakSet<object>
+  ):boolean {
     switch (true) {
       case (Value == null):                // deliberately also allows undefined
       case ValueIsBoolean(Value):
       case ValueIsNumber(Value):
       case ValueIsString(Value):
-      case ValueIsListSatisfying(Value,ValueIsSerializableValue):
         return true
-      case ValueIsPlainObject(Value): // *C* check for recursion
+      case ValueIsArray(Value):
+        if (Seen.has(Value)) { return false }            // circular reference
+        Seen.add(Value)
+        for (let Element of Value) {
+          if (! ValueIsSerializableValueWithout(Element,Seen)) { return false }
+        }
+        Seen.delete(Value)
+        return true
+      case ValueIsPlainObject(Value):
+        if (Seen.has(Value)) { return false }            // circular reference
+        Seen.add(Value)
         for (let Property in Value) {
           if (
             Value.hasOwnProperty(Property) &&
-            ! ValueIsSerializableValue(Value[Property])
+            ! ValueIsSerializableValueWithout(Value[Property],Seen)
           ) { return false }
         }
+        Seen.delete(Value)
         return true
     }
     return false
@@ -890,7 +908,8 @@ debugger
     if (ValueIsInteger(Value)) { return Value as number }
 
     if (ValueIsString(Value)) {
-      Value = parseFloat(Value as string)
+      const Trimmed = (Value as string).trim()      // strict full-string parse
+      Value = (Trimmed === '' ? NaN : Number(Trimmed))
       if (ValueIsInteger(Value)) { return Value as number }
     }
   }
@@ -901,7 +920,8 @@ debugger
     Value:any, Minimum?:number, Maximum?:number
   ):number|undefined {
     if (ValueIsString(Value)) {
-      Value = parseFloat(Value as string)
+      const Trimmed = (Value as string).trim()      // strict full-string parse
+      Value = (Trimmed === '' ? NaN : Number(Trimmed))
       if (! ValueIsNumber(Value)) { return undefined }
     }
 
@@ -916,7 +936,8 @@ debugger
     if (ValueIsOrdinal(Value)) { return Value as number }
 
     if (ValueIsString(Value)) {
-      Value = parseFloat(Value as string)
+      const Trimmed = (Value as string).trim()      // strict full-string parse
+      Value = (Trimmed === '' ? NaN : Number(Trimmed))
       if (ValueIsOrdinal(Value)) { return Value as number }
     }
   }
@@ -927,7 +948,8 @@ debugger
     if (ValueIsCardinal(Value)) { return Value as number }
 
     if (ValueIsString(Value)) {
-      Value = parseFloat(Value as string)
+      const Trimmed = (Value as string).trim()      // strict full-string parse
+      Value = (Trimmed === '' ? NaN : Number(Trimmed))
       if (ValueIsCardinal(Value)) { return Value as number }
     }
   }
@@ -1114,7 +1136,7 @@ debugger
     'time-input', 'date-time-input', 'date-input', 'week-input', 'month-input',
     'color-input', 'drop-down', 'slider',
     'text-input', 'html-input', 'css-input', 'javascript-input', 'json-input',
-    'linelist-input', 'numberlist-input'
+    'linelist-input', 'numberlist-input', 'integerlist-input'
   ]
   export type BC_PropertyEditorType = typeof BC_PropertyEditorTypes[number]
 
@@ -1578,7 +1600,8 @@ debugger
     let CharsToSkip = CharCount-Deck.Console_CharLimit
 
     for (let EOLCount = 0, curIndex = -1;;) {
-      curIndex = fullText.indexOf('\n',curIndex+1)             // must be <> -1!
+      curIndex = fullText.indexOf('\n',curIndex+1)
+      if (curIndex < 0) { return fullText }    // no more newlines - nothing to trim
       EOLCount += 1
 
       if ((EOLCount >= LinesToSkip) && (curIndex >= CharsToSkip)) {
@@ -2102,7 +2125,7 @@ console.warn(ErrorToShow)          // please keep this line for easier debugging
 //  expectIdentifier('property name',Key)
 //  expectPlainObject  ('descriptor',Descriptor)
 
-    acceptSetting(Key,Descriptor,ValueIsDimension,'bcension value')
+    acceptSetting(Key,Descriptor,ValueIsDimension,'dimension value')
   }
 
 /**** acceptAnchors ****/
@@ -2161,17 +2184,29 @@ console.warn(ErrorToShow)          // please keep this line for easier debugging
   export function safelyRendered (Renderer:Function):any {
     expectFunction('rendering function',Renderer)
 
-    const [ Error,resetError ] = useErrorBoundary()
+    const [ Error,resetError ]             = useErrorBoundary()
+    const [ caughtSignal,setCaughtSignal ] = useState<any>(undefined)
+
+    function resetAll ():void {           // clears both error sources before retry
+      setCaughtSignal(undefined)
+      resetError()
+    }
+
     if (Error != null) {
       console.warn('rendering error caught by preact: ' + Error)
-      return html`<${BC_ErrorIndicator} error=${Error} resetError=${resetError}/>`
+      return html`<${BC_ErrorIndicator} error=${Error} resetError=${resetAll}/>`
+    }
+
+    if (caughtSignal != null) {           // a previously caught synchronous error
+      return html`<${BC_ErrorIndicator} error=${caughtSignal} resetError=${resetAll}/>`
     }
 
     try {
       return Renderer()
     } catch (Signal:any) {
       console.warn('rendering error: ' + Signal)
-      return html`<${BC_ErrorIndicator} error=${Signal} resetError=${resetError}/>`
+      setCaughtSignal(Signal)             // remember it so the reset can clear it
+      return html`<${BC_ErrorIndicator} error=${Signal} resetError=${resetAll}/>`
     }
   }
 
@@ -2278,7 +2313,7 @@ export interface BC_Widget extends BC_Visual {
   showLines?:    boolean
   dontSearch?:   boolean
   sharedText?:   boolean
-  Value?:         string
+  Value?:        Serializable    // widgets may store numbers etc., not just strings
   FontSize?:     number
   FontWeight?:   'normal' | 'bold'
   TextAlign?:    'left' | 'center' | 'right'
@@ -3112,6 +3147,9 @@ export class ScriptInstance {
     const oldTimeouts  = [ ...this.#Timeouts  ]; this.#Timeouts .clear()
     const oldIntervals = [ ...this.#Intervals ]; this.#Intervals.clear()
 
+    oldTimeouts .forEach((Id) => clearTimeout(Id))      // stop pending timers now,
+    oldIntervals.forEach((Id) => clearInterval(Id))     // before awaiting the handler
+
     if (Handler != null) {
       try {
         await Handler()
@@ -3119,9 +3157,6 @@ export class ScriptInstance {
         console.warn('[BrowserCard] handler "obsolete" error:', Signal)
       }
     }
-
-    oldTimeouts .forEach((Id) => clearTimeout(Id))
-    oldIntervals.forEach((Id) => clearInterval(Id))
   }
 }
 
@@ -3182,19 +3217,24 @@ export function buildScriptParams (
   let behaviorLoaded = false
   async function behaveLike (nameOrUrl:string):Promise<void> {
     if (behaviorLoaded) { console.warn('[BrowserCard] behaveLike: only one behavior per Visual allowed'); return }
-    behaviorLoaded = true
+    behaviorLoaded = true            // set eagerly to reject concurrent attempts
 
-    const internal = _InternalBehaviors.get(nameOrUrl)
-    if (internal != null) { await internal(api); return }
+    try {
+      const internal = _InternalBehaviors.get(nameOrUrl)
+      if (internal != null) { await internal(api); return }
 
-    const url = resolveBehaviorUrl(nameOrUrl, VisualType)
-    const mod = await import(/* @vite-ignore */ url) as { default:(API:Indexable) => Promise<void> }
-    if (typeof mod.default === 'function') {
-      const API:Indexable = {}          // external behaviors receive the full
-      Params.forEach((Name,Index) => {  // script context as a single object
-        API[Name] = Args[Index]         // with named entries
-      })
-      await mod.default(API)
+      const url = resolveBehaviorUrl(nameOrUrl, VisualType)
+      const mod = await import(/* @vite-ignore */ url) as { default:(API:Indexable) => Promise<void> }
+      if (typeof mod.default === 'function') {
+        const API:Indexable = {}          // external behaviors receive the full
+        Params.forEach((Name,Index) => {  // script context as a single object
+          API[Name] = Args[Index]         // with named entries
+        })
+        await mod.default(API)
+      }
+    } catch (Signal) {
+      behaviorLoaded = false         // loading failed - allow another attempt
+      throw Signal
     }
   }
 
@@ -3489,18 +3529,40 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
     return null
   }
 
-/**** adjustIdCounterFor — prevents id collisions after loading a deck ****/
+/**** stripInternalIds — clones a deck without its runtime-internal ids ****/
 
-  export function adjustIdCounterFor (Deck:BC_Deck):void {
-    const consider = (Id:string | undefined):void => {
-      if (Id == null) { return }
-      const Match = /-(\d+)$/.exec(Id)
-      if (Match != null) { IdCounter = Math.max(IdCounter, parseInt(Match[1],10)) }
-    }
-    consider(Deck.Id)
+  export function stripInternalIds (Deck:BC_Deck):BC_Deck {
+    const Clone = JSON.parse(JSON.stringify(Deck)) as Indexable
+    delete Clone.Id
+    Clone.Cards?.forEach((Card:Indexable) => {
+      delete Card.Id
+      Card.Widgets?.forEach((Widget:Indexable) => { delete Widget.Id })
+    })
+    return Clone as BC_Deck
+  }
+
+/**** stripComputedGeometry — drops widget fields recomputed at render time ****/
+
+  const ComputedWidgetFields = [
+    'x','y','Width','Height','Position','Size','Geometry','changeGeometryTo'
+  ]
+
+  export function stripComputedGeometry (Deck:Indexable):void {
+    Deck.Cards?.forEach((Card:Indexable) => {
+      Card.Widgets?.forEach((Widget:Indexable) => {
+        ComputedWidgetFields.forEach((Key) => { delete Widget[Key] })
+      })
+    })
+  }
+
+/**** prepareLoadedDeck — assigns fresh ids and drops computed geometry ****/
+
+  export function prepareLoadedDeck (Deck:BC_Deck):void {
+    stripComputedGeometry(Deck as Indexable)
+    ;(Deck as Indexable).Id = newInternalId('deck')
     Deck.Cards.forEach((Card) => {
-      consider(Card.Id)
-      Card.Widgets.forEach((Obj) => consider(Obj.Id))
+      ;(Card as Indexable).Id = newInternalId('card')
+      Card.Widgets.forEach((Obj) => { ;(Obj as Indexable).Id = newInternalId('widget') })
     })
   }
 
@@ -3677,6 +3739,15 @@ export function makeWidgetProxy (
       if (key === $View)   { _View = value as Element | undefined; return true }
       if (key === 'View')  { return true }              // me.View is read-only
       if (key === 'own')   { _own = value as Record<string,unknown>; return true }
+      switch (key) {                  // computed geometry is read-only: a plain write
+        case 'x': case 'y':           // would only create a dead shadow property
+        case 'Width': case 'Height':
+          console.warn(
+            '[BrowserCard] "' + String(key) + '" is read-only - ' +
+            'use changeGeometryTo() to change a widget\'s geometry'
+          )
+          return true
+      }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
       forceUpdate()
@@ -4036,9 +4107,17 @@ function WidgetView ({
     }
 
     const effectiveScript = behaviorPrefix + userScript
-    inst.run(effectiveScript, Params, Args).then(async () => {
+    inst.run(effectiveScript, Params, Args)
+    .catch((Signal:any) => {        // a runtime error must not block 'ready'/onReady
+      console.warn('[BrowserCard] widget script error:', Signal)
+    })
+    .then(async () => {
       forceUpdate()
-      await inst.dispatch('ready')
+      try {
+        await inst.dispatch('ready')
+      } catch (Signal) {
+        console.warn('[BrowserCard] widget "ready" handler error:', Signal)
+      }
       onReadyRef.current(Obj.Id)
     })
 
@@ -5098,7 +5177,10 @@ function ColorAlphaRow (Label:string, Current:string, Commit:(Color:string) => v
         if (isFinite(Percent)) { Commit(ColorFrom(RGBHexOf(Current), Percent)) }
       }}/>
     <input type="text" value=${Current}
-      onInput=${(Event:Event) => Commit((Event.target as HTMLInputElement).value)}/>
+      onChange=${(Event:Event) => {     // commit only a complete, valid colour on blur
+        const Text = (Event.target as HTMLInputElement).value.trim()
+        if (ValueIsColor(Text)) { Commit(Text) }
+      }}/>
   </div>`
 }
 
@@ -5176,8 +5258,13 @@ function CardView ({
   // checkAllReadyRef: stable ref to always-current checkAllReady logic
   const checkAllReadyRef = useRef<() => void>(() => {})
   checkAllReadyRef.current = () => {
-    if (readyFiredRef.current) { return }
-    if (scriptDoneRef.current && (childReadySet.current.size >= allObjectsRef.current.length)) {
+    if (readyFiredRef.current)    { return }
+    if (! scriptDoneRef.current)  { return }
+
+    const ReadyIds   = childReadySet.current      // intersect with the *current* set
+    const CurrentIds = allObjectsRef.current      // of widgets, not just compare sizes
+      .map((Obj) => (Obj as BC_Widget).Id)
+    if (CurrentIds.every((Id) => ReadyIds.has(Id))) {
       readyFiredRef.current = true
       void instanceRef.current!.dispatch('ready').then(() => onCardReadyRef.current())
     }
@@ -5692,7 +5779,10 @@ function MCPSettingsDialog ({
   }
 
   return html`
-    <div class="bc-dialog-backdrop">
+    <div class="bc-dialog-backdrop"
+      onClick=${(Event:Event) => {       // a click on the backdrop itself cancels
+        if (Event.target === Event.currentTarget) { onClose() }
+      }}>
       <div class="bc-dialog bc-dialog-wide">
         <div class="bc-dialog-title">MCP Broker Settings</div>
         <div style=${{ padding:'8px 0' }}>
@@ -5898,10 +5988,7 @@ function DeckView ({
   async function addCardViaDialog ():Promise<void> {
     const Name = (await askUser('Name of the new card:',''))?.trim()
     if ((Name == null) || (Name === '')) { return }
-    if (Deck.Cards.some((Card) => Card.Name === Name)) {
-      await confirmWith(`A card named "${Name}" already exists.`,'OK')
-      return
-    }
+    // card names need not be unique - duplicates are deliberately allowed
 
     const newCard:BC_Card = {
       Id:newInternalId('card'), Name:Name,
@@ -5942,10 +6029,7 @@ function DeckView ({
 
     const newName = (await askUser('New name for this card:',Card.Name))?.trim()
     if ((newName == null) || (newName === '') || (newName === Card.Name)) { return }
-    if (Deck.Cards.some((otherCard) => otherCard.Name === newName)) {
-      await confirmWith(`A card named "${newName}" already exists.`,'OK')
-      return
-    }
+    // card names need not be unique - duplicates are deliberately allowed
     captureUndo()
     Card.Name = newName
     deckForceUpdate()
@@ -6145,6 +6229,12 @@ function DeckView ({
     }, 800)
   })                       // deliberately without dependency list - see comment
 
+  useEffect(() => () => {  // clear any pending auto-save timer on unmount only,
+    if (saveTimerRef.current != null) {   // so it cannot fire on a torn-down element
+      window.clearTimeout(saveTimerRef.current)
+    }
+  }, [])
+
 /**** MCP connector context — refreshed on every render ****/
 
   useEffect(() => {
@@ -6172,7 +6262,14 @@ function DeckView ({
           ConsoleFns, CardIndexRef,
         )
         const { Params, Args } = buildScriptParams(inst, ctx, 'deck')
-        const AsyncFn = new Function(...Params, `return (async () => { return (${Expression}) })()`)
+        let AsyncFn:Function
+        try {                          // a malformed expression must not escape as an
+          AsyncFn = new Function(      // unhandled rejection - report it cleanly instead
+            ...Params, `return (async () => { return (${Expression}) })()`
+          )
+        } catch (Signal:any) {
+          throw new Error('invalid expression: ' + (Signal?.message ?? String(Signal)))
+        }
         return AsyncFn(...Args)
       },
     }
@@ -6212,8 +6309,11 @@ function DeckView ({
 
   function restoreFrom (Snapshot:string):void {
     const restored = JSON.parse(Snapshot) as BC_Deck
-    Object.keys(Deck).forEach((Key) => delete (Deck as Indexable)[Key])
-    Object.assign(Deck, restored)        // keeps the object identity intact!
+    Object.assign(Deck, restored)        // overwrite/add all restored keys first, so
+                                           // Deck is never observed in an empty state
+    for (const Key of Object.keys(Deck)) {     // then drop keys no longer present -
+      if (! (Key in restored)) { delete (Deck as Indexable)[Key] }   // object identity
+    }                                                                // stays intact!
 
     lastUndoKeyRef.current = ''
     setSelectedIds([])
@@ -6527,7 +6627,9 @@ function DeckView ({
           return
         }
 
-        const Selected = Deck.Cards[CardIndex].Widgets.filter((Obj) => selectedIds.includes(Obj.Id))
+        const Card = Deck.Cards[CardIndex]    // may be out of range right after a delete
+        if (Card == null) { return }
+        const Selected = Card.Widgets.filter((Obj) => selectedIds.includes(Obj.Id))
         if (Selected.length === 0) { return }
 
         const Delta = e.shiftKey ? 10 : 1
@@ -6934,21 +7036,30 @@ class BC_Designer extends HTMLElement {
     }
     if (Deck == null) { Deck = JSON.parse(pristineDemoDeckJSON) as BC_Deck }
 
+    if (! Deck.Name) {            // adopt the element's HTML id as deck name if absent
+      const htmlId = this.getAttribute('id') ?? ''
+      if (htmlId && ValueIsName(htmlId)) { (Deck as Indexable).Name = htmlId }
+    }
+
     this.#StorageKey = 'bc-deck:' + (this.getAttribute('name') ?? Deck.Name ?? 'default')
 
+    let rememberedDeck:BC_Deck | null = null
     if (deckShallBeRemembered()) {   // opt-in: reopen the last deck, even overriding a "name" default
       try {
         const lastKey = localStorage.getItem(LastDeckKey)
         if (lastKey && lastKey !== this.#StorageKey) {
           const lastDeck = await get(lastKey, DeckStore)
           if (MountId !== this.#MountId) { return }
-          if (ValueIsDeck(lastDeck)) { this.#StorageKey = lastKey }
+          if (ValueIsDeck(lastDeck)) {
+            this.#StorageKey = lastKey
+            rememberedDeck   = lastDeck as BC_Deck   // reuse - avoids a second read
+          }
         }
       } catch { /* ignore */ }
     }
 
     try {                  // a persisted copy supersedes the original definition
-      const persisted = await get(this.#StorageKey, DeckStore)
+      const persisted = rememberedDeck ?? await get(this.#StorageKey, DeckStore)
       if (MountId !== this.#MountId) { return }       // superseded by new mount
       if (ValueIsDeck(persisted)) {
         Deck = persisted as BC_Deck
@@ -6961,8 +7072,7 @@ class BC_Designer extends HTMLElement {
       console.warn('[BrowserCard] could not access IndexedDB:', Signal)
     }
 
-    adjustIdCounterFor(Deck)
-    if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
+    prepareLoadedDeck(Deck)
 
     this.#Deck      = Deck
     this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
@@ -7025,8 +7135,7 @@ class BC_Designer extends HTMLElement {
       }
 
       const Deck = Candidate as BC_Deck
-      adjustIdCounterFor(Deck)
-      if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
+      prepareLoadedDeck(Deck)
 
       this.#Deck      = Deck
       this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
@@ -7034,7 +7143,7 @@ class BC_Designer extends HTMLElement {
       this.#Generation += 1
       this.#renderDeck()
     } catch (Signal) {
-      window.alert('Import failed: ' + Signal)
+      window.alert('Import failed: ' + (Signal instanceof Error ? Signal.message : String(Signal)))
     }
   }
 
@@ -7138,7 +7247,7 @@ class BC_Designer extends HTMLElement {
         return
       }
       const Deck = persisted as BC_Deck
-      adjustIdCounterFor(Deck)
+      prepareLoadedDeck(Deck)
       this.#StorageKey = Key
       this.#Deck      = Deck
       this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
@@ -7239,7 +7348,8 @@ class BC_Designer extends HTMLElement {
   async #saveDeck ():Promise<void> {
     if ((this.#Deck == null) || this.#isReadOnly) { return }
     try {
-      const Serialization = JSON.parse(JSON.stringify(this.#Deck))
+      const Serialization = stripInternalIds(this.#Deck)   // ids are runtime-only
+      stripComputedGeometry(Serialization as Indexable)     // recomputed on render
       await set(this.#StorageKey, Serialization, DeckStore)
     } catch (Signal) {
       console.warn('[BrowserCard] could not persist deck:', Signal)
@@ -7257,7 +7367,7 @@ class BC_Designer extends HTMLElement {
         return
       }
       const Deck = persisted as BC_Deck
-      adjustIdCounterFor(Deck)
+      prepareLoadedDeck(Deck)
       this.#Deck      = Deck
       this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
       this.#Generation += 1
@@ -7306,15 +7416,14 @@ class BC_Designer extends HTMLElement {
             return
           }
           const Deck = Candidate as BC_Deck
-          adjustIdCounterFor(Deck)
-          if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
+          prepareLoadedDeck(Deck)
           this.#Deck      = Deck
           this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
           await this.#saveDeck()
           this.#Generation += 1
           this.#renderDeck()
         } catch (Signal) {
-          window.alert('Import failed: ' + Signal)
+          window.alert('Import failed: ' + (Signal instanceof Error ? Signal.message : String(Signal)))
         }
       }
     Input.click()
@@ -7331,15 +7440,14 @@ class BC_Designer extends HTMLElement {
         return
       }
       const Deck = Candidate as BC_Deck
-      adjustIdCounterFor(Deck)
-      if ((Deck as Indexable).Id == null) { (Deck as Indexable).Id = newInternalId('deck') }
+      prepareLoadedDeck(Deck)
       this.#Deck      = Deck
       this.#isReadOnly = this.hasAttribute('readonly') || (Deck.readOnly ?? false)
       await this.#saveDeck()
       this.#Generation += 1
       this.#renderDeck()
     } catch (Signal) {
-      window.alert('Import failed: ' + Signal)
+      window.alert('Import failed: ' + (Signal instanceof Error ? Signal.message : String(Signal)))
     }
   }
 }
@@ -7411,7 +7519,7 @@ class BC_DeckElement extends HTMLElement {
       return
     }
 
-    adjustIdCounterFor(Deck)
+    prepareLoadedDeck(Deck)
 
     this.#Generation += 1
     render(html`<${DeckView}

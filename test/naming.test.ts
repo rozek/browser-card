@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
-  newInternalId, adjustIdCounterFor, normalizedName, uniqueNameIn,
+  newInternalId, prepareLoadedDeck, stripInternalIds, stripComputedGeometry,
+  normalizedName, uniqueNameIn,
 } from '../src/BrowserCard'
 
 describe('newInternalId', () => {
@@ -15,17 +16,54 @@ describe('newInternalId', () => {
   })
 })
 
-describe('adjustIdCounterFor', () => {
-  it('lifts the counter above the highest existing numeric id', () => {
-    const Deck:any = {
-      Id:'bc-deck-9000', Name:'X', readOnly:false, swipeToAdjacentCard:true, Script:'',
-      Cards:[{ Id:'bc-card-9100', Name:'C', Color:null, Alpha:1, dontSearch:false, Script:'',
-        Widgets:[{ Id:'bc-widget-9999', Name:'W', Number:1, Type:'button', zIndex:1,
-          Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'' }] }],
+const sampleDeck = ():any => ({
+  Id:'bc-deck-9000', Name:'X', readOnly:false, swipeToAdjacentCard:true, Script:'',
+  Cards:[{ Id:'bc-card-9100', Name:'C', Color:null, Alpha:1, dontSearch:false, Script:'',
+    Widgets:[{ Id:'bc-widget-9999', Name:'W', Number:1, Type:'button', zIndex:1,
+      Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'',
+      x:5, y:6, Width:10, Height:20, Position:[5,6], Size:[10,20],
+      Geometry:{}, changeGeometryTo:() => [0,0,0,0] }] }],
+})
+
+describe('prepareLoadedDeck', () => {
+  it('assigns fresh runtime ids to deck, cards and widgets', () => {
+    const Deck = sampleDeck()
+    prepareLoadedDeck(Deck)
+    expect(Deck.Id).toMatch(/^bc-deck-\d+$/)
+    expect(Deck.Id).not.toBe('bc-deck-9000')
+    expect(Deck.Cards[0].Id).toMatch(/^bc-card-\d+$/)
+    expect(Deck.Cards[0].Widgets[0].Id).toMatch(/^bc-widget-\d+$/)
+  })
+
+  it('drops computed geometry fields', () => {
+    const Deck = sampleDeck()
+    prepareLoadedDeck(Deck)
+    const Widget = Deck.Cards[0].Widgets[0]
+    for (const Key of ['x','y','Width','Height','Position','Size','Geometry','changeGeometryTo']) {
+      expect(Key in Widget).toBe(false)
     }
-    adjustIdCounterFor(Deck)
-    const next = Number(newInternalId('widget').split('-').at(-1))
-    expect(next).toBeGreaterThan(9999)
+  })
+})
+
+describe('stripInternalIds', () => {
+  it('removes ids from a clone without touching the original', () => {
+    const Deck = sampleDeck()
+    const Clone:any = stripInternalIds(Deck)
+    expect('Id' in Clone).toBe(false)
+    expect('Id' in Clone.Cards[0]).toBe(false)
+    expect('Id' in Clone.Cards[0].Widgets[0]).toBe(false)
+    expect(Deck.Id).toBe('bc-deck-9000')           // original is untouched
+  })
+})
+
+describe('stripComputedGeometry', () => {
+  it('deletes recomputed widget fields in place', () => {
+    const Deck = sampleDeck()
+    stripComputedGeometry(Deck)
+    const Widget = Deck.Cards[0].Widgets[0]
+    expect('Width' in Widget).toBe(false)
+    expect('Geometry' in Widget).toBe(false)
+    expect(Widget.Anchors).toEqual(['left-width','top-height'])   // sources kept
   })
 })
 

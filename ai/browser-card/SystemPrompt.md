@@ -476,6 +476,7 @@ Bare names resolve to: `https://rozek.github.io/browser-card/behaviors/widgets/<
 | `SVGView` | Renders inline SVG source from `my.Value`; `Configuration.scaling` (`'none'`/`'stretch'`/`'cover'`/`'contain'`) and `Configuration.alignment` (e.g. `'center center'`, `'left top'`) control fit |
 | `ImageView` | Shows an image from `my.Value` (URL); same `Configuration.scaling` and `Configuration.alignment` options as SVGView |
 | `WebView` | Embeds `my.Value` (URL) in an `<iframe>`; `Configuration.allowsFullScreen` (boolean), `Configuration.Permissions` (allow attribute), `Configuration.SandboxPermissions` (sandbox attribute; `false` = no sandbox), `Configuration.ReferrerPolicy` |
+| `QRCodeView` | Renders `my.Value` (text or URL) as a scalable inline-SVG QR code; `Configuration.ErrorCorrection` (`'L'`/`'M'`/`'Q'`/`'H'`, default `'M'`), `Configuration.Border` (quiet-zone in modules, default 4), `Configuration.Color` (dark modules, default `'#000000'`), `Configuration.Background` (light modules, default `'#ffffff'`; may be `'transparent'`); uses bundled `uqr` library |
 
 ### Icons and Selectors
 
@@ -485,6 +486,7 @@ Bare names resolve to: `https://rozek.github.io/browser-card/behaviors/widgets/<
 | `FAIcon` | Same as `Icon` but uses FontAwesome 4.7.0 icon names (e.g. `"fa-home"`); assets served same-origin from `fontawesome/` folder |
 | `PseudoDropDown` | Icon + transparent overlaid `<select>` for dropdown menus; `my.Options`/`Configuration.Options` is a list or space-separated string of `value` or `value:label` entries (leading `-` disables the entry); selected value written to `my.Value`; dispatches `'change'`; `my.disabled` locks it |
 | `PseudoFileInput` | Icon + hidden `<input type="file">`; click opens the OS file picker; `my.multiple`/`Configuration.multiple` allows multiple files; `my.FileTypes`/`Configuration.FileTypes` sets the `accept` filter; dispatches `'change'` with an array of `File` objects; `my.disabled` locks it |
+| `TabStrip` | Horizontal row of selectable tabs; `my.Tabs`/`Configuration.Tabs` is an array of HTML-content strings (leading `-` makes a tab non-clickable); `my.Value`/`Configuration.Value` is the active tab index; `my.GapIndex`/`Configuration.GapIndex` inserts a flexible spacer before that tab index; active tab marked with a 2 px dark-grey underline; dispatches `'change'` with the new index |
 
 ### Separators
 
@@ -492,6 +494,25 @@ Bare names resolve to: `https://rozek.github.io/browser-card/behaviors/widgets/<
 |---|---|
 | `horizontalSeparator` | Thin light-grey (`#cccccc`) horizontal line, centered vertically in the widget bounds |
 | `verticalSeparator` | Thin light-grey (`#cccccc`) vertical line, centered horizontally in the widget bounds |
+
+### Graphics / Drawing
+
+Both line behaviors render size-aware inline SVG via a `ResizeObserver` so the line always fills the current widget bounds correctly.
+
+| Behavior | Description |
+|---|---|
+| `straightLine` | SVG straight line across the widget; `Configuration.Direction` (`'n'`/`'ne'`/`'e'`/`'se'`/`'s'`/`'sw'`/`'w'`/`'nw'`, default `'e'`): cardinal directions span mid-to-mid, diagonals span corner-to-corner; `Configuration.ArrowHeads` (`'none'`/`'start'`/`'end'`/`'both'`, default `'none'`); `Configuration.Color` (default `'#000000'`); `Configuration.Thickness` in px (default 2) |
+| `curvedLine` | SVG quarter-circle/ellipse arc across the widget; `Configuration.Direction` (`'n'`/`'e'`/`'s'`/`'w'`, default `'e'`): tangent direction at the end of the arc; `Configuration.clockwise` (boolean, default `false`): selects one of the two quarter-arcs that end in the given direction; same `ArrowHeads`, `Color`, `Thickness` options as `straightLine` |
+
+### Sticky Notes
+
+Three complementary behaviors for a free-form sticky-note canvas on a card. Active note = `Card.own.activeNote`. Structural changes are auto-saved via `saveDeck()`.
+
+| Behavior | Description |
+|---|---|
+| `StickyTextNote` | Movable, resizable sticky note with a plain-text `<textarea>`; drag title bar to move, drag bottom-right handle to resize (min 80×60 px); `my.Value` holds the text; tab character disables line-wrapping; Tab key inserts a literal tab; focused title bar turns orange; dispatches `'change'`; respects `Card.SnapToGrid`/`Card.GridWidth`/`Card.GridHeight` |
+| `StickyNote` | Like `StickyTextNote` but the body renders `my.Value` as Markdown (uses the BrowserCard toolkit: highlight.js, KaTeX, Mermaid); double-click on title bar or body opens a floating Markdown-editor dialog (draggable, resizable, closeable); `Configuration.Value` as default content |
+| `StickyNoteMenu` | Collapsible 40 px toolbar that manages `StickyNote`/`StickyTextNote` widgets on the card; collapsed = 40×40 pill with a left caret; click to expand leftward showing 6 icon buttons: add new `StickyNote`, delete active note, bring to front, raise one, lower one, send to back; always start collapsed via `on('ready', ...)` |
 
 ### Native Form Controls
 

@@ -2535,6 +2535,13 @@ const Styles = `
     container-type: size;
   }
 
+  /* embedded <bc-deck>: no stage chrome - just the deck with its cards
+     (the dark backdrop, padding and "paper" look stay in <bc-designer>) */
+  .bc-card-area.bare {
+    padding: 0;
+    background: transparent;
+  }
+
   /* deck-level on('render') output: a deck-wide backdrop sharing the card's
      geometry (sits inside the card wrapper, behind the card canvas) */
   .bc-deck-render {
@@ -5287,6 +5294,7 @@ function CardView ({
   Card, Scale, CanvasW, CanvasH, makeContext,
   deckProxy, onCardProxy, onCardReady, reorderCard, deckRenderSlot = null,
   isEditing = false, selectedIds = [], onSelect, onSelectMany, onEdited, Grid, onBeforeEdit,
+  withChrome = true,
 }:{
   Card:        BC_Card
   Scale:       number
@@ -5305,6 +5313,7 @@ function CardView ({
   onEdited?:   () => void
   Grid?:       BC_Grid
   onBeforeEdit?:() => void
+  withChrome?: boolean
 }) {
   const [, setTick]      = useState(0)
   const isRenderingRef   = useRef(false)
@@ -5416,11 +5425,16 @@ function CardView ({
     transformOrigin: 'top left',
     background:      Card.Color ?? '#ffffff00',      // transparent white by default so the deck render shows through
   }
-  const WrapperStyle = {        // the white "paper" + drop shadow behind the (now transparent) card
-    width:CanvasW*Scale, height:CanvasH*Scale, position:'relative', flexShrink:0,
-    background:'#fff', borderRadius:3,
-    boxShadow:'0 4px 24px rgba(0,0,0,0.55)',
-  }
+  const WrapperStyle = withChrome
+    ? {        // the white "paper" + drop shadow behind the (now transparent) card
+        width:CanvasW*Scale, height:CanvasH*Scale, position:'relative', flexShrink:0,
+        background:'#fff', borderRadius:3,
+        boxShadow:'0 4px 24px rgba(0,0,0,0.55)',
+      }
+    : {        // embedded <bc-deck>: no paper/shadow - the card's own Color shows through
+        width:CanvasW*Scale, height:CanvasH*Scale, position:'relative', flexShrink:0,
+        background:'transparent',
+      }
   const DeckRenderStyle = {        // matches the canvas geometry so it aligns with the card
     position:'absolute', top:0, left:0, width:CanvasW, height:CanvasH,
     transform:`scale(${Scale})`, transformOrigin:'top left',
@@ -6557,7 +6571,7 @@ function DeckView ({
       setCanvasW(cw)
       setCanvasH(ch)
 
-      const Padding   = 24
+      const Padding   = withChrome ? 24 : 0
       const fitScale  = Math.max(0.1, Math.min((width - Padding*2) / cw, (height - Padding*2) / ch))
 
     // an explicit "--canvas-scale" pins the scale - but only in browse mode;
@@ -6859,13 +6873,14 @@ function DeckView ({
           onMCPSettings=${() => setShowMCPSettings(true)}
         />`}
         <div class="bc-main-area">
-          <div class="bc-card-area" ref=${CardAreaRef}>
+          <div class="bc-card-area${withChrome ? '' : ' bare'}" ref=${CardAreaRef}>
             <${CardView}
               key=${Card.Id + ':' + EditGeneration}
               Card=${Card}
               Scale=${Scale}
               CanvasW=${CanvasW}
               CanvasH=${CanvasH}
+              withChrome=${withChrome}
               deckRenderSlot=${deckRenderSlot}
               makeContext=${makeBaseContext}
               deckProxy=${deckProxy}

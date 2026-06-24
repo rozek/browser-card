@@ -6,7 +6,7 @@ BrowserCard (abbreviation: **BC**) is a browser-based reinterpretation of [NovoC
 
 > **new** now with initial support for "vibe coding": find a system (or project) prompt in file [SystemPrompt.md](./ai/SystemPrompt.md) and a complete agent skill in folder [browser-card](./ai/browser-card). An MCP-Server for live coding support within BC itself is planned for the end of next week.
 
-Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.html)!
+Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.html) or work through the [Tutorial](https://rozek.github.io/browser-card/demos/Tutorial.html)!
 
 ![Screenshot of a simple BrowserCard deck](BrowserCard-Pitch.jpg)
 

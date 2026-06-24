@@ -6,7 +6,7 @@
 
 import type { BC_Deck, BC_Card, BC_Widget } from './BrowserCard.js'
 import {
-  ScriptInstance, buildContext, buildScriptParams,
+  ScriptInstance, buildContext, buildScriptParams, raiseIdCounterTo,
 } from './BrowserCard.js'
 
 //----------------------------------------------------------------------------//
@@ -111,6 +111,7 @@ function nextCardID (Deck: BC_Deck):string {
     const N = parseInt(Card.Id.replace('bc-card-', ''), 10)
     if (! isNaN(N)) { Max = Math.max(Max, N) }
   }
+  raiseIdCounterTo(Max+1)    // keep the app's shared id counter from re-issuing this id
   return `bc-card-${Max+1}`
 }
 
@@ -124,6 +125,7 @@ function nextWidgetID (Deck: BC_Deck):string {
       if (! isNaN(N)) { Max = Math.max(Max, N) }
     }
   }
+  raiseIdCounterTo(Max+1)    // keep the app's shared id counter from re-issuing this id
   return `bc-widget-${Max+1}`
 }
 

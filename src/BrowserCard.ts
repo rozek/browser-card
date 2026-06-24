@@ -1033,6 +1033,15 @@ debugger
     return `bc-${Type}-${IdCounter}`
   }
 
+/**** raiseIdCounterTo — lifts the shared id counter to (at least) the given ****/
+/****   value, so ids minted elsewhere (e.g. by the MCP connector, which     ****/
+/****   derives ids by scanning the deck) can never be re-issued afterwards   ****/
+/****   by newInternalId - which would otherwise produce colliding ids        ****/
+
+  export function raiseIdCounterTo (Value:number):void {
+    if (Value > IdCounter) { IdCounter = Value }
+  }
+
 //------------------------------------------------------------------------------
 //--                              Normalizations                              --
 //------------------------------------------------------------------------------

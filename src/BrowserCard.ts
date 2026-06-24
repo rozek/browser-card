@@ -2365,7 +2365,7 @@ type BC_DeckProxy   = BC_Deck   & BC_Triggerable & {
   Console_LineLimit:           number
   Console_CharLimit:           number
 }
-type BC_CardProxy   = BC_Card   & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[] }
+type BC_CardProxy   = BC_Card   & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[]; Index:number }
 type BC_WidgetProxy = BC_Widget & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; Index:number }
 type BC_Proxy = BC_DeckProxy | BC_CardProxy | BC_WidgetProxy
 
@@ -3039,8 +3039,7 @@ interface BC_ScriptContext {
   openURL:      (url:string) => void
   answer:       (message:string, ...buttons:string[]) => Promise<string>
   ask:          (prompt:string, defaultValue?:string) => Promise<string | null>
-  Card:         (nameOrNum:string|number) => BC_CardRef | null
-  CardNumber:   () => number                        // 1-based index of the card
+  Card:         (nameOrIndex:string|number) => BC_CardRef | null  // index: 0-based
   CardCount:    () => number
   Widget:       (nameOrIndex:string|number) => BC_WidgetProxy | null
   print:        (...ArgList:unknown[]) => void
@@ -3299,7 +3298,6 @@ export function buildContext (
   onAnswer:     (message:string, buttons:string[], resolve:(Result:string) => void) => void,
   onAsk:        (prompt:string, defaultValue:string, resolve:(Result:string | null) => void) => void,
   ConsoleFns:   BC_ConsoleFns,
-  CardIndexRef: { current:number },
   requestSave?: () => Promise<void> | void,
 ):BC_ScriptContext {
   function makeRef (navType:string, extra?:Partial<BC_CardRef>):BC_CardRef {
@@ -3308,7 +3306,7 @@ export function buildContext (
 
   function resolveNav (target:unknown):BC_NavTarget {
     if (typeof target === 'string') { return { type:'card-name', name:target } }
-    if (typeof target === 'number') { return { type:'card-index', index:target-1 } }
+    if (typeof target === 'number') { return { type:'card-index', index:target } }  // 0-based
     if ((target == null) || (typeof target !== 'object')) { return { type:'next' } }
     const Ref = target as BC_CardRef
     switch (Ref.__navType) {
@@ -3328,8 +3326,8 @@ export function buildContext (
     if (typeof nameOrIndex === 'string') {
       return WidgetList.find((Widget) => Widget.Name === nameOrIndex) ?? null
     }
-    if (typeof nameOrIndex === 'number') {            // 1-based, like card()
-      return WidgetList[nameOrIndex-1] ?? null
+    if (typeof nameOrIndex === 'number') {            // 0-based, like Card()
+      return WidgetList[nameOrIndex] ?? null
     }
     return null
   }
@@ -3349,20 +3347,19 @@ export function buildContext (
       )
     },
 
-    Card (nameOrNum) {
-      if (typeof nameOrNum === 'string') {
-        return Cards.find((c) => c.Name === nameOrNum)
-          ? makeRef('card-name', { __name:nameOrNum })
+    Card (nameOrIndex) {
+      if (typeof nameOrIndex === 'string') {
+        return Cards.find((c) => c.Name === nameOrIndex)
+          ? makeRef('card-name', { __name:nameOrIndex })
           : null
       }
-      if (typeof nameOrNum === 'number') {
-        return ((nameOrNum >= 1) && (nameOrNum <= Cards.length))
-          ? makeRef('card-index', { __index:nameOrNum-1 })
+      if (typeof nameOrIndex === 'number') {            // 0-based
+        return ((nameOrIndex >= 0) && (nameOrIndex < Cards.length))
+          ? makeRef('card-index', { __index:nameOrIndex })
           : null
       }
       return null
     },
-    CardNumber () { return CardIndexRef.current+1 },
     CardCount ()  { return Cards.length },
 
     Widget: widgetLookup,
@@ -3839,6 +3836,7 @@ export function makeCardProxy (
   deckProxy:     BC_DeckProxy,
   widgetListRef: { current:BC_WidgetProxy[] },
   forceUpdate:   () => void,
+  reorderCard?:  (Card:BC_Card, toIndex:number) => void,   // moves the card in its deck
 ):BC_CardProxy {
   let _own:Record<string,unknown> | null = null
   let _Script:unknown = null         // ScriptInstance of this card, for event bubbling
@@ -3857,6 +3855,10 @@ export function makeCardProxy (
         case 'trigger':    return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.trigger  (Event, ...ArgList)
         case 'triggered':  return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.triggered(Event, ...ArgList)
         case 'rerender':   return forceUpdate         // force a re-render of this card and its widgets
+        case 'Index': {                  // 0-based position in the deck's card list
+          const Cards = (deckProxy as Indexable).Cards as BC_Card[]
+          return Cards.indexOf(target)
+        }
         default:           return Reflect.get(target, key)
       }
     },
@@ -3865,6 +3867,10 @@ export function makeCardProxy (
       if (key === $View) { _View = value as Element | undefined; return true }
       if (key === 'View') { return true }                // me.View is read-only
       if (key === 'own') { _own = value as Record<string,unknown>; return true }
+      if (key === 'Index') {            // moves the card within its deck (keeps it shown)
+        reorderCard?.(target, Number(value))
+        return true
+      }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
       forceUpdate()
@@ -5270,7 +5276,7 @@ function ColorAlphaRow (Label:string, Current:string, Commit:(Color:string) => v
 
 function CardView ({
   Card, Scale, CanvasW, CanvasH, makeContext,
-  deckProxy, onCardProxy, onCardReady, deckRenderSlot = null,
+  deckProxy, onCardProxy, onCardReady, reorderCard, deckRenderSlot = null,
   isEditing = false, selectedIds = [], onSelect, onSelectMany, onEdited, Grid, onBeforeEdit,
 }:{
   Card:        BC_Card
@@ -5281,6 +5287,7 @@ function CardView ({
   deckProxy:   BC_DeckProxy
   onCardProxy: (proxy:BC_CardProxy) => void
   onCardReady: () => void
+  reorderCard?:(Card:BC_Card, toIndex:number) => void
   deckRenderSlot?: unknown                 // deck-level on('render') output, shown behind the card
   isEditing?:  boolean
   selectedIds?:string[]
@@ -5311,7 +5318,7 @@ function CardView ({
   // card proxy created once at mount
   const cardProxyRef = useRef<BC_CardProxy | null>(null)
   if (cardProxyRef.current == null) {
-    cardProxyRef.current = makeCardProxy(Card, deckProxy, widgetListRef, forceUpdate)
+    cardProxyRef.current = makeCardProxy(Card, deckProxy, widgetListRef, forceUpdate, reorderCard)
   }
   const cardProxy = cardProxyRef.current!
 
@@ -5880,7 +5887,7 @@ function MCPSettingsDialog ({
           <input
             class="bc-dialog-input"
             type="text"
-            placeholder="ws://localhost:3001/bc"
+            placeholder="ws://localhost:3457/bc"
             value=${BrokerURL}
             onInput=${(e:Event) => setBrokerURL((e.target as HTMLInputElement).value)}
           />
@@ -6346,7 +6353,7 @@ function DeckView ({
           navigate,
           (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
           (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
-          ConsoleFns, CardIndexRef,
+          ConsoleFns,
         )
         const { Params, Args } = buildScriptParams(inst, ctx, 'deck')
         let AsyncFn:Function
@@ -6595,6 +6602,26 @@ function DeckView ({
     })
   }, [Deck])
 
+/**** reorderCard — moves a card within the deck, keeping the shown card shown ****/
+//    backs the writable, 0-based "Index" of a card proxy (analogous to widgets)
+
+  const reorderCardRef = useRef<(Card:BC_Card, toIndex:number) => void>(() => {})
+  reorderCardRef.current = (CardObj, toIndex) => {
+    const Cards = Deck.Cards
+    const from  = Cards.indexOf(CardObj)
+    if (from < 0) { return }
+    const to = Math.max(0, Math.min(Cards.length-1, Math.round(toIndex)))
+    if (to === from) { return }
+    const shownId = Cards[CardIndexRef.current]?.Id
+    Cards.splice(from, 1)
+    Cards.splice(to, 0, CardObj)
+    setCardIndex(Math.max(0, Cards.findIndex((c) => c.Id === shownId)))
+    deckForceUpdate()
+  }
+  const reorderCard = useCallback(
+    (CardObj:BC_Card, toIndex:number) => reorderCardRef.current(CardObj, toIndex), []
+  )
+
 /**** console functions — shared by every script context of this Deck ****/
 
   const ConsoleFns = useMemo<BC_ConsoleFns>(() => ({
@@ -6622,7 +6649,7 @@ function DeckView ({
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
-      ConsoleFns, CardIndexRef, requestDeckSave,
+      ConsoleFns, requestDeckSave,
     )
   }, [Deck, navigate, ConsoleFns, requestDeckSave])
 
@@ -6653,7 +6680,7 @@ function DeckView ({
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
-      ConsoleFns, CardIndexRef, requestDeckSave,
+      ConsoleFns, requestDeckSave,
     )
     const { Params, Args } = buildScriptParams(inst, ctx, 'deck')
 
@@ -6835,6 +6862,7 @@ function DeckView ({
               deckProxy=${deckProxy}
               onCardProxy=${onCardProxy}
               onCardReady=${onCardReady}
+              reorderCard=${reorderCard}
               isEditing=${isEditing}
               selectedIds=${selectedIds}
               onSelect=${selectWidget}

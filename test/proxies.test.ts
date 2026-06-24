@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { makeWidgetProxy } from '../src/BrowserCard'
+import { makeWidgetProxy, makeCardProxy } from '../src/BrowserCard'
 
 function setup () {
   const Obj:any = {
@@ -65,5 +65,28 @@ describe('makeWidgetProxy', () => {
     expect(Widgets.map((w) => w.Id)).toEqual([ 'bc-widget-2','bc-widget-1' ])
     expect(proxyA.Index).toBe(1)
     expect(rerender).toHaveBeenCalled()
+  })
+})
+
+describe('makeCardProxy', () => {
+  it('Index is the 0-based deck position and writing it reorders via the injected callback', () => {
+    const A:any = { Id:'bc-card-1', Name:'A' }
+    const B:any = { Id:'bc-card-2', Name:'B' }
+    const C:any = { Id:'bc-card-3', Name:'C' }
+    const Cards    = [ A, B, C ]
+    const deckProxy:any = { Cards }
+    const reorderCard = vi.fn((Card:any, toIndex:number) => {   // mimic the real mover
+      const from = Cards.indexOf(Card)
+      Cards.splice(from, 1)
+      Cards.splice(toIndex, 0, Card)
+    })
+    const widgetListRef = { current:[] as any }
+    const proxyA = makeCardProxy(A, deckProxy, widgetListRef, () => {}, reorderCard)
+
+    expect(proxyA.Index).toBe(0)
+    proxyA.Index = 2                              // move A to the end of the deck
+    expect(reorderCard).toHaveBeenCalledWith(A, 2)
+    expect(Cards.map((c) => c.Id)).toEqual([ 'bc-card-2','bc-card-3','bc-card-1' ])
+    expect(proxyA.Index).toBe(2)
   })
 })

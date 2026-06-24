@@ -122,10 +122,11 @@ Suggested scripts (add to `package.json`):
 
 | Test | Expectation |
 |------|-------------|
-| `Card(nameOrNumber)` | returns a ref for valid name/1-based index, else `null` |
-| `CardNumber()` / `CardCount()` | reflect current index (live) and total |
-| `go(target)` | resolves card ref / name / 1-based number / `nextCard` etc. to the right `BC_NavTarget` |
-| `Widget(nameOrIndex)` | finds a widget proxy on the current card |
+| `Card(nameOrIndex)` | returns a ref for valid name/0-based index, else `null` |
+| `CardCount()` | reflects the total number of cards |
+| `go(target)` | resolves card ref / name / 0-based index / `nextCard` etc. to the right `BC_NavTarget` |
+| `Widget(nameOrIndex)` | finds a widget proxy on the current card by name or 0-based index |
+| `my.Card.Index` (card proxy) | reads the 0-based deck position; assigning it reorders the card |
 | `trigger` / `triggered` bindings | `buildScriptParams` injects both so scripts can fire events on the current visual (and they bubble up to a linked parent) |
 | `await answer(...)` / `await ask(...)` | resolve with the chosen button / entered text / `null` on cancel (drive the dialog callback) |
 | `print`/`println`/`clearConsole` | mutate the deck console buffer |

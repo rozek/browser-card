@@ -5,34 +5,34 @@ function makeCtx (overrides:any = {}) {
   const Cards = [{ Name:'A' },{ Name:'B' },{ Name:'C' }] as any
   const nav   = vi.fn()
   const Console = { print:vi.fn(), println:vi.fn(), clearConsole:vi.fn() }
-  const CardIndexRef = { current: overrides.index ?? 1 }
   const me = overrides.me ?? null
   const onAnswer = overrides.onAnswer ?? ((_m:string,_b:string[],resolve:Function) => resolve('OK'))
   const onAsk    = overrides.onAsk    ?? ((_p:string,_d:string,resolve:Function) => resolve('typed'))
   const ctx = buildContext(
-    {} as any, Cards, me, nav, onAnswer as any, onAsk as any, Console as any, CardIndexRef
+    {} as any, Cards, me, nav, onAnswer as any, onAsk as any, Console as any
   )
   return { ctx, nav, Console, Cards }
 }
 
 describe('buildContext - cards & navigation', () => {
-  it('card() by name and 1-based index, else null', () => {
+  it('Card() by name and 0-based index, else null', () => {
     const { ctx } = makeCtx()
     expect(ctx.Card('B')).toMatchObject({ __navType:'card-name', __name:'B' })
-    expect(ctx.Card(1)).toMatchObject({ __navType:'card-index', __index:0 })
+    expect(ctx.Card(0)).toMatchObject({ __navType:'card-index', __index:0 })
+    expect(ctx.Card(2)).toMatchObject({ __navType:'card-index', __index:2 })
     expect(ctx.Card('nope')).toBeNull()
     expect(ctx.Card(99)).toBeNull()
+    expect(ctx.Card(-1)).toBeNull()
   })
-  it('CardNumber()/CardCount()', () => {
-    const { ctx } = makeCtx({ index:2 })
-    expect(ctx.CardNumber()).toBe(3)     // 1-based
+  it('CardCount()', () => {
+    const { ctx } = makeCtx()
     expect(ctx.CardCount()).toBe(3)
   })
-  it('go() resolves refs, names and numbers to nav targets', () => {
+  it('go() resolves refs, names and 0-based numbers to nav targets', () => {
     const { ctx, nav } = makeCtx()
     ctx.go(ctx.nextCard);  expect(nav).toHaveBeenLastCalledWith({ type:'next' })
     ctx.go('B');           expect(nav).toHaveBeenLastCalledWith({ type:'card-name', name:'B' })
-    ctx.go(2);             expect(nav).toHaveBeenLastCalledWith({ type:'card-index', index:1 })
+    ctx.go(2);             expect(nav).toHaveBeenLastCalledWith({ type:'card-index', index:2 })
     ctx.go(ctx.Card('C')); expect(nav).toHaveBeenLastCalledWith({ type:'card-name', name:'C' })
   })
 })
@@ -51,11 +51,12 @@ describe('buildContext - dialogs resolve with values', () => {
 })
 
 describe('buildContext - Widget()', () => {
-  it('Widget() finds a widget on the current card by name/index', () => {
+  it('Widget() finds a widget on the current card by name/0-based index', () => {
     const me:any = { Card:{ WidgetList:[ { Name:'X' }, { Name:'Y' } ] } }
     const { ctx } = makeCtx({ me })
     expect(ctx.Widget('Y')).toMatchObject({ Name:'Y' })
-    expect(ctx.Widget(1)).toMatchObject({ Name:'X' })
+    expect(ctx.Widget(0)).toMatchObject({ Name:'X' })
+    expect(ctx.Widget(1)).toMatchObject({ Name:'Y' })
     expect(ctx.Widget('Z')).toBeNull()
   })
 })

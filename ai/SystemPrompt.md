@@ -327,7 +327,8 @@ go(prevCard)           // Go to previous card
 go(firstCard)          // Go to first card
 go(lastCard)           // Go to last card
 go(Card('Card 2'))     // Go to card by name
-go(Card(3))            // Go to card by 1-based index
+go(Card(2))            // Go to card by 0-based index
+go(2)                  // same — go() also accepts a 0-based index directly
 ```
 
 **Dialogs:**
@@ -339,7 +340,7 @@ const Input  = await ask('Prompt', 'default value')      // returns string or nu
 **Widget access:**
 ```javascript
 Widget('MyWidget')      // Get widget proxy by name
-Widget(2)               // Get widget proxy by 1-based index
+Widget(1)               // Get widget proxy by 0-based index
 ```
 
 **Messaging / events:**
@@ -358,8 +359,8 @@ is `undefined`. An exception thrown by a handler propagates back to the caller. 
 
 **Card info:**
 ```javascript
-CardNumber()   // 1-based index of current card
-CardCount()    // Total number of cards
+my.Card.Index   // 0-based index of the current card (read/write; assigning moves the card)
+CardCount()     // Total number of cards
 ```
 
 **Reactive state (`me` / `my` / `I` - all synonyms for the current Visual's proxy):**

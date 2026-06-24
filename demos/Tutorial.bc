@@ -16,7 +16,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7001",
@@ -254,7 +254,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7021",
@@ -684,7 +684,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  Widget('Out').Value = ''\n\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  Widget('Out').Value = ''\n\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7039",
@@ -1172,7 +1172,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7059",
@@ -1695,7 +1695,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7075",
@@ -2037,7 +2037,7 @@
             334,
             56
           ],
-          "Value": "navigation: go(nextCard), go('Card Name') or go(3) - plus Card(), CardNumber() and CardCount()",
+          "Value": "navigation: go(nextCard), go('Card Name') or go(2) (0-based) - plus Card(), Card.Index and CardCount()",
           "Variant": "transparent",
           "lockText": true,
           "scrolling": false,
@@ -2134,7 +2134,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7088",
@@ -2488,7 +2488,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7101",
@@ -2838,7 +2838,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7110",
@@ -3088,7 +3088,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7119",
@@ -3343,7 +3343,7 @@
       "Color": "#f7f8fb",
       "Alpha": 1,
       "dontSearch": false,
-      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = CardNumber() + ' / ' + CardCount() }\n})",
+      "Script": "on('ready', () => {\n  const P = Widget('Progress')\n  if (P != null) { P.Value = (me.Card.Index + 1) + ' / ' + CardCount() }\n})",
       "Widgets": [
         {
           "Id": "bc-widget-7124",

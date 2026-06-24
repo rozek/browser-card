@@ -223,11 +223,11 @@ Scripts may import any ES module: `const { default:fn } = await import('https://
 | Function | Description |
 |----------|-------------|
 | `on(Msg, Fn)` | registers a handler for a message (one handler per message; later calls replace earlier ones) |
-| `go(Target)` | navigates to a card: a card ref (`nextCard`, `Card(...)`, ...), a card name, or a 1-based number |
-| `Card(NameOrNumber)` | returns a card ref by name or 1-based index (or `null`) |
-| `CardNumber()` | 1-based number of the current card (live) |
+| `go(Target)` | navigates to a card: a card ref (`nextCard`, `Card(...)`, ...), a card name, or a 0-based index |
+| `Card(NameOrIndex)` | returns a card ref by name or 0-based index (or `null`) |
 | `CardCount()` | number of cards in the deck |
-| `Widget(NameOrIndex)` | reactive proxy of a widget on the current card, by name or 1-based index (or `null`) |
+| `Widget(NameOrIndex)` | reactive proxy of a widget on the current card, by name or 0-based index (or `null`) |
+| `my.Card.Index` | 0-based position of a card in its deck (read/write; assigning moves the card, keeping it shown) — `my.Card.Index` gives the current card's index |
 | `trigger(Event, ...Args)` | fires an event on the current visual; it bubbles up (widget → card → deck) to the **first** matching handler. Extra arguments are passed to the handler |
 | `await triggered(Event, ...Args)` | like `trigger`, but resolves with the handler's return value (`undefined` if none matched); a handler's exception propagates to the caller |
 | `Widget(...).trigger(Event, ...)` / `.triggered(...)` | the same two methods exist on every proxy (`me`, `Widget(...)`, `my.Card`, `my.Deck`), so you can fire an event on **another** visual and let it bubble up from there |

@@ -19505,6 +19505,7 @@ const ys = 800, ks = 600, u5 = `
 
   /* embedded <bc-deck>: no stage chrome - just the deck with its cards
      (the dark backdrop, padding and "paper" look stay in <bc-designer>) */
+  .bc-app.bare { background: transparent; }
   .bc-card-area.bare {
     padding: 0;
     background: transparent;
@@ -22870,7 +22871,7 @@ function ld({
   };
   return K`
     <${An}>
-      <div class="bc-app" ref=${F0}>
+      <div class="bc-app${t ? "" : " bare"}" ref=${F0}>
         ${t && K`<${O5}
           DeckName=${N.Name}
           CardIndex=${P}

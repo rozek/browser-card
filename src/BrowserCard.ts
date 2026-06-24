@@ -2537,6 +2537,7 @@ const Styles = `
 
   /* embedded <bc-deck>: no stage chrome - just the deck with its cards
      (the dark backdrop, padding and "paper" look stay in <bc-designer>) */
+  .bc-app.bare { background: transparent; }
   .bc-card-area.bare {
     padding: 0;
     background: transparent;
@@ -6835,7 +6836,7 @@ function DeckView ({
 
   return html`
     <${Fragment}>
-      <div class="bc-app" ref=${deckViewRef}>
+      <div class="bc-app${withChrome ? '' : ' bare'}" ref=${deckViewRef}>
         ${withChrome && html`<${MenuBar}
           DeckName=${Deck.Name}
           CardIndex=${CardIndex}

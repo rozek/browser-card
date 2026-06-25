@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   sanitizeName, flattenCards, cardTreeIndex, pathOf,
-  siblingListOf, moveWouldCycle, moveCardInTree,
+  siblingListOf, moveWouldCycle, moveCardInTree, pathHiddenByCollapse,
 } from '../src/BrowserCard'
 
 const card = (Id:string, Name:string, CardList?:any[]) => ({
@@ -120,6 +120,30 @@ describe('moveCardInTree', () => {
     const D = deck()                                     // B,D are siblings under A
     expect(moveCardInTree(D,'bc-card-D','bc-card-A',0)).toBe(true)
     expect(D.Cards[0].CardList.map((c:any) => c.Id)).toEqual(['bc-card-D','bc-card-B'])
+  })
+})
+
+describe('pathHiddenByCollapse (panel collapse visibility)', () => {
+  it('hides cards inside a collapsed subtree', () => {
+    expect(pathHiddenByCollapse('A/B', 'A', [ 'A' ])).toBe(true)
+    expect(pathHiddenByCollapse('A/B/C', 'A', [ 'A' ])).toBe(true)
+  })
+  it('never hides the collapsed parent itself or unrelated cards', () => {
+    expect(pathHiddenByCollapse('A',   'A', [ 'A' ])).toBe(false)   // the parent stays
+    expect(pathHiddenByCollapse('X/Y', 'A', [ 'A' ])).toBe(false)   // unrelated subtree
+  })
+  it('collapsing a STRICT ANCESTOR of the active card has no effect', () => {
+    // active = A/B/C (an inner card with its own child D); collapse the outer parent A/B
+    expect(pathHiddenByCollapse('A/B/C',   'A/B/C', [ 'A/B' ])).toBe(false)  // active card
+    expect(pathHiddenByCollapse('A/B/C/D', 'A/B/C', [ 'A/B' ])).toBe(false)  // its child stays (the bug)
+    expect(pathHiddenByCollapse('A/B',     'A/B/C', [ 'A/B' ])).toBe(false)  // ancestor stays
+  })
+  it('still hides a sibling subtree of the active card when that sibling is collapsed', () => {
+    // active = A/B/C; collapse A/B/E (a sibling branch) → its children hide
+    expect(pathHiddenByCollapse('A/B/E/F', 'A/B/C', [ 'A/B/E' ])).toBe(true)
+  })
+  it('collapsing the active card itself still hides its own descendants', () => {
+    expect(pathHiddenByCollapse('A/B/C/D', 'A/B/C', [ 'A/B/C' ])).toBe(true)
   })
 })
 

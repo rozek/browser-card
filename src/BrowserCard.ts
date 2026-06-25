@@ -2879,6 +2879,7 @@ const Styles = `
     z-index: var(--bc-z-dropdown);
     user-select: none;
   }
+  .bc-decks-panel.bc-cards-wide { width: 500px; }
   .bc-decks-header {
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: space-between;
@@ -2940,6 +2941,16 @@ const Styles = `
     cursor: pointer; min-width: 0;
   }
   .bc-cards-item.active .bc-cards-main { cursor: default; }
+  .bc-cards-twisty {
+    flex-shrink: 0; width: 30px; text-align: center;
+    color: rgba(255,255,255,0.8); font-size: 30px; line-height: 1;
+    cursor: pointer; user-select: none;
+  }
+  .bc-cards-twisty:hover { color: #fff; }
+  .bc-cards-twisty.disabled {
+    color: rgba(255,255,255,0.2); cursor: default;
+  }
+  .bc-cards-twisty.disabled:hover { color: rgba(255,255,255,0.2); }
   .bc-card-thumb {
     position: relative; overflow: hidden; flex-shrink: 0;
     border-radius: 3px;
@@ -3678,6 +3689,23 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
 
   export function pathOf (Deck:BC_Deck, Card:BC_Card):string {
     return cardTreeIndex(Deck).get(Card.Id)?.Path ?? Card.Name
+  }
+
+// cards-panel collapse visibility: a card (by Path) is hidden when it lies inside
+// a collapsed subtree - EXCEPT when that collapsed parent is a (strict) ancestor
+// of the currently shown card (activePath). In that case the active card or one
+// of its descendants is inside the subtree, so collapsing it must have no effect,
+// keeping the active card's full context visible. Paths are '/'-joined card names.
+
+  export function pathHiddenByCollapse (
+    Path:string, activePath:string, collapsedPaths:Iterable<string>
+  ):boolean {
+    for (const P of collapsedPaths) {
+      if (! Path.startsWith(P + '/'))       { continue }   // not inside P's subtree
+      if (activePath.startsWith(P + '/'))   { continue }   // P is an ancestor of the active card
+      return true
+    }
+    return false
   }
 
 // the CardList that directly contains the given card (its parent's CardList,
@@ -6345,6 +6373,43 @@ function DeckView ({
     }
   }, [StorageKey, CardIndex])
 
+/**** collapsed cards in the cards panel ****/
+//    A collapsed parent hides its descendants in the panel only - navigation is
+//    unaffected. Card ids are reassigned on load, so the state is keyed by the
+//    card's Path (ancestor names + own name) to survive reloads. Hierarchical
+//    paths also make hiding a whole subtree a simple prefix test.
+
+  const CollapseKey = StorageKey ? 'bc-collapsed-cards:' + StorageKey : ''
+
+  const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(() => {
+    if (CollapseKey === '') { return new Set() }
+    try {
+      const Raw = localStorage.getItem(CollapseKey)
+      return new Set(Raw ? (JSON.parse(Raw) as string[]) : [])
+    } catch { return new Set() }
+  })
+
+  useEffect(() => {                                       // persist collapse state
+    if (CollapseKey === '') { return }
+    try { localStorage.setItem(CollapseKey, JSON.stringify([ ...collapsedPaths ])) } catch { /* ignore */ }
+  }, [CollapseKey, collapsedPaths])
+
+  function toggleCardCollapsed (Path:string):void {
+    setCollapsedPaths((prev) => {
+      const Next = new Set(prev)
+      Next.has(Path) ? Next.delete(Path) : Next.add(Path)
+      return Next
+    })
+  }
+
+  // a card is hidden when it lies inside a collapsed subtree - EXCEPT when that
+  // collapsed parent is a (strict) ancestor of the currently shown card: then the
+  // active card or one of its descendants would be inside it, so collapsing it
+  // must have no effect at all (the active card keeps its full context visible).
+  function cardHiddenByCollapse (Path:string, activePath:string):boolean {
+    return pathHiddenByCollapse(Path, activePath, collapsedPaths)
+  }
+
 /**** decks panel state and handlers ****/
 
   const [DeckList, setDeckList] = useState<BC_DeckInfo[] | null>(null)
@@ -7364,7 +7429,7 @@ function DeckView ({
         `}
         ${(activeOverlay === 'cards-panel') && html`
           <div class="bc-dropdown-backdrop" onClick=${() => setActiveOverlay(null)}></div>
-          <div class="bc-decks-panel">
+          <div class="bc-decks-panel bc-cards-wide">
             <div class="bc-decks-header">
               <span>Cards</span>
               <button class="bc-console-btn" onClick=${() => setActiveOverlay(null)}>×</button>
@@ -7374,14 +7439,21 @@ function DeckView ({
             `}
             <div class="bc-decks-list">
               ${(() => {
-                const Tree = cardTreeIndex(Deck)        // depth / parent / path per card
+                const Tree       = cardTreeIndex(Deck)   // depth / parent / path per card
+                const activePath = Tree.get(allCards[CardIndex]?.Id ?? '')?.Path ?? ''
                 return allCards.map((listedCard,i) => {  // flattened, depth-first
                   const Entry  = Tree.get(listedCard.Id)
                   const Depth  = Entry?.Depth ?? 0
                   const Path   = Entry?.Path  ?? listedCard.Name
-                  const sibs   = siblingListOf(Deck, listedCard.Id) ?? []
-                  const sibPos = sibs.findIndex((c) => c.Id === listedCard.Id)
-                  const Kids   = listedCard.CardList?.length ?? 0
+                  if (cardHiddenByCollapse(Path, activePath)) { return null }   // under a collapsed parent
+                  const sibs       = siblingListOf(Deck, listedCard.Id) ?? []
+                  const sibPos     = sibs.findIndex((c) => c.Id === listedCard.Id)
+                  const Kids       = listedCard.CardList?.length ?? 0
+                  // collapsing is pointless (and therefore locked) while the active
+                  // card lies strictly inside this card's subtree - its collapse is
+                  // ignored, so the toggle would do nothing
+                  const collapseLocked = (Kids > 0) && activePath.startsWith(Path + '/')
+                  const isCollapsed    = (Kids > 0) && collapsedPaths.has(Path) && ! collapseLocked
                   return html`
                 <div key=${listedCard.Id}
                   class=${`bc-cards-item${i === CardIndex ? ' active' : ''}`}>
@@ -7390,6 +7462,11 @@ function DeckView ({
                     onClick=${() => {
                       if (i !== CardIndex) { navigate({ type:'card-index', index:i }) }
                     }}>
+                    <span
+                      class=${`bc-cards-twisty${(Kids === 0) ? ' empty' : ''}${collapseLocked ? ' disabled' : ''}`}
+                      onClick=${(e:Event) => { e.stopPropagation(); if ((Kids > 0) && ! collapseLocked) { toggleCardCollapsed(Path) } }}
+                      title=${Kids === 0 ? '' : collapseLocked ? 'contains the current card - cannot be collapsed' : (isCollapsed ? 'expand nested cards' : 'collapse nested cards')}
+                    >${Kids > 0 ? (isCollapsed ? '▸' : '▾') : ''}</span>
                     <${CardThumbnail}
                       Card=${listedCard} CanvasW=${CanvasW} CanvasH=${CanvasH}
                     />

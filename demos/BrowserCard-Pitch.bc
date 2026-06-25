@@ -1,0 +1,794 @@
+{
+  "Id": "bc-deck-229",
+  "Name": "BrowserCard-Pitch",
+  "readOnly": false,
+  "swipeToAdjacentCard": true,
+  "Script": "",
+  "Cards": [
+    {
+      "Id": "bc-card-230",
+      "Name": "Card 1",
+      "Color": null,
+      "Alpha": 1,
+      "dontSearch": false,
+      "Script": "",
+      "Widgets": [
+        {
+          "Id": "bc-widget-231",
+          "Name": "TitleView 2",
+          "Number": 1,
+          "Type": "generic",
+          "zIndex": 1,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            10,
+            150,
+            10,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/TitleView.js')",
+          "Configuration": {},
+          "Value": "BrowserCard"
+        },
+        {
+          "Id": "bc-widget-232",
+          "Name": "Label 2",
+          "Number": 2,
+          "Type": "generic",
+          "zIndex": 2,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            10,
+            360,
+            50,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/Label.js')",
+          "Configuration": {},
+          "Value": "Play with Code and Data directly in the Browser"
+        },
+        {
+          "Id": "bc-widget-233",
+          "Name": "StickyTextNote 2",
+          "Number": 3,
+          "Type": "generic",
+          "zIndex": 3,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            10,
+            100,
+            90,
+            70
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/StickyTextNote.js')",
+          "Configuration": {},
+          "Value": "Hello, World!"
+        },
+        {
+          "Id": "bc-widget-234",
+          "Name": "TextView 2",
+          "Number": 4,
+          "Type": "generic",
+          "zIndex": 4,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            120,
+            150,
+            80,
+            80
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "at first, it looks like yet another tool for \"sticky notes\", but..."
+        },
+        {
+          "Id": "bc-widget-235",
+          "Name": "TextView 3",
+          "Number": 5,
+          "Type": "generic",
+          "zIndex": 5,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            10,
+            160,
+            170,
+            60
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "you can add arbitrary media, such as images..."
+        },
+        {
+          "Id": "bc-widget-236",
+          "Name": "Widget 2",
+          "Number": 6,
+          "Type": "generic",
+          "zIndex": 6,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            180,
+            40,
+            160,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/curvedLine.js')",
+          "Configuration": {
+            "Direction": "w",
+            "clockwise": true,
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-237",
+          "Name": "ImageView 2",
+          "Number": 7,
+          "Type": "generic",
+          "zIndex": 7,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            10,
+            100,
+            230,
+            100
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/ImageView.js')",
+          "Configuration": {
+            "scaling": "cover",
+            "alignment": "center center"
+          },
+          "Value": "./img/Mandelbrot_240x240.png"
+        },
+        {
+          "Id": "bc-widget-238",
+          "Name": "TextView 4",
+          "Number": 8,
+          "Type": "generic",
+          "zIndex": 8,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            120,
+            160,
+            290,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "...complete web pages..."
+        },
+        {
+          "Id": "bc-widget-239",
+          "Name": "Widget 3",
+          "Number": 9,
+          "Type": "generic",
+          "zIndex": 9,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            120,
+            40,
+            250,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/curvedLine.js')",
+          "Configuration": {
+            "Direction": "s",
+            "clockwise": true,
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-240",
+          "Name": "TextView 5",
+          "Number": 10,
+          "Type": "generic",
+          "zIndex": 10,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            160,
+            140,
+            230,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "...dynamic content..."
+        },
+        {
+          "Id": "bc-widget-241",
+          "Name": "WebView 2",
+          "Number": 11,
+          "Type": "generic",
+          "zIndex": 11,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            10,
+            330,
+            350,
+            240
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/WebView.js')",
+          "Configuration": {
+            "scaling": "cover",
+            "alignment": "center center"
+          },
+          "Value": "https://www.rozek.de"
+        },
+        {
+          "Id": "bc-widget-242",
+          "Name": "Widget 4",
+          "Number": 12,
+          "Type": "generic",
+          "zIndex": 12,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            290,
+            30,
+            230,
+            110
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/straightLine.js')",
+          "Configuration": {
+            "Direction": "n",
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-243",
+          "Name": "SubtitleView 2",
+          "Number": 13,
+          "Type": "generic",
+          "zIndex": 13,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            270,
+            100,
+            200,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/SubtitleView.js')\n\non('ready', () => {\n  const padded = (n) => String(n).padStart(2,'0')\n  function updateClock () {\n    const now = new Date()\n    my.Value = (\n      padded(now.getHours())   + ':' + \n      padded(now.getMinutes()) + ':' + \n      padded(now.getSeconds())\n    )\n  }\n  updateClock()                          // show immediately, then keep current\n  every(1000, updateClock)\n})",
+          "Configuration": {},
+          "Value": "08:23:07"
+        },
+        {
+          "Id": "bc-widget-244",
+          "Name": "Widget 5",
+          "Number": 14,
+          "Type": "generic",
+          "zIndex": 14,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            300,
+            60,
+            160,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/curvedLine.js')",
+          "Configuration": {
+            "Direction": "e",
+            "clockwise": true,
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-245",
+          "Name": "TextView 6",
+          "Number": 15,
+          "Type": "generic",
+          "zIndex": 15,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            370,
+            170,
+            140,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "...and even input controls!"
+        },
+        {
+          "Id": "bc-widget-246",
+          "Name": "TextlineInput 2",
+          "Number": 16,
+          "Type": "generic",
+          "zIndex": 16,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            370,
+            170,
+            180,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/nativeTextlineInput.js')\n\nmy.Value = undefined\n\non('update', () => {\n  my.Value = my.Card.QRCodeValue\n})\n\non('change', (Value) => {\n  my.Card.QRCodeValue = Value\n})\n",
+          "Configuration": {
+            "Placeholder": "(enter text for QR code)"
+          },
+          "Value": ""
+        },
+        {
+          "Id": "bc-widget-247",
+          "Name": "Widget 6",
+          "Number": 17,
+          "Type": "generic",
+          "zIndex": 17,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            370,
+            30,
+            220,
+            60
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/straightLine.js')",
+          "Configuration": {
+            "Direction": "s",
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-248",
+          "Name": "TextView 7",
+          "Number": 18,
+          "Type": "generic",
+          "zIndex": 18,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            400,
+            160,
+            220,
+            60
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "Widgets automatically react on state changes"
+        },
+        {
+          "Id": "bc-widget-249",
+          "Name": "Widget 7",
+          "Number": 19,
+          "Type": "generic",
+          "zIndex": 19,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            550,
+            50,
+            180,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/straightLine.js')",
+          "Configuration": {
+            "Direction": "e",
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-250",
+          "Name": "TextView 8",
+          "Number": 20,
+          "Type": "generic",
+          "zIndex": 20,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            370,
+            210,
+            280,
+            120
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "Use scripting to freely experiment with code and data - a bit like a 2D REPL or like interactive computing notebooks (without the need for a server)"
+        },
+        {
+          "Id": "bc-widget-251",
+          "Name": "Widget 8",
+          "Number": 21,
+          "Type": "generic",
+          "zIndex": 21,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            370,
+            30,
+            400,
+            60
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/straightLine.js')",
+          "Configuration": {
+            "Direction": "s",
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-252",
+          "Name": "TextView 9",
+          "Number": 22,
+          "Type": "generic",
+          "zIndex": 22,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            400,
+            140,
+            400,
+            60
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "Craft complete tools, if you like"
+        },
+        {
+          "Id": "bc-widget-253",
+          "Name": "TitleView 3",
+          "Number": 23,
+          "Type": "generic",
+          "zIndex": 23,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            360,
+            250,
+            470,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/TitleView.js')",
+          "Configuration": {},
+          "Value": "Temperature Converter"
+        },
+        {
+          "Id": "bc-widget-254",
+          "Name": "Label 3",
+          "Number": 24,
+          "Type": "generic",
+          "zIndex": 24,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            370,
+            100,
+            510,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/Label.js')",
+          "Configuration": {},
+          "Value": "°Celsius:"
+        },
+        {
+          "Id": "bc-widget-255",
+          "Name": "Label 4",
+          "Number": 25,
+          "Type": "generic",
+          "zIndex": 25,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            370,
+            100,
+            540,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/Label.js')",
+          "Configuration": {},
+          "Value": "°Fahrenheit:"
+        },
+        {
+          "Id": "bc-widget-256",
+          "Name": "NumberInput 2",
+          "Number": 26,
+          "Type": "generic",
+          "zIndex": 26,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            470,
+            120,
+            510,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/nativeNumberInput.js')\n\nmy.Value = 0\n\non('update', () => {\n  my.Value = my.Card.Temperature ?? 0\n})\n\non('change', (Value) => {\n  my.Card.Temperature = Value\n})",
+          "Configuration": {},
+          "Value": 5
+        },
+        {
+          "Id": "bc-widget-257",
+          "Name": "NumberInput 3",
+          "Number": 27,
+          "Type": "generic",
+          "zIndex": 27,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            470,
+            120,
+            540,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/nativeNumberInput.js')\n\nmy.Value = 0\n\non('update', () => {\n  my.Value = (my.Card.Temperature ?? 0) * 9/5 + 32\n})\n\non('change', (Value) => {\n  my.Card.Temperature = (Value-32) * 5/9\n})",
+          "Configuration": {},
+          "Value": 41
+        },
+        {
+          "Id": "bc-widget-258",
+          "Name": "Widget",
+          "Number": 28,
+          "Type": "generic",
+          "zIndex": 28,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            610,
+            80,
+            480,
+            60
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/curvedLine.js')",
+          "Configuration": {
+            "Direction": "n",
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-259",
+          "Name": "TextView 10",
+          "Number": 29,
+          "Type": "generic",
+          "zIndex": 29,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            590,
+            200,
+            380,
+            100
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "Now export your work as a self-contained web page and BrowserCard serves as a low-code application generator!"
+        },
+        {
+          "Id": "bc-widget-260",
+          "Name": "Widget-2",
+          "Number": 30,
+          "Type": "generic",
+          "zIndex": 30,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            610,
+            160,
+            150,
+            160
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/QRCodeView.js')\n\nconst DefaultValue = 'https://github.com/rozek/browser-card'\n\nmy.Value = DefaultValue\n\non('update', () => {\n  const Value = my.Card.QRCodeValue\n  my.Value = (Value == null) || (Value === '') ? DefaultValue : Value\n})\n",
+          "Configuration": {
+            "ErrorCorrection": "M",
+            "Border": 4,
+            "Color": "#000000",
+            "Background": "#ffffff"
+          },
+          "Value": "https://github.com/rozek/browser-card"
+        },
+        {
+          "Id": "bc-widget-261",
+          "Name": "Widget 9",
+          "Number": 31,
+          "Type": "generic",
+          "zIndex": 31,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            670,
+            30,
+            320,
+            60
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/straightLine.js')",
+          "Configuration": {
+            "Direction": "n",
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        },
+        {
+          "Id": "bc-widget-262",
+          "Name": "HTMLView",
+          "Number": 32,
+          "Type": "generic",
+          "zIndex": 32,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            630,
+            120,
+            340,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/HTMLView.js')",
+          "Configuration": {},
+          "Value": "<span style=\"font-weight:bold; font-size:18px\">Have &nbsp; &nbsp; Fun!</span>"
+        },
+        {
+          "Id": "bc-widget-263",
+          "Name": "TextView 11",
+          "Number": 33,
+          "Type": "generic",
+          "zIndex": 33,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            530,
+            260,
+            30,
+            100
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/MarkdownView.js')",
+          "Configuration": {},
+          "Value": "BrowserCard started as a small test for Anthropic Fable 5 (while it was available for non-US citizens), but soon turned out to be quite useful - try yourself!"
+        },
+        {
+          "Id": "bc-widget-264",
+          "Name": "Widget 10",
+          "Number": 34,
+          "Type": "generic",
+          "zIndex": 34,
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            280,
+            240,
+            70,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('./behaviors/widgets/straightLine.js')",
+          "Configuration": {
+            "Direction": "ne",
+            "ArrowHeads": "end",
+            "Color": "#000000",
+            "Thickness": 2
+          }
+        }
+      ],
+      "Temperature": 5,
+      "QRCodeValue": ""
+    }
+  ],
+  "SnapToGrid": true,
+  "CardWidth": 800,
+  "CardHeight": 600
+}

@@ -1720,6 +1720,28 @@ console.warn(ErrorToShow)          // please keep this line for easier debugging
     return `${ErrorReport.Title}\n\n${ErrorReport.Message}`
   }
 
+/**** BC_SafeSlot — per-Visual error boundary around rendered script output ****/
+//    a render handler may return preact components whose bodies only execute
+//    during reconciliation, i.e. outside the try/catch in "renderResult". this
+//    boundary keeps such a failure local to its Visual, so that neither the
+//    runtime nor the designer is torn down by a single broken render. recovery
+//    after an edit is handled at the call site by passing a "key" that changes
+//    with the script: a changed key remounts the boundary with a clean slate and
+//    re-attempts the render. the boundary itself never auto-resets - an in-place
+//    reset that immediately re-throws behaves non-deterministically
+
+  export function BC_SafeSlot (PropSet:Indexable):any {
+    const [ Signal ] = useErrorBoundary()
+
+    if (Signal != null) {
+      console.warn('[BrowserCard] render error:', Signal)
+      const Message = ((Signal as any)?.message ?? String(Signal))
+      return html`<div class="bc-error-indicator" title=${'render error: '+Message}/>`
+    }
+
+    return PropSet.children
+  }
+
 //------------------------------------------------------------------------------
 //--                            Visual Descriptors                            --
 //------------------------------------------------------------------------------
@@ -4202,19 +4224,23 @@ function WidgetView ({
     )
     onWidgetProxy(Obj.Id, proxy)
 
-  // syntax-check the user script first - a broken script must not prevent the
-  // intrinsic behavior from running (the widget would disappear otherwise)
-    let userScript = Obj.Script ?? ''
+  // syntax-check the user script first - a broken script is ignored (simply not
+  // run), never deleted: the original stays in Obj.Script and is tried again
+  // after the next edit. the intrinsic behavior is invoked from within the same
+  // script (behaviorPrefix), so it cannot run correctly while the script is
+  // faulty - hence a broken script suppresses the behavior too
+    const userScript = Obj.Script ?? ''
+    let scriptIsRunnable = true
     if (userScript.trim() !== '') {
       try {
         new Function(`return (async () => {\n${userScript}\n})()`)
       } catch (Signal) {
-        console.warn('[BrowserCard] syntax error in script of widget ' + quoted(Obj.Name) + ':', Signal)
-        userScript = ''
+        console.warn('[BrowserCard] syntax error in script of widget ' + quoted(Obj.Name) + ' - ignored:', Signal)
+        scriptIsRunnable = false
       }
     }
 
-    const effectiveScript = behaviorPrefix + userScript
+    const effectiveScript = scriptIsRunnable ? behaviorPrefix + userScript : ''
     inst.run(effectiveScript, Params, Args)
     .catch((Signal:any) => {        // a runtime error must not block 'ready'/onReady
       console.warn('[BrowserCard] widget script error:', Signal)
@@ -4251,7 +4277,7 @@ function WidgetView ({
       class=${`bc-widget${Obj.Type === 'shape' ? ' bc-shape' : ''}`}
       style=${{ ...RectStyle(Obj, StackIndex, containerW, containerH), ...extraStyle }}
     >
-      ${renderSlot}
+      <${BC_SafeSlot} key=${'safe:'+String(Obj.Script)}>${renderSlot}<//>
     </div>
   `
 }
@@ -5293,7 +5319,7 @@ function ColorAlphaRow (Label:string, Current:string, Commit:(Color:string) => v
 
 function CardView ({
   Card, Scale, CanvasW, CanvasH, makeContext,
-  deckProxy, onCardProxy, onCardReady, reorderCard, deckRenderSlot = null,
+  deckProxy, onCardProxy, onCardReady, reorderCard, deckRenderSlot = null, deckScript = '',
   isEditing = false, selectedIds = [], onSelect, onSelectMany, onEdited, Grid, onBeforeEdit,
   withChrome = true,
 }:{
@@ -5307,6 +5333,7 @@ function CardView ({
   onCardReady: () => void
   reorderCard?:(Card:BC_Card, toIndex:number) => void
   deckRenderSlot?: unknown                 // deck-level on('render') output, shown behind the card
+  deckScript?: string                      // the deck script, used to key the deck-render boundary
   isEditing?:  boolean
   selectedIds?:string[]
   onSelect?:   (Id:string | null, additive:boolean) => void
@@ -5405,7 +5432,26 @@ function CardView ({
     readyFiredRef.current = false
     childReadySet.current.clear()
 
-    inst.run(Card.Script ?? '', Params, Args).then(() => {
+  // syntax-check the user script first - a broken script is ignored (simply not
+  // run), never deleted: the original stays in Card.Script and is tried again
+  // after the next edit. ignoring it must neither block the ready chain the
+  // designer waits on nor tear anything down
+    const cardScript = Card.Script ?? ''
+    let scriptIsRunnable = true
+    if (cardScript.trim() !== '') {
+      try {
+        new Function(`return (async () => {\n${cardScript}\n})()`)
+      } catch (Signal) {
+        console.warn('[BrowserCard] syntax error in card script - ignored:', Signal)
+        scriptIsRunnable = false
+      }
+    }
+
+    inst.run(scriptIsRunnable ? cardScript : '', Params, Args)
+    .catch((Signal:any) => {         // a runtime error must not block the ready chain
+      console.warn('[BrowserCard] card script error:', Signal)
+    })
+    .then(() => {                    // runs regardless of outcome (finally-like)
       scriptDoneRef.current = true
       forceUpdate()
       checkAllReadyRef.current()
@@ -5444,10 +5490,12 @@ function CardView ({
   return html`
     <div style=${WrapperStyle}>
       ${(deckRenderSlot != null) && html`
-        <div class="bc-deck-render" style=${DeckRenderStyle}>${deckRenderSlot}</div>
+        <div class="bc-deck-render" style=${DeckRenderStyle}>
+          <${BC_SafeSlot} key=${'safe:'+String(deckScript)}>${deckRenderSlot}<//>
+        </div>
       `}
       <div class="bc-card-canvas" style=${CanvasStyle} ref=${cardViewRef}>
-        ${renderSlot}
+        <${BC_SafeSlot} key=${'safe:'+String(Card.Script)}>${renderSlot}<//>
         ${allObjects.map((obj) => html`
           <${WidgetView}
             key=${(obj as BC_Widget).Id}
@@ -6711,7 +6759,26 @@ function DeckView ({
     deckScriptDoneRef.current  = false
     cardReadyDoneRef.current   = false
 
-    inst.run(Deck.Script ?? '', Params, Args).then(() => {
+  // syntax-check the user script first - a broken script is ignored (simply not
+  // run), never deleted: the original stays in Deck.Script and is tried again
+  // after the next edit. ignoring it must neither block the ready chain the
+  // designer waits on nor tear anything down
+    const deckScript = Deck.Script ?? ''
+    let scriptIsRunnable = true
+    if (deckScript.trim() !== '') {
+      try {
+        new Function(`return (async () => {\n${deckScript}\n})()`)
+      } catch (Signal) {
+        console.warn('[BrowserCard] syntax error in deck script - ignored:', Signal)
+        scriptIsRunnable = false
+      }
+    }
+
+    inst.run(scriptIsRunnable ? deckScript : '', Params, Args)
+    .catch((Signal:any) => {         // a runtime error must not block the ready chain
+      console.warn('[BrowserCard] deck script error:', Signal)
+    })
+    .then(() => {                    // runs regardless of outcome (finally-like)
       deckScriptDoneRef.current = true
       deckForceUpdate()
       checkDeckReady()
@@ -6883,6 +6950,7 @@ function DeckView ({
               CanvasH=${CanvasH}
               withChrome=${withChrome}
               deckRenderSlot=${deckRenderSlot}
+              deckScript=${Deck.Script ?? ''}
               makeContext=${makeBaseContext}
               deckProxy=${deckProxy}
               onCardProxy=${onCardProxy}

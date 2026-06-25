@@ -1,6 +1,6 @@
 # BrowserCard - Test Plan
 
-> **Status:** implemented as a [Vitest](https://vitest.dev) suite under `test/` - `npm test` runs **138 tests, all green**. The pure-logic, runtime, context, proxy, export, demo-integrity and MCP-connector areas are covered; deep DOM-render/pointer interaction of the designer in jsdom is intentionally limited to registration + crash-free mounting (see "Not automatically testable").
+> **Status:** implemented as a [Vitest](https://vitest.dev) suite under `test/` - `npm test` runs the pure-logic, runtime, context, proxy, export, demo-integrity, MCP-connector and **card-hierarchy** areas; deep DOM-render/pointer interaction of the designer in jsdom is intentionally limited to registration + crash-free mounting (see "Not automatically testable").
 >
 > **Note (area 17d):** `MCPSettingsDialog` is an internal Preact component and not exported. Its localStorage contract and `connector.configure()` side-effect isolation are tested in `mcp-settings-dialog.test.ts`; the component rendering itself requires manual/visual testing until the component is exported.
 
@@ -115,6 +115,7 @@ Suggested scripts (add to `package.json`):
 | handler replacement | a second `on('msg', …)` replaces the first |
 | error isolation | a throwing script is caught and logged, does not break the instance (note: `triggered` deliberately re-throws handler errors) |
 | syntax-error guard | a widget with a syntactically invalid script still runs its intrinsic behavior |
+| runaway-loop circuit breaker | when scripts are (re-)run far too often in a short window (a render/mount loop), `run` suspends execution and warns once instead of freezing the tab |
 | timer auto-cleanup | `after`/`every` timers registered in a script are cancelled on `teardown` (assert with fake timers) |
 | teardown order | `obsolete` fires; handlers cleared synchronously so a re-run can re-register |
 
@@ -142,6 +143,8 @@ Suggested scripts (add to `package.json`):
 | `me.Configuration` | exposes the widget's config object |
 | `me.Deck` / `me.Card` / `me.Card.WidgetList` | resolve to the right proxies / ordered widget list |
 | `me.trigger` / `me.triggered` | every proxy exposes both, delegating to its `$Script` instance; null-safe before a script is attached |
+| **render-loop protection** | a reactive write inside an `on('render')`/`on('update')` handler writes the value but does **not** schedule another render (no infinite loop); writes outside a render pass re-render normally; suppression does not leak across passes |
+| **proxy-assignment guard** | assigning a Deck/Card/Widget proxy to a property (e.g. the typo `my.Value = my`) is rejected with a warning and leaves the descriptor JSON-serializable (no circular reference) |
 
 ## 11. Event bubbling
 
@@ -271,6 +274,24 @@ Run the same checks the deck generators use, as a test over `demos/*.bc` and `Fe
 | bounds | `left-width`/`top-height` widgets lie within `CardWidth`×`CardHeight` |
 | field heights | non-scrolling fields are tall enough for their font size |
 | script syntax | every deck/card/widget script compiles (`new Function`) without throwing |
+
+---
+
+## 18. Card hierarchy (schema A) — `hierarchy.test.ts`, plus extensions in `structure`, `naming`, `proxies`, `mcp-connector`
+
+| Test | Expectation |
+|------|-------------|
+| `sanitizeName` | strips every `'/'`; empty result falls back to the given default; spaces are kept |
+| `flattenCards` | depth-first, parents before children; equals `Deck.Cards` for a flat deck |
+| `cardTreeIndex` / `pathOf` | correct parent, depth and `'/'`-joined Path per card |
+| `siblingListOf` | returns `Deck.Cards` for a root card, the parent `CardList` for a nested one, `null` for unknown |
+| `moveWouldCycle` | detects self/descendant targets; allows valid moves and moves to root |
+| `moveCardInTree` | re-parents a subtree, moves to root, reorders siblings; refuses cycles & unknowns without mutating |
+| cascade delete | removing a subtree from its sibling list drops all descendants |
+| `ValueIsCardJSON` (structure) | accepts/rejects nested `CardList`; deep round-trip stays valid |
+| `prepareLoadedDeck` / strip*/normalize* (naming) | recurse through `CardList`; ids fresh & unique; `'/'` stripped from deck/card/widget names incl. nested |
+| card proxy (proxies) | `Path` computed & read-only; `Index` is the flattened depth-first position |
+| MCP connector | `list_cards` yields `parent_id`/`depth`/`path`/`child_count`; `card_get`/`card_patch` reach nested cards & strip `'/'`; `card_add` honors `parent_id`; `card_delete` cascades; `card_move` re-parents & rejects cycles; `card_reorder` is sibling-relative |
 
 ---
 

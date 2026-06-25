@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MCPConnector } from '../src/MCPConnector'
 import type { BCMCPContext } from '../src/MCPConnector'
-import type { BC_Deck } from '../src/BrowserCard'
+import type { BC_Deck, BC_Card } from '../src/BrowserCard'
+import { flattenCards } from '../src/BrowserCard'
 
 //----------------------------------------------------------------------------//
 //                            fake WebSocket                                    //
@@ -656,4 +657,94 @@ describe('MCPConnector — tool handlers', () => {
     })
   })
 
+})
+
+//============================================================================//
+//                          nested cards (schema A)                            //
+//============================================================================//
+
+// Card 1 ├─ Child A ─ Grandchild
+//        └─ Child B
+function makeNestedDeck (): BC_Deck {
+  const card = (Id:string, Name:string, CardList?:any[]):any => ({
+    Id, Name, Color:null, Alpha:1, dontSearch:false, Script:'', Widgets:[],
+    ...(CardList ? { CardList } : {}),
+  })
+  return {
+    Id:'bc-deck-1', Name:'Test', readOnly:false, swipeToAdjacentCard:true, Script:'',
+    CardWidth:600, CardHeight:450,
+    Cards:[ card('bc-card-1','Card 1',[
+      card('bc-card-2','Child A',[ card('bc-card-3','Grandchild') ]),
+      card('bc-card-4','Child B'),
+    ]) ],
+  } as any
+}
+
+async function withDeck (Deck: BC_Deck, fn: (ws: MockWS, Deck: BC_Deck) => Promise<void>) {
+  localStorage.setItem('bc-mcp-url',   'ws://localhost:3001/bc')
+  localStorage.setItem('bc-mcp-token', 'tok')
+  const c = new MCPConnector()
+  c.setContext(makeCtx(Deck))
+  c.connect()
+  const ws = MockWS.lastInstance!
+  ws.triggerOpen(); ws.sent = []
+  await fn(ws, Deck)
+  c.disconnect()
+}
+
+const findCard = (Deck: BC_Deck, Id: string):BC_Card =>
+  flattenCards(Deck).find((c) => c.Id === Id)!
+
+describe('MCPConnector — nested cards', () => {
+  it('list_cards traverses the tree with parent_id / depth / path', async () => {
+    await withDeck(makeNestedDeck(), async (ws) => {
+      const rows = (await invoke(ws, 'list_cards')).result as any[]
+      expect(rows.map((r) => r.id)).toEqual([ 'bc-card-1','bc-card-2','bc-card-3','bc-card-4' ])
+      const gc = rows.find((r) => r.id === 'bc-card-3')
+      expect(gc.parent_id).toBe('bc-card-2')
+      expect(gc.depth).toBe(2)
+      expect(gc.path).toBe('Card 1/Child A/Grandchild')
+      expect(rows.find((r) => r.id === 'bc-card-2').child_count).toBe(1)
+    })
+  })
+
+  it('card_get reaches a nested card; card_patch strips "/" from the name', async () => {
+    await withDeck(makeNestedDeck(), async (ws, Deck) => {
+      expect(((await invoke(ws, 'card_get', { card_id:'bc-card-3' })).result as any).Name).toBe('Grandchild')
+      await invoke(ws, 'card_patch', { card_id:'bc-card-3', props:{ Name:'a/b/c' } })
+      expect(findCard(Deck,'bc-card-3').Name).toBe('abc')
+    })
+  })
+
+  it('card_add inserts under a given parent', async () => {
+    await withDeck(makeNestedDeck(), async (ws, Deck) => {
+      const id = (await invoke(ws, 'card_add', { parent_id:'bc-card-4', props:{ Name:'New' } })).result as string
+      expect(findCard(Deck,'bc-card-4').CardList!.map((c) => c.Id)).toEqual([ id ])
+    })
+  })
+
+  it('card_delete removes the whole subtree (cascade)', async () => {
+    await withDeck(makeNestedDeck(), async (ws, Deck) => {
+      await invoke(ws, 'card_delete', { card_id:'bc-card-2' })   // Child A + Grandchild
+      expect(flattenCards(Deck).map((c) => c.Id)).toEqual([ 'bc-card-1','bc-card-4' ])
+    })
+  })
+
+  it('card_move re-parents a card and rejects a cycle', async () => {
+    await withDeck(makeNestedDeck(), async (ws, Deck) => {
+      const ok = await invoke(ws, 'card_move', { card_id:'bc-card-4', parent_id:'bc-card-2', index:0 })
+      expect(ok.error).toBeNull()
+      expect(findCard(Deck,'bc-card-2').CardList!.some((c) => c.Id === 'bc-card-4')).toBe(true)
+
+      const bad = await invoke(ws, 'card_move', { card_id:'bc-card-1', parent_id:'bc-card-3', index:0 })
+      expect(typeof bad.error).toBe('string')           // would create a cycle
+    })
+  })
+
+  it('card_reorder reorders within the sibling list', async () => {
+    await withDeck(makeNestedDeck(), async (ws, Deck) => {
+      await invoke(ws, 'card_reorder', { card_id:'bc-card-4', new_index:0 })
+      expect(findCard(Deck,'bc-card-1').CardList!.map((c) => c.Id)).toEqual([ 'bc-card-4','bc-card-2' ])
+    })
+  })
 })

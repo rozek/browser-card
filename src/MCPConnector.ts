@@ -7,6 +7,7 @@
 import type { BC_Deck, BC_Card, BC_Widget } from './BrowserCard.js'
 import {
   ScriptInstance, buildContext, buildScriptParams, raiseIdCounterTo,
+  flattenCards, cardTreeIndex, siblingListOf, moveCardInTree, sanitizeName,
 } from './BrowserCard.js'
 
 //----------------------------------------------------------------------------//
@@ -107,7 +108,7 @@ function offsetsFromRect (
 
 function nextCardID (Deck: BC_Deck):string {
   let Max = 0
-  for (const Card of Deck.Cards) {
+  for (const Card of flattenCards(Deck)) {    // scan nested cards too
     const N = parseInt(Card.Id.replace('bc-card-', ''), 10)
     if (! isNaN(N)) { Max = Math.max(Max, N) }
   }
@@ -119,7 +120,7 @@ function nextCardID (Deck: BC_Deck):string {
 
 function nextWidgetID (Deck: BC_Deck):string {
   let Max = 0
-  for (const Card of Deck.Cards) {
+  for (const Card of flattenCards(Deck)) {    // scan nested cards too
     for (const Widget of Card.Widgets) {
       const N = parseInt(Widget.Id.replace('bc-widget-', ''), 10)
       if (! isNaN(N)) { Max = Math.max(Max, N) }
@@ -140,8 +141,8 @@ type RawTarget = 'deck' | { Card:BC_Card } | { Card:BC_Card, Widget:BC_Widget }
 function resolveTarget (Target: string, Deck: BC_Deck):RawTarget | null {
   if (Target === 'deck') { return 'deck' }
 
-  const Parts  = Target.split('/')
-  const Card   = Deck.Cards.find((c) => c.Id === Parts[0]) ?? null
+  const Parts  = Target.split('/')      // "cardId" or "cardId/widgetId" (ids, not names)
+  const Card   = flattenCards(Deck).find((c) => c.Id === Parts[0]) ?? null
   if (Card == null) { return null }
   if (Parts.length === 1) { return { Card } }
 
@@ -299,6 +300,7 @@ export class MCPConnector {
       case (Method === 'card_add'):        return this.#CardAdd(Params)
       case (Method === 'card_delete'):     return this.#CardDelete(Params)
       case (Method === 'card_reorder'):    return this.#CardReorder(Params)
+      case (Method === 'card_move'):       return this.#CardMove(Params)
       case (Method === 'widget_get'):      return this.#WidgetGet(Params)
       case (Method === 'widget_patch'):    return this.#WidgetPatch(Params)
       case (Method === 'widget_add'):      return this.#WidgetAdd(Params)
@@ -363,18 +365,27 @@ export class MCPConnector {
   //--------------------------------------------------------------------------//
 
   #listCards () {
-    return this.#ctx.getDeck().Cards.map((Card) => ({   // position = array order
-      id:           Card.Id,
-      name:         Card.Name,
-      widget_count: Card.Widgets.length,
-      has_script:   Card.Script.trim() !== '',
-    }))
+    const Deck  = this.#ctx.getDeck()
+    const Index = cardTreeIndex(Deck)                   // parent / depth / path per card
+    return flattenCards(Deck).map((Card) => {           // depth-first, parents first
+      const Entry = Index.get(Card.Id)
+      return {
+        id:           Card.Id,
+        name:         Card.Name,
+        parent_id:    Entry?.Parent?.Id ?? null,
+        depth:        Entry?.Depth ?? 0,
+        path:         Entry?.Path ?? Card.Name,
+        widget_count: Card.Widgets.length,
+        child_count:  Card.CardList?.length ?? 0,
+        has_script:   Card.Script.trim() !== '',
+      }
+    })
   }
 
   #listWidgets (Params: Record<string,unknown>) {
     const Deck   = this.#ctx.getDeck()
     const CardID = Params.card_id as string
-    const Card   = Deck.Cards.find((c) => c.Id === CardID)
+    const Card   = flattenCards(Deck).find((c) => c.Id === CardID)
     if (Card == null) { throw new Error(`card not found: ${CardID}`) }
 
     const W = Deck.CardWidth  ?? 600
@@ -421,7 +432,7 @@ export class MCPConnector {
     }
 
     if (Scope !== 'widgets') {
-      for (const Card of Deck.Cards) {
+      for (const Card of flattenCards(Deck)) {
         if (matchesCard(Card)) {
           Results.push({
             target:  Card.Id,
@@ -434,7 +445,7 @@ export class MCPConnector {
     }
 
     if (Scope !== 'cards') {
-      for (const Card of Deck.Cards) {
+      for (const Card of flattenCards(Deck)) {
         for (const Widget of Card.Widgets) {
           if (matchesWidget(Widget)) {
             const Value = (Widget as any).Value as string ?? ''
@@ -471,11 +482,12 @@ export class MCPConnector {
     const CardID = Params.card_id as string
     const Props  = (Params.props ?? {}) as Record<string,unknown>
     this.#ctx.mutateDeck((Deck) => {
-      const Card = Deck.Cards.find((c) => c.Id === CardID)
+      const Card = flattenCards(Deck).find((c) => c.Id === CardID)
       if (Card == null) { throw new Error(`card not found: ${CardID}`) }
       for (const Key of [ 'Name','Color','Alpha','dontSearch','Script' ]) {
         if (Key in Props) { (Card as any)[Key] = Props[Key] }
       }
+      if ('Name' in Props) { Card.Name = sanitizeName(Card.Name, 'Card') }   // '/' reserved
     })
     return null
   }
@@ -483,43 +495,70 @@ export class MCPConnector {
   #CardAdd (Params: Record<string,unknown>):string {
     const Props    = (Params.props ?? {}) as Record<string,unknown>
     const Index    = Params.index as number | undefined
+    const ParentID = (Params.parent_id ?? null) as string | null   // null/absent = deck root
     let NewID      = ''
     this.#ctx.mutateDeck((Deck) => {
       NewID = nextCardID(Deck)
       const NewCard = {
         Id:         NewID,
-        Name:       Props.Name       ?? 'New Card',
+        Name:       sanitizeName(Props.Name ?? 'New Card', 'Card'),   // '/' reserved
         Color:      Props.Color      ?? null,
         Alpha:      Props.Alpha      ?? 1,
         dontSearch: Props.dontSearch ?? false,
         Script:     Props.Script     ?? '',
         Widgets:    [],
       } as unknown as BC_Card
-      Index == null
-        ? Deck.Cards.push(NewCard)
-        : Deck.Cards.splice(Index, 0, NewCard)
+
+      let list:BC_Card[]
+      if (ParentID == null) {
+        list = Deck.Cards
+      } else {
+        const Parent = flattenCards(Deck).find((c) => c.Id === ParentID)
+        if (Parent == null) { throw new Error(`parent card not found: ${ParentID}`) }
+        list = (Parent.CardList ??= [])
+      }
+      Index == null ? list.push(NewCard) : list.splice(Index, 0, NewCard)
     })
     return NewID
   }
 
+  // deletes a card AND its whole subtree (cascade). To keep nested cards, move
+  // them out first with card_move.
   #CardDelete (Params: Record<string,unknown>):null {
     const CardID = Params.card_id as string
     this.#ctx.mutateDeck((Deck) => {
-      const Idx = Deck.Cards.findIndex((c) => c.Id === CardID)
-      if (Idx < 0) { throw new Error(`card not found: ${CardID}`) }
-      Deck.Cards.splice(Idx, 1)
+      const list = siblingListOf(Deck, CardID)
+      if (list == null) { throw new Error(`card not found: ${CardID}`) }
+      const Idx = list.findIndex((c) => c.Id === CardID)
+      list.splice(Idx, 1)
     })
     return null
   }
 
+  // reorder a card within its own sibling list (new_index is relative to siblings)
   #CardReorder (Params: Record<string,unknown>):null {
     const CardID   = Params.card_id as string
     const NewIndex = Params.new_index as number
     this.#ctx.mutateDeck((Deck) => {
-      const Idx = Deck.Cards.findIndex((c) => c.Id === CardID)
-      if (Idx < 0) { throw new Error(`card not found: ${CardID}`) }
-      const [ Card ] = Deck.Cards.splice(Idx, 1)
-      Deck.Cards.splice(NewIndex, 0, Card)
+      const list = siblingListOf(Deck, CardID)
+      if (list == null) { throw new Error(`card not found: ${CardID}`) }
+      const Idx = list.findIndex((c) => c.Id === CardID)
+      const [ Card ] = list.splice(Idx, 1)
+      const To = Math.max(0, Math.min(list.length, NewIndex))
+      list.splice(To, 0, Card)
+    })
+    return null
+  }
+
+  // move a card (with its subtree) under a new parent (parent_id null = deck root)
+  #CardMove (Params: Record<string,unknown>):null {
+    const CardID   = Params.card_id as string
+    const ParentID = (Params.parent_id ?? null) as string | null
+    const Index    = (Params.index ?? 0) as number
+    this.#ctx.mutateDeck((Deck) => {
+      if (! moveCardInTree(Deck, CardID, ParentID, Index)) {
+        throw new Error(`cannot move card ${CardID} (unknown card/parent or would create a cycle)`)
+      }
     })
     return null
   }
@@ -556,7 +595,7 @@ export class MCPConnector {
     let NewID    = ''
 
     this.#ctx.mutateDeck((Deck) => {
-      const Card = Deck.Cards.find((c) => c.Id === CardID)
+      const Card = flattenCards(Deck).find((c) => c.Id === CardID)
       if (Card == null) { throw new Error(`card not found: ${CardID}`) }
 
       NewID = nextWidgetID(Deck)
@@ -591,7 +630,7 @@ export class MCPConnector {
     const CardID   = Params.card_id as string
     const WidgetID = Params.widget_id as string
     this.#ctx.mutateDeck((Deck) => {
-      const Card = Deck.Cards.find((c) => c.Id === CardID)
+      const Card = flattenCards(Deck).find((c) => c.Id === CardID)
       if (Card == null) { throw new Error(`card not found: ${CardID}`) }
       const Idx = Card.Widgets.findIndex((w) => w.Id === WidgetID)
       if (Idx < 0) { throw new Error(`widget not found: ${WidgetID}`) }
@@ -602,8 +641,8 @@ export class MCPConnector {
 
   #WidgetTransfer (Params: Record<string,unknown>):null {
     this.#ctx.mutateDeck((Deck) => {
-      const Src = Deck.Cards.find((c) => c.Id === Params.src_card_id)
-      const Dst = Deck.Cards.find((c) => c.Id === Params.dst_card_id)
+      const Src = flattenCards(Deck).find((c) => c.Id === Params.src_card_id)
+      const Dst = flattenCards(Deck).find((c) => c.Id === Params.dst_card_id)
       if (Src == null) { throw new Error(`source card not found: ${Params.src_card_id}`) }
       if (Dst == null) { throw new Error(`destination card not found: ${Params.dst_card_id}`) }
       const Idx = Src.Widgets.findIndex((w) => w.Id === Params.widget_id)
@@ -619,7 +658,7 @@ export class MCPConnector {
     const WidgetID = Params.widget_id as string
     const NewIndex = Params.new_index as number   // 0-based stacking position
     this.#ctx.mutateDeck((Deck) => {
-      const Card = Deck.Cards.find((c) => c.Id === CardID)
+      const Card = flattenCards(Deck).find((c) => c.Id === CardID)
       if (Card == null) { throw new Error(`card not found: ${CardID}`) }
       const Idx = Card.Widgets.findIndex((w) => w.Id === WidgetID)
       if (Idx < 0) { throw new Error(`widget not found: ${WidgetID}`) }
@@ -778,7 +817,7 @@ export class MCPConnector {
   //--------------------------------------------------------------------------//
 
   #requireCard (CardID: string):BC_Card {
-    const Card = this.#ctx.getDeck().Cards.find((c) => c.Id === CardID)
+    const Card = flattenCards(this.#ctx.getDeck()).find((c) => c.Id === CardID)
     if (Card == null) { throw new Error(`card not found: ${CardID}`) }
     return Card
   }
@@ -790,7 +829,7 @@ export class MCPConnector {
   #requireWidgetIn (
     Deck: BC_Deck, CardID: string, WidgetID: string
   ):{ Card:BC_Card, Widget:BC_Widget } {
-    const Card = Deck.Cards.find((c) => c.Id === CardID)
+    const Card = flattenCards(Deck).find((c) => c.Id === CardID)
     if (Card == null) { throw new Error(`card not found: ${CardID}`) }
     const Widget = Card.Widgets.find((w) => w.Id === WidgetID)
     if (Widget == null) { throw new Error(`widget not found: ${WidgetID}`) }

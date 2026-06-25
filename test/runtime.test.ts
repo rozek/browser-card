@@ -101,3 +101,19 @@ describe('ScriptInstance', () => {
     expect(await inst.triggered('obsolete')).toBeUndefined()   // handlers cleared
   })
 })
+
+// kept LAST: trips the process-wide runaway-loop breaker, whose window would
+// otherwise suppress scripts in tests that run afterwards in this file.
+describe('ScriptInstance — runaway-loop circuit breaker', () => {
+  it('suspends script execution after far too many runs in a short window', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const inst = new ScriptInstance()
+    for (let i = 0; i < 1100; i++) {            // a render/mount loop would do this
+      await inst.run("on('ping', () => 1)", [], [])
+    }
+    expect(warn.mock.calls.some((c) => String(c[0]).includes('runaway script loop'))).toBe(true)
+    // the final (suspended) run cleared handlers without re-registering them
+    expect(await inst.triggered('ping')).toBeUndefined()
+    warn.mockRestore()
+  })
+})

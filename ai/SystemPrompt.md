@@ -359,9 +359,17 @@ is `undefined`. An exception thrown by a handler propagates back to the caller. 
 
 **Card info:**
 ```javascript
-my.Card.Index   // 0-based index of the current card (read/write; assigning moves the card)
-CardCount()     // Total number of cards
+my.Card.Index   // 0-based index in the flattened (depth-first) card list (read/write)
+my.Card.Path    // computed, READ-ONLY: ancestor card names + own name, joined by '/'
+CardCount()     // Total number of cards (including nested ones)
 ```
+
+> **Nested cards.** Cards can be nested: every card may hold child cards. The nesting is
+> purely organizational — each card is still a standalone object and there are still only the
+> Deck / Card / Widget proxies. Navigation, `Card(...)`, `CardCount()` and `my.Card.Index`
+> all operate on the **flattened**, depth-first list, so existing scripts keep working.
+> `my.Card.Path` (e.g. `"Settings/Audio"`) is read-only. `'/'` is reserved as the path
+> separator and is never allowed inside a card, widget or deck name (silently stripped).
 
 **Reactive state (`me` / `my` / `I` - all synonyms for the current Visual's proxy):**
 ```javascript

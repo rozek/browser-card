@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { makeWidgetProxy, makeCardProxy } from '../src/BrowserCard'
+import { makeWidgetProxy, makeCardProxy, ScriptInstance } from '../src/BrowserCard'
 
 function setup () {
   const Obj:any = {
@@ -33,6 +33,18 @@ describe('makeWidgetProxy', () => {
     proxy.changeGeometryTo!(30)                 // move x to 30
     expect(Obj.Offsets[0]).toBe(30)
     expect(forceUpdate).toHaveBeenCalled()
+  })
+
+  it('rejects assigning a Visual proxy to a property (e.g. the typo `my.Value = my`)', () => {
+    const { Obj, proxy, forceUpdate } = setup()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    ;(proxy as any).Value = proxy                 // circular, non-serializable
+    expect((Obj as any).Value).toBeUndefined()    // assignment ignored
+    expect(forceUpdate).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cannot assign a Deck/Card/Widget proxy'))
+    // the descriptor stays JSON-serializable
+    expect(() => JSON.stringify(Obj)).not.toThrow()
+    warn.mockRestore()
   })
 
   it('me.own is private state that does NOT re-render', () => {
@@ -88,5 +100,61 @@ describe('makeCardProxy', () => {
     expect(reorderCard).toHaveBeenCalledWith(A, 2)
     expect(Cards.map((c) => c.Id)).toEqual([ 'bc-card-2','bc-card-3','bc-card-1' ])
     expect(proxyA.Index).toBe(2)
+  })
+
+  it('exposes a computed, read-only Path and a flattened Index for nested cards', () => {
+    const Child:any  = { Id:'bc-card-2', Name:'Child', Widgets:[] }
+    const Parent:any = { Id:'bc-card-1', Name:'Parent', Widgets:[], CardList:[ Child ] }
+    const deckProxy:any = { Cards:[ Parent ] }
+    const parentProxy = makeCardProxy(Parent, deckProxy, { current:[] } as any, () => {})
+    const childProxy  = makeCardProxy(Child,  deckProxy, { current:[] } as any, () => {})
+
+    expect(parentProxy.Path).toBe('Parent')
+    expect(childProxy.Path).toBe('Parent/Child')
+    expect(childProxy.Index).toBe(1)              // flattened depth-first position
+
+    ;(childProxy as any).Path = 'hacked'          // read-only: write is ignored
+    expect(childProxy.Path).toBe('Parent/Child')
+    expect(Child.Name).toBe('Child')
+  })
+})
+
+describe('render-loop protection', () => {
+  function widget () {
+    const Obj:any = {
+      Id:'bc-widget-1', Name:'W', Type:'shape', Value:'a',
+      Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'',
+    }
+    const SizeRef = { current:{ W:600, H:450 } }
+    const forceUpdate = vi.fn()
+    const proxy:any = makeWidgetProxy(Obj, SizeRef as any, {} as any, {} as any, forceUpdate)
+    return { Obj, proxy, forceUpdate }
+  }
+
+  it('suppresses the extra re-render when a reactive prop is set during a render handler', () => {
+    const { Obj, proxy, forceUpdate } = widget()
+    const inst = new ScriptInstance()
+    let n = 0
+    inst.on('render', () => { proxy.Value = 'v' + (n++) })   // changes on every pass → would loop
+
+    inst.renderResult()
+    expect(Obj.Value).toBe('v0')                  // the write still happens
+    expect(forceUpdate).not.toHaveBeenCalled()    // but no re-render is scheduled → no loop
+  })
+
+  it('still re-renders for reactive writes outside a render handler', () => {
+    const { proxy, forceUpdate } = widget()
+    proxy.Value = 'changed'                        // ordinary event-time write
+    expect(forceUpdate).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not leak the suppression state across render passes', () => {
+    const { proxy, forceUpdate } = widget()
+    const inst = new ScriptInstance()
+    inst.on('render', () => { proxy.Value = 'x' + Math.random() })
+    inst.renderResult()                            // suppressed (depth > 0)
+    expect(forceUpdate).not.toHaveBeenCalled()
+    proxy.Value = 'after'                          // depth back to 0 → normal
+    expect(forceUpdate).toHaveBeenCalledTimes(1)
   })
 })

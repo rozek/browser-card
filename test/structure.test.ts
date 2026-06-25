@@ -34,4 +34,28 @@ describe('structural validators', () => {
     const D = JSON.parse(JSON.stringify(deck()))
     expect(ValueIsDeck(D)).toBe(true)
   })
+
+  it('accepts a card with a nested CardList', () => {
+    const D:any = deck()
+    D.Cards[0].CardList = [{ ...card(), Id:'bc-card-2' }]
+    expect(ValueIsDeck(D)).toBe(true)
+  })
+  it('accepts deeply nested CardLists and survives a round-trip', () => {
+    const D:any = deck()
+    D.Cards[0].CardList = [{ ...card(), Id:'bc-card-2', CardList:[{ ...card(), Id:'bc-card-3' }] }]
+    expect(ValueIsDeck(D)).toBe(true)
+    expect(ValueIsDeck(JSON.parse(JSON.stringify(D)))).toBe(true)
+  })
+  it('rejects a deck whose nested child card is broken', () => {
+    const D:any = deck()
+    const child:any = { ...card(), Id:'bc-card-2' }
+    delete child.Widgets
+    D.Cards[0].CardList = [child]
+    expect(ValueIsDeck(D)).toBe(false)
+  })
+  it('rejects a non-array CardList', () => {
+    const D:any = deck()
+    D.Cards[0].CardList = 'oops'
+    expect(ValueIsDeck(D)).toBe(false)
+  })
 })

@@ -134,6 +134,7 @@
   const $OverlayList        = Symbol('OverlayList')
   const $DialogList         = Symbol('DialogList')
   const $ErrorReport        = Symbol('ErrorReport')
+  const $isProxy:            unique symbol = Symbol('isProxy')   // tags Deck/Card/Widget proxies
   const $rerender:           unique symbol = Symbol('rerender')
   const $Console:            unique symbol = Symbol('Console')
   const $Console_CharCount:  unique symbol = Symbol('Console_CharCount')
@@ -2298,6 +2299,7 @@ export interface BC_Card extends BC_Visual {
   Alpha:        number
   dontSearch:   boolean
   Widgets:      BC_Widget[]
+  CardList?:    BC_Card[]   // optional nested child cards (hierarchy, schema A)
 }
 
 type BC_WidgetType = 'generic' | 'button' | 'field' | 'shape' | 'picture'
@@ -2396,7 +2398,7 @@ type BC_DeckProxy   = BC_Deck   & BC_Triggerable & {
   Console_LineLimit:           number
   Console_CharLimit:           number
 }
-type BC_CardProxy   = BC_Card   & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[]; Index:number }
+type BC_CardProxy   = BC_Card   & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; readonly WidgetList:BC_WidgetProxy[]; Index:number; readonly Path:string }
 type BC_WidgetProxy = BC_Widget & BC_Triggerable & { own:Record<string,unknown>; readonly Deck:BC_DeckProxy; readonly Card:BC_CardProxy; Index:number }
 type BC_Proxy = BC_DeckProxy | BC_CardProxy | BC_WidgetProxy
 
@@ -3114,6 +3116,46 @@ interface BC_CardRef {
 }
 
 //----------------------------------------------------------------------------//
+//                          render-loop protection                            //
+//----------------------------------------------------------------------------//
+
+// While a 'render'/'update' handler runs, BC_renderDepth > 0. A reactive write
+// during that window (e.g. `my.Value = …` inside on('render')) must NOT schedule
+// another render - that is exactly the infinite-loop pattern that froze the app.
+// The write itself still happens (so the current render reflects it); only the
+// extra re-render is suppressed, and the developer is warned once per render pass.
+
+  let BC_renderDepth      = 0
+  let BC_renderLoopWarned = false
+
+  function isInRenderPass ():boolean { return BC_renderDepth > 0 }
+
+// true if a value is a Deck/Card/Widget proxy. Assigning such a proxy to a
+// property (e.g. the typo `my.Value = my`) would create a circular, non-
+// serializable reference that breaks persistence/undo/export - so it is rejected.
+
+  function valueIsVisualProxy (Value:unknown):boolean {
+    return (Value != null) && (typeof Value === 'object') &&
+           ((Value as Indexable)[$isProxy] === true)
+  }
+
+  function scheduleReactiveUpdate (forceUpdate:() => void):void {
+    if (BC_renderDepth > 0) {
+      if (! BC_renderLoopWarned) {
+        BC_renderLoopWarned = true
+        console.warn(
+          '[BrowserCard] a reactive property was changed inside a render handler - ' +
+          'the extra re-render was suppressed to prevent an infinite render loop. ' +
+          'Move such writes into on("ready") or an event handler, or change the ' +
+          'value only when it really differs.'
+        )
+      }
+      return
+    }
+    forceUpdate()
+  }
+
+//----------------------------------------------------------------------------//
 //                            ScriptInstance                                   //
 //----------------------------------------------------------------------------//
 
@@ -3127,11 +3169,51 @@ export class ScriptInstance {
 
   #handlers = new Map<string, (...args:unknown[]) => unknown>()
 
+/**** runaway-loop circuit breaker ****/
+//    A script that changes state during render/'ready' can make the host
+//    re-render or remount the Visual, which re-runs the script - an infinite
+//    loop that freezes the tab (each remount even creates a fresh instance, so a
+//    per-instance guard cannot see it). We cannot interrupt a synchronous loop,
+//    but we CAN stop feeding it: if scripts are (re-)run far more often than any
+//    legitimate deck would in a short window, we suspend execution for the rest
+//    of that window and warn once. Normal mounts/edits run a script only a
+//    handful of times, so the threshold is never reached in healthy use.
+
+  static #runWindowStart = 0
+  static #runCount       = 0
+  static #loopWarned     = false
+  static readonly #RunsPerWindow = 1000
+  static readonly #WindowMs      = 1000
+
+  static #loopBreakerTripped ():boolean {
+    const Now = Date.now()
+    if (Now - ScriptInstance.#runWindowStart > ScriptInstance.#WindowMs) {
+      ScriptInstance.#runWindowStart = Now      // open a fresh window
+      ScriptInstance.#runCount       = 0
+      ScriptInstance.#loopWarned     = false
+    }
+    ScriptInstance.#runCount++
+    if (ScriptInstance.#runCount > ScriptInstance.#RunsPerWindow) {
+      if (! ScriptInstance.#loopWarned) {
+        ScriptInstance.#loopWarned = true
+        console.warn(
+          '[BrowserCard] runaway script loop detected (' + ScriptInstance.#runCount +
+          ' script runs within ' + ScriptInstance.#WindowMs + ' ms) - script execution ' +
+          'was suspended to keep the app responsive. A script is most likely changing ' +
+          'state during render or on("ready") in a way that re-triggers itself.'
+        )
+      }
+      return true
+    }
+    return false
+  }
+
 /**** run — evaluates the script asynchronously; clears old handlers first ****/
 
   async run (script:string, Params:string[], Args:unknown[]):Promise<void> {
     this.#handlers.clear()
     if (! script?.trim()) { return }
+    if (ScriptInstance.#loopBreakerTripped()) { return }   // suspend on runaway loop
     try {
       await (new Function(...Params, `return (async () => {\n${script}\n})()`))(...Args)
     } catch (Signal) {
@@ -3187,17 +3269,23 @@ export class ScriptInstance {
 /**** renderResult — synchronously invokes the 'render' handler ****/
 
   renderResult ():unknown {
-    const updateHandler = this.#handlers.get('update')
-    if (updateHandler != null) {
-      try { (updateHandler as () => void)() } catch (Signal) {
-        console.warn('[BrowserCard] update handler error:', Signal)
+    BC_renderDepth++                 // suppress reactive re-renders during this pass
+    try {
+      const updateHandler = this.#handlers.get('update')
+      if (updateHandler != null) {
+        try { (updateHandler as () => void)() } catch (Signal) {
+          console.warn('[BrowserCard] update handler error:', Signal)
+        }
       }
-    }
-    const Handler = this.#handlers.get('render')
-    if (Handler == null) { return null }
-    try { return Handler() } catch (Signal) {
-      console.warn('[BrowserCard] render handler error:', Signal)
-      return null
+      const Handler = this.#handlers.get('render')
+      if (Handler == null) { return null }
+      try { return Handler() } catch (Signal) {
+        console.warn('[BrowserCard] render handler error:', Signal)
+        return null
+      }
+    } finally {
+      BC_renderDepth--
+      if (BC_renderDepth === 0) { BC_renderLoopWarned = false }
     }
   }
 
@@ -3511,7 +3599,11 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
       ValueIsPlainObject(Value) &&
       ValueIsString(Value.Name) &&
       ValueIsArray(Value.Widgets) &&
-      (Value.Widgets as any[]).every(ValueIsWidgetJSON)
+      (Value.Widgets as any[]).every(ValueIsWidgetJSON) &&
+      (                                   // optional nested child cards (schema A)
+        (Value.CardList == null) ||
+        (ValueIsArray(Value.CardList) && (Value.CardList as any[]).every(ValueIsCardJSON))
+      )
     )
   }
 
@@ -3523,6 +3615,123 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
       (Value.Cards.length >= 1) &&            // a deck must have at least one card
       (Value.Cards as any[]).every(ValueIsCardJSON)
     )
+  }
+
+/**** card-hierarchy helpers (schema A) ****/
+
+// '/' is reserved as the separator between card names in a card "Path", so it
+// must never occur inside a name. It is silently stripped on every input and
+// on deserialization. An empty result falls back to the given default.
+
+  export function sanitizeName (Name:any, Fallback:BC_Name='Card'):BC_Name {
+    const Cleaned = String(Name ?? '').replace(/\//g, '')
+    return (Cleaned === '' ? Fallback : Cleaned)
+  }
+
+// depth-first list of all cards, parents before children, in CardList order.
+// For a deck without any nested CardList this equals the flat Deck.Cards.
+
+  export function flattenCards (Deck:BC_Deck):BC_Card[] {
+    const Result:BC_Card[] = []
+    const Seen = new Set<BC_Card>()        // guard against a malformed cyclic CardList
+    const visit = (List:BC_Card[] | undefined):void => {
+      if (List == null) { return }
+      for (const Card of List) {
+        if (Seen.has(Card)) { continue }
+        Seen.add(Card); Result.push(Card); visit(Card.CardList)
+      }
+    }
+    visit(Deck.Cards)
+    return Result
+  }
+
+  export interface BC_CardTreeEntry {
+    Card:   BC_Card
+    Parent: BC_Card | null
+    Depth:  number          // 0 = root level
+    Path:   string          // ancestor names + own name, joined by '/'
+  }
+
+// maps every card Id to its parent, depth and computed Path (depth-first).
+
+  export function cardTreeIndex (Deck:BC_Deck):Map<string,BC_CardTreeEntry> {
+    const Index = new Map<string,BC_CardTreeEntry>()
+    const Seen = new Set<BC_Card>()        // guard against a malformed cyclic CardList
+    const visit = (
+      List:BC_Card[] | undefined, Parent:BC_Card | null,
+      Depth:number, ParentPath:string
+    ):void => {
+      if (List == null) { return }
+      for (const Card of List) {
+        if (Seen.has(Card)) { continue }
+        Seen.add(Card)
+        const Path = (ParentPath === '' ? Card.Name : ParentPath + '/' + Card.Name)
+        Index.set(Card.Id, { Card, Parent, Depth, Path })
+        visit(Card.CardList, Card, Depth+1, Path)
+      }
+    }
+    visit(Deck.Cards, null, 0, '')
+    return Index
+  }
+
+// the computed Path of a single card (ancestor names + own name, '/'-joined).
+
+  export function pathOf (Deck:BC_Deck, Card:BC_Card):string {
+    return cardTreeIndex(Deck).get(Card.Id)?.Path ?? Card.Name
+  }
+
+// the CardList that directly contains the given card (its parent's CardList,
+// or Deck.Cards for a root-level card); null if the card is not in the deck.
+
+  export function siblingListOf (Deck:BC_Deck, CardId:string):BC_Card[] | null {
+    if (Deck.Cards.some((c) => c.Id === CardId)) { return Deck.Cards }
+    for (const Card of flattenCards(Deck)) {
+      if (Card.CardList?.some((c) => c.Id === CardId)) { return Card.CardList }
+    }
+    return null
+  }
+
+// true if moving "CardId" under "TargetParentId" would create a cycle (i.e. the
+// target is the card itself or one of its descendants).
+
+  export function moveWouldCycle (Deck:BC_Deck, CardId:string, TargetParentId:string | null):boolean {
+    if (TargetParentId == null) { return false }
+    if (TargetParentId === CardId) { return true }
+    const Index = cardTreeIndex(Deck)
+    let Cursor:string | null = TargetParentId
+    while (Cursor != null) {
+      if (Cursor === CardId) { return true }
+      Cursor = Index.get(Cursor)?.Parent?.Id ?? null
+    }
+    return false
+  }
+
+// moves a card (with its whole subtree) under a new parent (null = deck root) at
+// the given position within the destination CardList. Mutates the deck in place.
+// Returns false (and changes nothing) on a cycle or an unknown card/parent.
+
+  export function moveCardInTree (
+    Deck:BC_Deck, CardId:string, NewParentId:string | null, toIndex:number
+  ):boolean {
+    if (moveWouldCycle(Deck, CardId, NewParentId)) { return false }
+    const srcList = siblingListOf(Deck, CardId)
+    if (srcList == null) { return false }
+    const from = srcList.findIndex((c) => c.Id === CardId)
+    if (from < 0) { return false }
+
+    let destList:BC_Card[]
+    if (NewParentId == null) {
+      destList = Deck.Cards
+    } else {
+      const Parent = flattenCards(Deck).find((c) => c.Id === NewParentId)
+      if (Parent == null) { return false }
+      destList = (Parent.CardList ??= [])
+    }
+
+    const [ Card ] = srcList.splice(from, 1)
+    const to = Math.max(0, Math.min(destList.length, Math.round(toIndex)))
+    destList.splice(to, 0, Card)
+    return true
   }
 
 //----------------------------------------------------------------------------//
@@ -3605,10 +3814,12 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
   export function stripInternalIds (Deck:BC_Deck):BC_Deck {
     const Clone = JSON.parse(JSON.stringify(Deck)) as Indexable
     delete Clone.Id
-    Clone.Cards?.forEach((Card:Indexable) => {
+    const stripCard = (Card:Indexable):void => {
       delete Card.Id
-      Card.Widgets?.forEach((Widget:Indexable) => { delete Widget.Id })
-    })
+      ;(Card.Widgets as Indexable[] | undefined)?.forEach((Widget:Indexable) => { delete Widget.Id })
+      ;(Card.CardList as Indexable[] | undefined)?.forEach(stripCard)   // recurse into nested cards
+    }
+    ;(Clone.Cards as Indexable[] | undefined)?.forEach(stripCard)
     return Clone as BC_Deck
   }
 
@@ -3619,11 +3830,13 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
   ]
 
   export function stripComputedGeometry (Deck:Indexable):void {
-    Deck.Cards?.forEach((Card:Indexable) => {
-      Card.Widgets?.forEach((Widget:Indexable) => {
+    const stripCard = (Card:Indexable):void => {
+      ;(Card.Widgets as Indexable[] | undefined)?.forEach((Widget:Indexable) => {
         ComputedWidgetFields.forEach((Key) => { delete Widget[Key] })
       })
-    })
+      ;(Card.CardList as Indexable[] | undefined)?.forEach(stripCard)   // recurse into nested cards
+    }
+    ;(Deck.Cards as Indexable[] | undefined)?.forEach(stripCard)
   }
 
 /**** serializableDeck — a clone without runtime ids or computed geometry ****/
@@ -3637,15 +3850,18 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
 /**** normalizeWidgetOrder — migrate legacy "zIndex"/"Number" to array order ****/
 
   export function normalizeWidgetOrder (Deck:Indexable):void {
-    Deck.Cards?.forEach((Card:Indexable) => {
+    const normCard = (Card:Indexable):void => {
       const Widgets = Card.Widgets as Indexable[] | undefined
-      if (Widgets == null) { return }
-      const hasLegacyOrder = Widgets.some((W) => typeof W.zIndex === 'number')
-      if (hasLegacyOrder) {              // Array.sort is stable - ties keep their order
-        Widgets.sort((a,b) => (((a.zIndex as number) ?? 0)-((b.zIndex as number) ?? 0)))
+      if (Widgets != null) {
+        const hasLegacyOrder = Widgets.some((W) => typeof W.zIndex === 'number')
+        if (hasLegacyOrder) {            // Array.sort is stable - ties keep their order
+          Widgets.sort((a,b) => (((a.zIndex as number) ?? 0)-((b.zIndex as number) ?? 0)))
+        }
+        Widgets.forEach((W) => { delete W.zIndex; delete W.Number })   // now array-derived
       }
-      Widgets.forEach((W) => { delete W.zIndex; delete W.Number })   // now array-derived
-    })
+      ;(Card.CardList as Indexable[] | undefined)?.forEach(normCard)   // recurse into nested cards
+    }
+    ;(Deck.Cards as Indexable[] | undefined)?.forEach(normCard)
   }
 
 /**** prepareLoadedDeck — assigns fresh ids and drops computed/legacy fields ****/
@@ -3654,10 +3870,23 @@ const DemoDeck:BC_Deck = JSON.parse(DemoDeckJSON) as BC_Deck
     stripComputedGeometry(Deck as Indexable)
     normalizeWidgetOrder(Deck as Indexable)
     ;(Deck as Indexable).Id = newInternalId('deck')
-    Deck.Cards.forEach((Card) => {
+    sanitizeNameOf(Deck as Indexable, 'Deck')
+    const prepCard = (Card:BC_Card):void => {           // recurse into nested cards
       ;(Card as Indexable).Id = newInternalId('card')
-      Card.Widgets.forEach((Obj) => { ;(Obj as Indexable).Id = newInternalId('widget') })
-    })
+      sanitizeNameOf(Card as Indexable, 'Card')
+      Card.Widgets.forEach((Obj) => {
+        ;(Obj as Indexable).Id = newInternalId('widget')
+        sanitizeNameOf(Obj as Indexable, 'Widget')
+      })
+      Card.CardList?.forEach(prepCard)
+    }
+    Deck.Cards.forEach(prepCard)
+  }
+
+/**** sanitizeNameOf — strips '/' from an object's Name in place (if present) ****/
+
+  function sanitizeNameOf (Obj:Indexable, Fallback:BC_Name):void {
+    if (typeof Obj.Name === 'string') { Obj.Name = sanitizeName(Obj.Name, Fallback) }
   }
 
 //----------------------------------------------------------------------------//
@@ -3802,6 +4031,7 @@ export function makeWidgetProxy (
   let _View:Element | undefined      // the widget's wrapper DOM element, once mounted
   return new Proxy(Obj, {
     get (target, key) {
+      if (key === $isProxy) { return true }
       if (key === $Script) { return _Script }
       if (key === $View)   { return _View }
       switch (key) {
@@ -3827,10 +4057,10 @@ export function makeWidgetProxy (
           const { left: x, top: y, width: Width, height: Height } = resolveGeometry(target.Anchors, target.Offsets, W, H)
           const offsets = computeOffsets(newX ?? x, newY ?? y, newWidth ?? Width, newHeight ?? Height, target.Anchors, W, H)
           target.Offsets = offsets
-          forceUpdate()
+          scheduleReactiveUpdate(forceUpdate)
           return offsets
         }
-        case 'rerender': return forceUpdate          // force a re-render of this widget
+        case 'rerender': return () => scheduleReactiveUpdate(forceUpdate)   // re-render this widget
         default: return Reflect.get(target, key)
       }
     },
@@ -3860,9 +4090,16 @@ export function makeWidgetProxy (
           return true
         }
       }
+      if (valueIsVisualProxy(value)) {     // e.g. the typo `my.Value = my`
+        console.warn(
+          '[BrowserCard] cannot assign a Deck/Card/Widget proxy to property ' +
+          String(key) + ' - ignored (it would create a circular, non-serializable reference)'
+        )
+        return true
+      }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
-      forceUpdate()
+      scheduleReactiveUpdate(forceUpdate)
       return true
     },
   }) as BC_WidgetProxy
@@ -3883,6 +4120,7 @@ export function makeCardProxy (
   let proxy:BC_CardProxy
   proxy = new Proxy(Card, {
     get (target, key) {
+      if (key === $isProxy) { return true }
       if (key === $Script) { return _Script }
       if (key === $View) { return _View }
       switch (key) {
@@ -3893,11 +4131,12 @@ export function makeCardProxy (
         case 'WidgetList': return widgetListRef.current
         case 'trigger':    return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.trigger  (Event, ...ArgList)
         case 'triggered':  return (Event:string, ...ArgList:unknown[]) => (_Script as ScriptInstance | null)?.triggered(Event, ...ArgList)
-        case 'rerender':   return forceUpdate         // force a re-render of this card and its widgets
-        case 'Index': {                  // 0-based position in the deck's card list
-          const Cards = (deckProxy as Indexable).Cards as BC_Card[]
-          return Cards.indexOf(target)
+        case 'rerender':   return () => scheduleReactiveUpdate(forceUpdate)   // re-render this card and its widgets
+        case 'Index': {                  // 0-based position in the flattened card list
+          return flattenCards(deckProxy as unknown as BC_Deck).indexOf(target)
         }
+        case 'Path':                     // computed, read-only: ancestor names + own
+          return pathOf(deckProxy as unknown as BC_Deck, target)   // name, '/'-joined
         default:           return Reflect.get(target, key)
       }
     },
@@ -3905,14 +4144,22 @@ export function makeCardProxy (
       if (key === $Script) { _Script = value; return true }
       if (key === $View) { _View = value as Element | undefined; return true }
       if (key === 'View') { return true }                // me.View is read-only
+      if (key === 'Path') { return true }                // me.Path is computed/read-only
       if (key === 'own') { _own = value as Record<string,unknown>; return true }
       if (key === 'Index') {            // moves the card within its deck (keeps it shown)
         reorderCard?.(target, Number(value))
         return true
       }
+      if (valueIsVisualProxy(value)) {     // e.g. the typo `my.Value = my`
+        console.warn(
+          '[BrowserCard] cannot assign a Deck/Card/Widget proxy to property ' +
+          String(key) + ' - ignored (it would create a circular, non-serializable reference)'
+        )
+        return true
+      }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
-      forceUpdate()
+      scheduleReactiveUpdate(forceUpdate)
       return true
     },
   }) as BC_CardProxy
@@ -3935,8 +4182,9 @@ export function makeDeckProxy (
   let proxy:BC_DeckProxy
   proxy = new Proxy(Deck, {
     get (target, key) {
+      if (key === $isProxy)           { return true }
       if (key === $Script)            { return _Script }
-      if (key === $rerender)          { return forceUpdate }
+      if (key === $rerender)          { return () => scheduleReactiveUpdate(forceUpdate) }
       if (key === $View)              { return _View }
       if (key === $Console)           { return _console }
       if (key === $Console_LineCount) { return _consoleLineCount }
@@ -3961,9 +4209,16 @@ export function makeDeckProxy (
       if (key === $Console)         { _console          = value as string; return true }
       if (key === $Console_LineCount) { _consoleLineCount = value as number; return true }
       if (key === $Console_CharCount) { _consoleCharCount = value as number; return true }
+      if (valueIsVisualProxy(value)) {     // e.g. the typo `my.Value = my`
+        console.warn(
+          '[BrowserCard] cannot assign a Deck/Card/Widget proxy to property ' +
+          String(key) + ' - ignored (it would create a circular, non-serializable reference)'
+        )
+        return true
+      }
       if (Object.is(Reflect.get(target, key), value)) { return true }
       Reflect.set(target, key, value)
-      forceUpdate()
+      scheduleReactiveUpdate(forceUpdate)
       return true
     },
   }) as BC_DeckProxy
@@ -4860,7 +5115,7 @@ function WidgetView ({
 
       function updateCard (Key:string, Value:unknown):void {
         onBeforeEdit?.(`card:${Card!.Id}:${Key}`)
-        ;(Card as Indexable)[Key] = Value
+        ;(Card as Indexable)[Key] = (Key === 'Name') ? sanitizeName(Value, 'Card') : Value
         onEdited()
       }
 
@@ -4875,6 +5130,9 @@ function WidgetView ({
         <div class="bc-props-panel">
           <div class="bc-props-title">${Card.Name}</div>
           <div class="bc-props-subtitle">card · ${Card.Id}</div>
+          ${(Deck != null) && pathOf(Deck, Card).includes('/')
+            ? html`<div class="bc-props-subtitle">path · ${pathOf(Deck, Card)}</div>`
+            : null}
           <div class="bc-props-hint">
             no widget selected - these are the properties of the card itself
           </div>
@@ -6027,6 +6285,10 @@ function DeckView ({
 }:AppProps) {
   const effectiveDeck = initialDeck ?? DemoDeck
   const [Deck]        = useState<BC_Deck>(effectiveDeck)
+  // flattened, depth-first view of all cards (incl. nested CardLists). CardIndex
+  // and all navigation index into THIS list, never into Deck.Cards directly.
+  // Recomputed every render; Deck is mutated in place + a tick forces re-render.
+  const allCards = flattenCards(Deck)
   const [, setVersion] = useState(0)
   const bumpVersion = () => setVersion((n) => n+1)
   const [CardIndex, setCardIndex]         = useState(Math.min(initialCardIndex, effectiveDeck?.Cards.length - 1 || 0))
@@ -6156,93 +6418,160 @@ function DeckView ({
 /**** card management (edit mode only) ****/
 
   async function addCardViaDialog ():Promise<void> {
-    const Name = (await askUser('Name of the new card:',''))?.trim()
-    if ((Name == null) || (Name === '')) { return }
+    const Raw = (await askUser('Name of the new card:',''))?.trim()
+    if ((Raw == null) || (Raw === '')) { return }
     // card names need not be unique - duplicates are deliberately allowed
+    const Name = sanitizeName(Raw, 'Card')        // '/' is reserved for the Path
 
     const newCard:BC_Card = {
       Id:newInternalId('card'), Name:Name,
       Color:null, Alpha:1, dontSearch:false, Script:'', Widgets:[],
     }
     captureUndo()
-    Deck.Cards.splice(CardIndex+1, 0, newCard)
-    navigate({ type:'card-index', index:CardIndex+1 })
+    // insert as a sibling right after the current card (same parent)
+    const RefId = allCards[CardIndex]?.Id ?? null
+    const list  = (RefId != null ? siblingListOf(Deck, RefId) : null) ?? Deck.Cards
+    const pos   = (RefId != null ? list.findIndex((c) => c.Id === RefId) : list.length-1)
+    list.splice(pos+1, 0, newCard)
+    navigate({ type:'card-id', id:newCard.Id })
     deckForceUpdate()
   }
 
-  function indexOfCard (Id:string):number {
-    return Deck.Cards.findIndex((Card) => Card.Id === Id)
+  function indexOfCard (Id:string):number {       // live flattened index (post-mutation safe)
+    return flattenCards(Deck).findIndex((Card) => Card.Id === Id)
+  }
+
+  // recursively give a (pasted/cloned) card fresh runtime ids and '/'-free names
+  function freshenCardSubtree (Card:BC_Card):void {
+    Card.Id   = newInternalId('card')
+    Card.Name = sanitizeName(Card.Name, 'Card')
+    Card.Widgets.forEach((Obj) => {
+      Obj.Id = newInternalId('widget')
+      if (typeof Obj.Name === 'string') { Obj.Name = sanitizeName(Obj.Name, 'Widget') }
+    })
+    Card.CardList?.forEach(freshenCardSubtree)
+  }
+
+  function descendantCount (Card:BC_Card):number {
+    let n = 0
+    Card.CardList?.forEach((c) => { n += 1+descendantCount(c) })
+    return n
   }
 
   function duplicateCardAt (Index:number):void {
-    const Original = Deck.Cards[Index]
+    const Original = allCards[Index]
     if (Original == null) { return }
 
     const Clone = JSON.parse(JSON.stringify(Original)) as BC_Card
-      Clone.Id = newInternalId('card')
-      Clone.Widgets.forEach((Obj) => { Obj.Id = newInternalId('widget') })
+    freshenCardSubtree(Clone)                     // new ids for the whole subtree
+    const list = siblingListOf(Deck, Original.Id) ?? Deck.Cards
+    Clone.Name = uniqueNameIn(Original.Name+' Copy', new Set(list.map((c) => c.Name)))
 
-      let Name = Original.Name + ' Copy', Counter = 1
-      while (Deck.Cards.some((Card) => Card.Name === Name)) {
-        Counter += 1; Name = Original.Name + ' Copy ' + Counter
-      }
-      Clone.Name = Name
     captureUndo()
-    Deck.Cards.splice(Index+1, 0, Clone)
-    navigate({ type:'card-index', index:Index+1 })
+    const pos = list.findIndex((c) => c.Id === Original.Id)
+    list.splice(pos+1, 0, Clone)
+    navigate({ type:'card-id', id:Clone.Id })
     deckForceUpdate()
   }
 
   async function renameCardAt (Index:number):Promise<void> {
-    const Card = Deck.Cards[Index]
+    const Card = allCards[Index]
     if (Card == null) { return }
 
     const newName = (await askUser('New name for this card:',Card.Name))?.trim()
     if ((newName == null) || (newName === '') || (newName === Card.Name)) { return }
     // card names need not be unique - duplicates are deliberately allowed
     captureUndo()
-    Card.Name = newName
+    Card.Name = sanitizeName(newName, 'Card')     // '/' is reserved for the Path
     deckForceUpdate()
   }
 
   async function deleteCardAt (Index:number):Promise<void> {
-    const Card = Deck.Cards[Index]
+    const Card = allCards[Index]
     if (Card == null) { return }
 
-    if (Deck.Cards.length <= 1) {
+    const subtreeCount = 1+descendantCount(Card)
+    if (flattenCards(Deck).length-subtreeCount < 1) {
       await confirmWith('The last remaining card cannot be deleted.','OK')
       return
     }
 
+    const Extra = (subtreeCount > 1)
+      ? ` and its ${subtreeCount-1} nested card(s)`
+      : ''
     const Choice = await confirmWith(
-      `Really delete card "${Card.Name}" and all its widgets?`, 'Delete','Cancel'
+      `Really delete card "${Card.Name}"${Extra} and all their widgets?`, 'Delete','Cancel'
     )
     if (Choice !== 'Delete') { return }
 
+    const list = siblingListOf(Deck, Card.Id)
+    if (list == null) { return }
+
     captureUndo()
-    const currentId = Deck.Cards[CardIndex].Id
-    Deck.Cards.splice(Index,1)
+    const currentId = allCards[CardIndex].Id
+    const pos = list.findIndex((c) => c.Id === Card.Id)
+    list.splice(pos, 1)                           // cascade: the whole subtree goes
     setHistory([])             // card indices in the history are no longer valid
     setFuture([])
     setSelectedIds([])
 
-    const newIndex = indexOfCard(currentId)     // the current card may have moved
-    setCardIndex(newIndex >= 0 ? newIndex : clamp(Index, 0, Deck.Cards.length-1))
+    const newIndex = indexOfCard(currentId)       // the current card may be gone/moved
+    setCardIndex(newIndex >= 0 ? newIndex : clamp(Index, 0, flattenCards(Deck).length-1))
     deckForceUpdate()
   }
 
+  // reorder within the card's own sibling list (panel ↑/↓)
   function moveCardAt (Index:number, Delta:number):void {
-    const newIndex = Index+Delta
-    if ((newIndex < 0) || (newIndex >= Deck.Cards.length)) { return }
+    const Card = allCards[Index]
+    if (Card == null) { return }
+    const list = siblingListOf(Deck, Card.Id)
+    if (list == null) { return }
+    const from = list.findIndex((c) => c.Id === Card.Id)
+    const to   = from+Delta
+    if ((to < 0) || (to >= list.length)) { return }
 
     captureUndo()
-    const currentId = Deck.Cards[CardIndex].Id
-    const [ Card ]  = Deck.Cards.splice(Index,1)
-    Deck.Cards.splice(newIndex, 0, Card)
+    const currentId = allCards[CardIndex].Id
+    list.splice(from, 1)
+    list.splice(to, 0, Card)
     setHistory([])             // card indices in the history are no longer valid
     setFuture([])
     setCardIndex(Math.max(0, indexOfCard(currentId)))
     deckForceUpdate()
+  }
+
+  // move a card (with its whole subtree) under a new parent (null = deck root)
+  function moveCardTo (CardId:string, NewParentId:string | null, toIndex:number):void {
+    if (moveWouldCycle(Deck, CardId, NewParentId)) { return }
+    const currentId = allCards[CardIndex]?.Id
+    captureUndo()
+    if (! moveCardInTree(Deck, CardId, NewParentId, toIndex)) { return }
+    setHistory([]); setFuture([])
+    const newIndex = (currentId != null ? indexOfCard(currentId) : -1)
+    setCardIndex(newIndex >= 0 ? newIndex : clamp(CardIndex, 0, flattenCards(Deck).length-1))
+    deckForceUpdate()
+  }
+
+  // indent: make the card the last child of its preceding sibling
+  function indentCardAt (Index:number):void {
+    const Card = allCards[Index]; if (Card == null) { return }
+    const list = siblingListOf(Deck, Card.Id); if (list == null) { return }
+    const pos = list.findIndex((c) => c.Id === Card.Id)
+    if (pos <= 0) { return }                      // no preceding sibling
+    const Prev = list[pos-1]
+    moveCardTo(Card.Id, Prev.Id, Prev.CardList?.length ?? 0)
+  }
+
+  // outdent: move the card up to its grandparent, right after its former parent
+  function outdentCardAt (Index:number):void {
+    const Card = allCards[Index]; if (Card == null) { return }
+    const Tree = cardTreeIndex(Deck)
+    const Parent = Tree.get(Card.Id)?.Parent
+    if (Parent == null) { return }                // already at deck root
+    const GrandParentId = Tree.get(Parent.Id)?.Parent?.Id ?? null
+    const gList = (GrandParentId == null) ? Deck.Cards : (Tree.get(GrandParentId)!.Card.CardList ?? [])
+    const parentPos = gList.findIndex((c) => c.Id === Parent.Id)
+    moveCardTo(Card.Id, GrandParentId, parentPos+1)
   }
 
 /**** editor window for multi-line properties ****/
@@ -6266,7 +6595,7 @@ function DeckView ({
 
   async function copyCardToClipboard ():Promise<void> {
     const successful = await writeToClipboard(
-      CardMIMEType, JSON.stringify(Deck.Cards[CardIndex])
+      CardMIMEType, JSON.stringify(allCards[CardIndex])
     )
     if (! successful) {
       await confirmWith('BrowserCard could not write to the clipboard.','OK')
@@ -6276,7 +6605,7 @@ function DeckView ({
   async function copySelectionToClipboard ():Promise<void> {
     if (selectedIds.length === 0) { await copyCardToClipboard(); return }
 
-    const Widgets = Deck.Cards[CardIndex].Widgets
+    const Widgets = allCards[CardIndex].Widgets
       .filter((Obj) => selectedIds.includes(Obj.Id))    // filter keeps the array
                                                         // order = stacking order
     if (Widgets.length === 0) { return }
@@ -6313,19 +6642,19 @@ function DeckView ({
       Candidate = JSON.parse(Payload.Serialization)
     } catch { return }
 
-    const Card = Deck.Cards[CardIndex]
+    const Card = allCards[CardIndex]
     if (Payload.Kind === 'card') {
       if (! ValueIsCardJSON(Candidate)) { return }
 
       const newCard = Candidate as BC_Card
-        newCard.Id = newInternalId('card')
-        newCard.Widgets.forEach((Obj) => { Obj.Id = newInternalId('widget') })
-        newCard.Name = uniqueNameIn(
-          newCard.Name, new Set(Deck.Cards.map((Card) => Card.Name))
-        )
+        freshenCardSubtree(newCard)         // new ids + '/'-free names for the whole subtree
+      const RefId = allCards[CardIndex]?.Id ?? null
+      const list  = (RefId != null ? siblingListOf(Deck, RefId) : null) ?? Deck.Cards
+        newCard.Name = uniqueNameIn(newCard.Name, new Set(list.map((c) => c.Name)))
       captureUndo()
-      Deck.Cards.splice(CardIndex+1, 0, newCard)
-      navigate({ type:'card-index', index:CardIndex+1 })
+      const pos = (RefId != null ? list.findIndex((c) => c.Id === RefId) : list.length-1)
+      list.splice(pos+1, 0, newCard)
+      navigate({ type:'card-id', id:newCard.Id })
     } else {
       if (Card == null) { return }       // no current card to paste the widget(s) onto
       // accept both a single widget (older clipboard) and an array of widgets
@@ -6370,7 +6699,7 @@ function DeckView ({
         ),
       })
 
-      const currentCard = Deck.Cards[CardIndex]
+      const currentCard = allCards[CardIndex]
       const Anchor = document.createElement('a')
         Anchor.href     = DataURL
         Anchor.download = `${Deck.Name ?? 'Deck'} - ${currentCard.Name ?? 'Card'}.png`
@@ -6413,7 +6742,7 @@ function DeckView ({
         if (typeof Card === 'number') {
           navigate({ type:'card-index', index:Card })
         } else {
-          const Idx = Deck.Cards.findIndex((c) => c.Id === Card || c.Name === Card)
+          const Idx = flattenCards(Deck).findIndex((c) => c.Id === Card || c.Name === Card)
           if (Idx >= 0) { navigate({ type:'card-index', index:Idx }) }
         }
       },
@@ -6421,7 +6750,7 @@ function DeckView ({
       evalInContext: async (Expression) => {
         const inst = new ScriptInstance()
         const ctx  = buildContext(
-          Deck, Deck.Cards, null,
+          Deck, flattenCards(Deck), null,
           navigate,
           (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
           (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
@@ -6485,7 +6814,7 @@ function DeckView ({
     setSelectedIds([])
     setHistory([])
     setFuture([])
-    setCardIndex((prev) => clamp(prev, 0, Deck.Cards.length-1))
+    setCardIndex((prev) => clamp(prev, 0, flattenCards(Deck).length-1))
     setEditGeneration((n) => n+1)  // remounts CardView with fresh descriptors
     setPanelGeneration((n) => n+1)
     deckForceUpdate()
@@ -6508,7 +6837,7 @@ function DeckView ({
 /**** widget insertion, deletion and arrangement (edit mode only) ****/
 
   function addWidget (Type:BC_WidgetType):void {
-    const Card      = Deck.Cards[CardIndex]
+    const Card      = allCards[CardIndex]
     const newWidget = newWidgetOfType(Type, Card, CanvasW, CanvasH)
     captureUndo()
     Card.Widgets.push(newWidget)
@@ -6518,7 +6847,7 @@ function DeckView ({
 
   function deleteSelection ():void {
     if (selectedIds.length === 0) { return }
-    const Card = Deck.Cards[CardIndex]
+    const Card = allCards[CardIndex]
     if (Card.Widgets.some((Obj) => selectedIds.includes(Obj.Id))) {
       captureUndo()
       for (let i = Card.Widgets.length-1; i >= 0; i--) {
@@ -6531,7 +6860,7 @@ function DeckView ({
 
   function reorderSelection (Direction:BC_ArrangeDirection):void {
     if (selectedIds.length === 0) { return }
-    const Card  = Deck.Cards[CardIndex]
+    const Card  = allCards[CardIndex]
     const arr   = [ ...Card.Widgets ]              // array order = stacking order
     const isSel = (Obj:BC_Widget) => selectedIds.includes(Obj.Id)
     if (! arr.some(isSel)) { return }
@@ -6558,8 +6887,8 @@ function DeckView ({
 
   function moveSelectionToCard (targetIndex:number):void {
     if ((selectedIds.length === 0) || (targetIndex === CardIndex)) { return }
-    const Card   = Deck.Cards[CardIndex]
-    const Target = Deck.Cards[targetIndex]
+    const Card   = allCards[CardIndex]
+    const Target = allCards[targetIndex]
     if (Target == null) { return }
 
     const Moving = Card.Widgets
@@ -6645,7 +6974,11 @@ function DeckView ({
 /**** navigate ****/
 
   const navigate = useCallback((Target:BC_NavTarget) => {
-    const Cards = Deck.Cards
+    if (isInRenderPass()) {        // go() during render would loop endlessly - ignore
+      console.warn('[BrowserCard] navigation requested during rendering was ignored - call go() from an event or on("ready"), not on("render")')
+      return
+    }
+    const Cards = flattenCards(Deck)          // navigate over the flattened tree
     setCardIndex((prev) => {
       const addHistory = (next:number) => {
         if (next !== prev) {
@@ -6679,15 +7012,16 @@ function DeckView ({
 
   const reorderCardRef = useRef<(Card:BC_Card, toIndex:number) => void>(() => {})
   reorderCardRef.current = (CardObj, toIndex) => {
-    const Cards = Deck.Cards
-    const from  = Cards.indexOf(CardObj)
+    const list = siblingListOf(Deck, CardObj.Id)   // reorder within its own siblings
+    if (list == null) { return }
+    const from = list.indexOf(CardObj)
     if (from < 0) { return }
-    const to = Math.max(0, Math.min(Cards.length-1, Math.round(toIndex)))
+    const to = Math.max(0, Math.min(list.length-1, Math.round(toIndex)))
     if (to === from) { return }
-    const shownId = Cards[CardIndexRef.current]?.Id
-    Cards.splice(from, 1)
-    Cards.splice(to, 0, CardObj)
-    setCardIndex(Math.max(0, Cards.findIndex((c) => c.Id === shownId)))
+    const shownId = flattenCards(Deck)[CardIndexRef.current]?.Id
+    list.splice(from, 1)
+    list.splice(to, 0, CardObj)
+    setCardIndex(Math.max(0, flattenCards(Deck).findIndex((c) => c.Id === shownId)))
     deckForceUpdate()
   }
   const reorderCard = useCallback(
@@ -6717,7 +7051,7 @@ function DeckView ({
 
   const makeBaseContext = useCallback((me:BC_DeckProxy | BC_CardProxy | BC_WidgetProxy | null):BC_ScriptContext => {
     return buildContext(
-      Deck, Deck.Cards, me,
+      Deck, flattenCards(Deck), me,
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
@@ -6748,7 +7082,7 @@ function DeckView ({
     const inst = deckInstanceRef.current!
     ;(deckProxy as Indexable)[$Script] = inst          // top of the hierarchy - no parent
     const ctx  = buildContext(
-      Deck, Deck.Cards, deckProxy,
+      Deck, flattenCards(Deck), deckProxy,
       navigate,
       (message, buttons, resolve) => setActiveDialog({ kind:'answer', message, buttons, resolve }),
       (prompt, defaultValue, resolve) => setActiveDialog({ kind:'ask', prompt, defaultValue, resolve }),
@@ -6830,7 +7164,7 @@ function DeckView ({
           return
         }
 
-        const Card = Deck.Cards[CardIndex]    // may be out of range right after a delete
+        const Card = allCards[CardIndex]    // may be out of range right after a delete
         if (Card == null) { return }
         const Selected = Card.Widgets.filter((Obj) => selectedIds.includes(Obj.Id))
         if (Selected.length === 0) { return }
@@ -6886,7 +7220,7 @@ function DeckView ({
 
 /**** render ****/
 
-  const Card           = Deck.Cards[CardIndex]
+  const Card           = allCards[CardIndex]
   const deckRenderSlot = deckInstanceRef.current!.renderResult() ?? null
 
   const selectedWidget = (
@@ -6907,7 +7241,7 @@ function DeckView ({
         ${withChrome && html`<${MenuBar}
           DeckName=${Deck.Name}
           CardIndex=${CardIndex}
-          CardCount=${Deck.Cards.length}
+          CardCount=${allCards.length}
           activeOverlay=${activeOverlay}
           onOverlayToggle=${setActiveOverlay}
           onGoFirst=${() => navigate({ type:'first' })}
@@ -6973,7 +7307,7 @@ function DeckView ({
               CanvasW=${CanvasW}
               CanvasH=${CanvasH}
               onEdited=${deckForceUpdate}
-              CardNames=${Deck.Cards.map((Card) => Card.Name)}
+              CardNames=${allCards.map((Card) => Card.Name)}
               CardIndex=${CardIndex}
               onDelete=${deleteSelection}
               onReorder=${reorderSelection}
@@ -7039,10 +7373,20 @@ function DeckView ({
               <button class="bc-decks-new" onClick=${() => void addCardViaDialog()}>+ New Card</button>
             `}
             <div class="bc-decks-list">
-              ${Deck.Cards.map((listedCard,i) => html`
+              ${(() => {
+                const Tree = cardTreeIndex(Deck)        // depth / parent / path per card
+                return allCards.map((listedCard,i) => {  // flattened, depth-first
+                  const Entry  = Tree.get(listedCard.Id)
+                  const Depth  = Entry?.Depth ?? 0
+                  const Path   = Entry?.Path  ?? listedCard.Name
+                  const sibs   = siblingListOf(Deck, listedCard.Id) ?? []
+                  const sibPos = sibs.findIndex((c) => c.Id === listedCard.Id)
+                  const Kids   = listedCard.CardList?.length ?? 0
+                  return html`
                 <div key=${listedCard.Id}
                   class=${`bc-cards-item${i === CardIndex ? ' active' : ''}`}>
                   <div class="bc-cards-main"
+                    style=${{ paddingLeft:`${Depth*16}px` }}
                     onClick=${() => {
                       if (i !== CardIndex) { navigate({ type:'card-index', index:i }) }
                     }}>
@@ -7050,32 +7394,40 @@ function DeckView ({
                       Card=${listedCard} CanvasW=${CanvasW} CanvasH=${CanvasH}
                     />
                     <div class="bc-cards-info">
-                      <div class="bc-cards-name" title=${listedCard.Name}>${listedCard.Name}</div>
+                      <div class="bc-cards-name" title=${Path}>${listedCard.Name}</div>
                       <div class="bc-cards-sub">
                         #${i+1} · ${listedCard.Widgets.length}${' '}
                         ${listedCard.Widgets.length === 1 ? 'widget' : 'widgets'}
+                        ${Kids > 0 ? html` · ${Kids} nested` : null}
                       </div>
                     </div>
                   </div>
                   ${isEditing && html`
                     <div class="bc-cards-actions">
-                      <button class="bc-console-btn" title="move this card backward"
-                        disabled=${i === 0}
+                      <button class="bc-console-btn" title="move up among siblings"
+                        disabled=${sibPos <= 0}
                         onClick=${() => moveCardAt(i,-1)}>↑</button>
-                      <button class="bc-console-btn" title="move this card forward"
-                        disabled=${i === Deck.Cards.length-1}
+                      <button class="bc-console-btn" title="move down among siblings"
+                        disabled=${sibPos >= sibs.length-1}
                         onClick=${() => moveCardAt(i,1)}>↓</button>
-                      <button class="bc-console-btn" title="duplicate this card"
+                      <button class="bc-console-btn" title="make a child of the card above it"
+                        disabled=${sibPos <= 0}
+                        onClick=${() => indentCardAt(i)}>⇥</button>
+                      <button class="bc-console-btn" title="move out to the parent level"
+                        disabled=${Depth === 0}
+                        onClick=${() => outdentCardAt(i)}>⇤</button>
+                      <button class="bc-console-btn" title="duplicate this card (with nested cards)"
                         onClick=${() => duplicateCardAt(i)}>⧉</button>
                       <button class="bc-console-btn" title="rename this card"
                         onClick=${() => void renameCardAt(i)}>✎</button>
-                      <button class="bc-console-btn" title="delete this card"
-                        disabled=${Deck.Cards.length <= 1}
+                      <button class="bc-console-btn" title="delete this card and its nested cards"
+                        disabled=${allCards.length <= 1}
                         onClick=${() => void deleteCardAt(i)}>×</button>
                     </div>
                   `}
-                </div>
-              `)}
+                </div>`
+                })
+              })()}
             </div>
           </div>
         `}
@@ -7093,7 +7445,7 @@ function DeckView ({
         `}
         ${withChrome && html`<${BottomBar}
           CardIndex=${CardIndex}
-          CardCount=${Deck.Cards.length}
+          CardCount=${allCards.length}
           onFirst=${() => navigate({ type:'first' })}
           onPrev=${ () => navigate({ type:'prev'  })}
           onNext=${ () => navigate({ type:'next'  })}

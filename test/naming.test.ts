@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   newInternalId, prepareLoadedDeck, stripInternalIds, stripComputedGeometry,
-  normalizeWidgetOrder, normalizedName, uniqueNameIn,
+  normalizeWidgetOrder, normalizedName, uniqueNameIn, flattenCards,
 } from '../src/BrowserCard'
 
 describe('newInternalId', () => {
@@ -125,5 +125,55 @@ describe('uniqueNameIn', () => {
 
   it('leaves a numbered name untouched when already unique', () => {
     expect(uniqueNameIn('Label 7', new Set(['Label 1']))).toBe('Label 7')
+  })
+})
+
+// ---- nested cards (schema A) ----------------------------------------------
+
+const nestedDeck = ():any => ({
+  Id:'bc-deck-1', Name:'My/Deck', readOnly:false, swipeToAdjacentCard:true, Script:'',
+  Cards:[{
+    Id:'bc-card-1', Name:'Pa/rent', Color:null, Alpha:1, dontSearch:false, Script:'',
+    Widgets:[{ Id:'bc-widget-1', Name:'Wid/get', Type:'button',
+      Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'' }],
+    CardList:[{
+      Id:'bc-card-2', Name:'Ch/ild', Color:null, Alpha:1, dontSearch:false, Script:'',
+      Widgets:[{ Id:'bc-widget-2', Name:'Deep', Type:'shape',
+        Anchors:['left-width','top-height'], Offsets:[0,1,0,1], visible:true, Script:'' }],
+    }],
+  }],
+})
+
+describe('prepareLoadedDeck — nested cards', () => {
+  it('assigns fresh ids recursively through CardList', () => {
+    const Deck = nestedDeck()
+    prepareLoadedDeck(Deck)
+    const ids = flattenCards(Deck).map((c:any) => c.Id)
+    expect(ids).toHaveLength(2)
+    expect(ids.every((id:string) => /^bc-card-\d+$/.test(id))).toBe(true)
+    expect(new Set(ids).size).toBe(2)                       // unique
+    expect(Deck.Cards[0].CardList[0].Widgets[0].Id).toMatch(/^bc-widget-\d+$/)
+  })
+  it('strips "/" from deck, card and widget names (incl. nested)', () => {
+    const Deck = nestedDeck()
+    prepareLoadedDeck(Deck)
+    expect(Deck.Name).toBe('MyDeck')
+    expect(Deck.Cards[0].Name).toBe('Parent')
+    expect(Deck.Cards[0].Widgets[0].Name).toBe('Widget')
+    expect(Deck.Cards[0].CardList[0].Name).toBe('Child')
+  })
+})
+
+describe('stripInternalIds / stripComputedGeometry / normalizeWidgetOrder — nested', () => {
+  it('strips ids through nested CardList', () => {
+    const Clone:any = stripInternalIds(nestedDeck())
+    expect('Id' in Clone.Cards[0].CardList[0]).toBe(false)
+    expect('Id' in Clone.Cards[0].CardList[0].Widgets[0]).toBe(false)
+  })
+  it('normalizes nested widget order without crashing', () => {
+    const Deck = nestedDeck()
+    normalizeWidgetOrder(Deck)
+    stripComputedGeometry(Deck)
+    expect(Deck.Cards[0].CardList[0].Widgets[0].Name).toBe('Deep')
   })
 })

@@ -9,7 +9,7 @@ BrowserCard (abbreviation: **BC**) is a browser-based reinterpretation of [NovoC
 > 
 > If you want it to work with a running BrowserCard instance directly, you may install and start the [BrowserCard-AI-Broker](https://github.com/rozek/browsercard-ai-broker), configure it as an MCP server in your AI assistant and connect it with BrowserCard. From then on, your AI assistant has full (read and write) access to your deck and its contents.
 
-Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.html) or work through the [Tutorial](https://rozek.github.io/browser-card/demos/Tutorial.html)!
+Try it [live in your browser](https://rozek.github.io/browser-card/demos/index.html) or work through the [Tour](https://rozek.github.io/browser-card/demos/Tour.html)!
 
 ![Screenshot of a simple BrowserCard deck](BrowserCard-Pitch.jpg)
 

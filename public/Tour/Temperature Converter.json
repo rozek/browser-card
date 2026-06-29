@@ -1,0 +1,112 @@
+{
+  "Name": "Temperature Converter",
+  "readOnly": false,
+  "swipeToAdjacentCard": true,
+  "Script": "",
+  "CardWidth": 280,
+  "CardHeight": 110,
+  "SnapToGrid": true,
+  "GridWidth": 10,
+  "GridHeight": 10,
+  "Cards": [
+    {
+      "Name": "Temperature Converter",
+      "Color": "#ffffff",
+      "Alpha": 1,
+      "dontSearch": false,
+      "Script": "",
+      "Widgets": [
+        {
+          "Name": "TitleView 3",
+          "Type": "generic",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            10,
+            250,
+            0,
+            40
+          ],
+          "visible": true,
+          "Script": "await behaveLike('TitleView')",
+          "Configuration": {},
+          "Value": "Temperature Converter"
+        },
+        {
+          "Name": "Label 3",
+          "Type": "generic",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            20,
+            100,
+            40,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('Label')",
+          "Configuration": {},
+          "Value": "°Celsius:"
+        },
+        {
+          "Name": "Label 4",
+          "Type": "generic",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            20,
+            100,
+            70,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('Label')",
+          "Configuration": {},
+          "Value": "°Fahrenheit:"
+        },
+        {
+          "Name": "NumberInput 3",
+          "Type": "generic",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            120,
+            120,
+            40,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('nativeNumberInput')\n\nmy.Value = 0\n\non('update', () => {\n  my.Value = my.Card.Temperature ?? 0\n})\n\non('change', (Value) => {\n  my.Card.Temperature = Value\n})",
+          "Configuration": {},
+          "Value": 0
+        },
+        {
+          "Name": "NumberInput 4",
+          "Type": "generic",
+          "Anchors": [
+            "left-width",
+            "top-height"
+          ],
+          "Offsets": [
+            120,
+            120,
+            70,
+            30
+          ],
+          "visible": true,
+          "Script": "await behaveLike('nativeNumberInput')\n\nmy.Value = 0\n\non('update', () => {\n  my.Value = (my.Card.Temperature ?? 0) * 9/5 + 32\n})\n\non('change', (Value) => {\n  my.Card.Temperature = (Value-32) * 5/9\n})",
+          "Configuration": {},
+          "Value": 32
+        }
+      ]
+    }
+  ]
+}

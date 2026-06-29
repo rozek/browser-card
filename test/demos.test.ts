@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import { ValueIsDeck, resolveGeometry } from '../src/BrowserCard'
 
-const Files = [ 'demos/Showcase.bc', 'demos/Tutorial.bc', 'FeatureTest.bc' ].filter(existsSync)
+const Files = [ 'demos/Showcase.bc', 'demos/Tour.bc', 'FeatureTest.bc' ].filter(existsSync)
 
 describe.each(Files)('demo deck %s', (File) => {
   const Deck = JSON.parse(readFileSync(File,'utf8'))

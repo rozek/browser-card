@@ -6,7 +6,10 @@
 // a "Bearer" authorisation, lifting the rate limit and enabling private context.
 // Any failure (network, HTTP status, abort) is shown as a readable error message.
 //
-// Configuration fields (all optional):
+// Configuration fields (all optional): "Value" and "Token" act as design-time
+// defaults - the runtime properties "my.Value"/"my.Token" take precedence:
+//   "Value"      - Markdown text to render when "my.Value" is unset
+//   "Token"      - GitHub access token used when "my.Token" is unset
 //   "Endpoint"   - API URL (default 'https://api.github.com/markdown')
 //   "APIVersion" - value of the "X-GitHub-Api-Version" header (default '2022-11-28')
 //   "Mode"       - 'markdown' (default) or 'gfm' for GitHub-Flavoured Markdown
@@ -110,8 +113,8 @@
   /**** on 'update' - start a fresh request whenever the inputs actually change ****/
 
     on('update', () => {
-      const Text  = String(my.Value ?? '')
-      const Token = String(my.Token ?? '').trim()
+      const Text  = String(my.Value ?? Configuration?.Value ?? '')
+      const Token = String(my.Token ?? Configuration?.Token ?? '').trim()
       const Data  = State()
 
       if (Text.trim() === '') {                             // nothing to render

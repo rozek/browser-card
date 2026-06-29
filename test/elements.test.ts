@@ -83,12 +83,13 @@ describe('custom elements', () => {
     expect(cardMarker!.closest('.bc-card-canvas')).not.toBeNull()
     expect(el.querySelector('.bc-card-canvas .bc-deck-render')).toBeNull()
 
-    // a colour-less card is transparent by default (so the deck render shows
-    // through); the white "paper" lives on the wrapper behind it
+    // an embedded <bc-deck> is chromeless: a colour-less card is transparent
+    // (so the deck render shows through) and the wrapper carries no white
+    // "paper"/shadow either - that only exists in the full <bc-designer>
     const canvasEl = canvas as HTMLElement
     expect(AlphaPercentOf(canvasEl.style.background)).toBe(0)
     const wrapperEl = wrapper as HTMLElement
-    expect(AlphaPercentOf(wrapperEl.style.background)).toBe(100)
+    expect(AlphaPercentOf(wrapperEl.style.background)).toBe(0)
 
     document.body.removeChild(el)
   })

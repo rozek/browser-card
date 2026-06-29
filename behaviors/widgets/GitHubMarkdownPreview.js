@@ -133,7 +133,7 @@
       return html`
         <div style=${{
           display:'flex', alignItems:'center', justifyContent:'center',
-          width:'100%', height:'100%',
+          width:'100%', height:'100%', background:'#ffffff',
           color:(Colour ?? '#999999'), fontSize:'13px', textAlign:'center', padding:'4px',
         }}>${Message}</div>
       `
@@ -164,7 +164,7 @@
               class="bc-markdown markdown-body"
               style=${{
                 width:'100%', height:'100%', overflow:'auto',
-                padding:'0px', textAlign:'left',
+                padding:'0px', textAlign:'left', background:'#ffffff',
                 color:(my.Color ?? Configuration?.Color),
               }}
               dangerouslySetInnerHTML=${{ __html:(Data.HTML ?? '') }}

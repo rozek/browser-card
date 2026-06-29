@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="52" height="40" viewBox="-1 -1 54 42">
+  <!-- AI-Request: Ellipse rx=21 ry=14, Spitze rechts unten, limetten-grüner Hintergrund, grauer Rand -->
+  <path
+    d="M26,1 A21,14 0 0 1 44,22 L48,39 L37,27 A21,14 0 0 1 26,29 A21,14 0 0 1 5,15 A21,14 0 0 1 26,1 Z"
+    fill="#84CC16" stroke="#888888" stroke-width="1" stroke-linejoin="round"
+  />
+  <g stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="26" y1="22" x2="26" y2="12"/>
+    <polyline points="22,17 26,12 30,17"/>
+  </g>
+</svg>

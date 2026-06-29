@@ -3131,15 +3131,84 @@ interface BC_CardRef {
 //----------------------------------------------------------------------------//
 
 // While a 'render'/'update' handler runs, BC_renderDepth > 0. A reactive write
-// during that window (e.g. `my.Value = …` inside on('render')) must NOT schedule
-// another render - that is exactly the infinite-loop pattern that froze the app.
-// The write itself still happens (so the current render reflects it); only the
-// extra re-render is suppressed, and the developer is warned once per render pass.
+// during that window (e.g. `my.Value = …` inside on('render')) must not re-render
+// *synchronously* - that is the infinite-loop pattern that froze the app. But it
+// must not be dropped either: a Designer edit (or any derived value computed in
+// render) has to become visible. So such a write is collected and a single,
+// coalesced "settle" pass is scheduled on the microtask queue once the current
+// render has unwound. The settle pass re-renders, the new values are read, and
+// the cycle repeats until nothing changes any more - the proxy setters short-
+// circuit equal values (Object.is), so a value that stabilises stops scheduling
+// and the loop ends on its own. Only a value that genuinely changes on *every*
+// pass (a real loop) would never settle; for that case the number of consecutive
+// settle passes is capped, after which further re-renders are suppressed and the
+// developer is warned once.
 
   let BC_renderDepth      = 0
   let BC_renderLoopWarned = false
 
+// settle-pass driver: forceUpdate callbacks collected from reactive writes that
+// happened during a render, plus the bounded re-render scheduler that flushes them
+
+  const BC_pendingUpdates   = new Set<() => void>()
+  let   BC_settleScheduled  = false
+  let   BC_settlePass       = 0
+  let   BC_lastSettleTime   = 0
+  const BC_MaxSettlePasses  = 8      // generous enough for real "settling", far below a freeze
+  const BC_SettleResetMs    = 50     // a gap longer than this starts a new interaction
+
   function isInRenderPass ():boolean { return BC_renderDepth > 0 }
+
+// resetSettleBudget — starts a fresh interaction: each Designer edit (or other
+// discrete change) gets the full settle budget again. Settle passes that belong
+// to the *same* interaction follow each other within a few milliseconds, so a
+// longer pause (see BC_SettleResetMs) marks the boundary between interactions.
+// This matters because Designer edits re-render via their own forceUpdate, not
+// through the proxy, so they cannot reset the budget themselves.
+
+  function resetSettleBudget ():void {
+    BC_settlePass       = 0
+    BC_renderLoopWarned = false
+  }
+
+  function scheduleSettlePass ():void {
+    if (BC_settleScheduled) { return }
+    BC_settleScheduled = true
+    queueMicrotask(runSettlePass)
+  }
+
+  function runSettlePass ():void {
+    BC_settleScheduled = false
+
+    if (BC_pendingUpdates.size === 0) {     // converged: the last pass changed nothing
+      resetSettleBudget()
+      return
+    }
+
+    const Now = Date.now()                  // a pause since the last pass = new interaction
+    if (Now-BC_lastSettleTime > BC_SettleResetMs) { resetSettleBudget() }
+    BC_lastSettleTime = Now
+
+    if (BC_settlePass >= BC_MaxSettlePasses) {     // never settles → a real render loop
+      if (! BC_renderLoopWarned) {
+        BC_renderLoopWarned = true
+        console.warn(
+          '[BrowserCard] a reactive property keeps changing on every render pass - ' +
+          'further re-renders were suppressed to prevent an infinite render loop. ' +
+          'Move such writes into on("ready") or an event handler, or change the ' +
+          'value only when it really differs.'
+        )
+      }
+      BC_pendingUpdates.clear()
+      BC_settlePass = 0
+      return
+    }
+
+    BC_settlePass++
+    const Callbacks = [ ...BC_pendingUpdates ]
+    BC_pendingUpdates.clear()
+    for (const forceUpdate of Callbacks) { forceUpdate() }
+  }
 
 // true if a value is a Deck/Card/Widget proxy. Assigning such a proxy to a
 // property (e.g. the typo `my.Value = my`) would create a circular, non-
@@ -3151,18 +3220,12 @@ interface BC_CardRef {
   }
 
   function scheduleReactiveUpdate (forceUpdate:() => void):void {
-    if (BC_renderDepth > 0) {
-      if (! BC_renderLoopWarned) {
-        BC_renderLoopWarned = true
-        console.warn(
-          '[BrowserCard] a reactive property was changed inside a render handler - ' +
-          'the extra re-render was suppressed to prevent an infinite render loop. ' +
-          'Move such writes into on("ready") or an event handler, or change the ' +
-          'value only when it really differs.'
-        )
-      }
+    if (BC_renderDepth > 0) {     // write during a render handler: defer to a settle pass
+      BC_pendingUpdates.add(forceUpdate)
+      scheduleSettlePass()
       return
     }
+    resetSettleBudget()           // a fresh event-time write begins a new interaction
     forceUpdate()
   }
 
@@ -3296,7 +3359,6 @@ export class ScriptInstance {
       }
     } finally {
       BC_renderDepth--
-      if (BC_renderDepth === 0) { BC_renderLoopWarned = false }
     }
   }
 

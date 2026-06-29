@@ -153,7 +153,7 @@
           return html`
             <div style=${{
               width:'100%', height:'100%', overflow:'auto',
-              padding:'8px', textAlign:'left',
+              padding:'8px', textAlign:'left', background:'#ffffff',
               color:'#a00', font:'13px/1.4 ui-monospace,Menlo,Consolas,monospace',
               whiteSpace:'pre-wrap',
             }}>${Data.Message}</div>

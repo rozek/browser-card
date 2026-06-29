@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="52" height="40" viewBox="-1 -1 54 42">
+  <!-- AI-Warning: Ellipse rx=21 ry=14, Spitze links unten, goldgelber Hintergrund, grauer Rand -->
+  <path
+    d="M26,1 A21,14 0 0 1 47,15 A21,14 0 0 1 26,29 A21,14 0 0 1 15,27 L4,39 L8,22 A21,14 0 0 1 26,1 Z"
+    fill="#F59E0B" stroke="#888888" stroke-width="1" stroke-linejoin="round"
+  />
+  <g fill="white" stroke="none">
+    <rect x="24" y="8" width="4" height="10" rx="2"/>
+    <circle cx="26" cy="22" r="2"/>
+  </g>
+</svg>

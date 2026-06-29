@@ -119,7 +119,7 @@ describe('makeCardProxy', () => {
   })
 })
 
-describe('render-loop protection', () => {
+describe('render-loop protection (bounded settle)', () => {
   function widget () {
     const Obj:any = {
       Id:'bc-widget-1', Name:'W', Type:'shape', Value:'a',
@@ -131,30 +131,71 @@ describe('render-loop protection', () => {
     return { Obj, proxy, forceUpdate }
   }
 
-  it('suppresses the extra re-render when a reactive prop is set during a render handler', () => {
+  const flushMicrotasks = () => Promise.resolve().then(() => undefined)
+
+  it('does not re-render synchronously when a reactive prop is set during render', () => {
     const { Obj, proxy, forceUpdate } = widget()
     const inst = new ScriptInstance()
-    let n = 0
-    inst.on('render', () => { proxy.Value = 'v' + (n++) })   // changes on every pass → would loop
+    inst.on('render', () => { proxy.Value = 'derived' })
 
     inst.renderResult()
-    expect(Obj.Value).toBe('v0')                  // the write still happens
-    expect(forceUpdate).not.toHaveBeenCalled()    // but no re-render is scheduled → no loop
+    expect(Obj.Value).toBe('derived')             // the write still happens
+    expect(forceUpdate).not.toHaveBeenCalled()    // but not synchronously (no in-place loop)
   })
 
-  it('still re-renders for reactive writes outside a render handler', () => {
+  it('schedules a settle re-render so a derived value becomes visible', async () => {
+    const { proxy, forceUpdate } = widget()
+    const inst = new ScriptInstance()
+    inst.on('render', () => { proxy.Value = 'derived' })
+
+    inst.renderResult()
+    await flushMicrotasks()
+    expect(forceUpdate).toHaveBeenCalled()         // a follow-up render was driven
+  })
+
+  it('converges: a stable derived value stops re-rendering', async () => {
+    const { proxy, forceUpdate } = widget()
+    const inst = new ScriptInstance()
+    // mimic Preact: every forced update re-runs the render handler
+    forceUpdate.mockImplementation(() => { inst.renderResult() })
+    inst.on('render', () => { proxy.Value = 'stable' })   // unchanged after the first write
+
+    inst.renderResult()
+    for (let i = 0; i < 20; i++) { await flushMicrotasks() }
+    // one settle pass applies the change; equality short-circuit then stops the loop
+    expect(forceUpdate).toHaveBeenCalledTimes(1)
+  })
+
+  it('caps a genuinely oscillating value and warns once', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const { proxy, forceUpdate } = widget()
+    const inst = new ScriptInstance()
+    let n = 0
+    forceUpdate.mockImplementation(() => { inst.renderResult() })
+    inst.on('render', () => { proxy.Value = 'v' + (n++) })   // changes on every pass → real loop
+
+    inst.renderResult()
+    for (let i = 0; i < 50; i++) { await flushMicrotasks() }
+
+    expect(forceUpdate.mock.calls.length).toBeLessThanOrEqual(8)   // bounded, never frozen
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('infinite render loop'))
+    warn.mockRestore()
+  })
+
+  it('re-renders immediately for reactive writes outside a render handler', () => {
     const { proxy, forceUpdate } = widget()
     proxy.Value = 'changed'                        // ordinary event-time write
     expect(forceUpdate).toHaveBeenCalledTimes(1)
   })
 
-  it('does not leak the suppression state across render passes', () => {
+  it('gives each fresh interaction the full settle budget', async () => {
     const { proxy, forceUpdate } = widget()
     const inst = new ScriptInstance()
     inst.on('render', () => { proxy.Value = 'x' + Math.random() })
-    inst.renderResult()                            // suppressed (depth > 0)
+    inst.renderResult()                            // deferred to a settle pass
     expect(forceUpdate).not.toHaveBeenCalled()
-    proxy.Value = 'after'                          // depth back to 0 → normal
+    proxy.Value = 'after'                          // depth back to 0 → immediate, resets budget
     expect(forceUpdate).toHaveBeenCalledTimes(1)
+    await flushMicrotasks()                         // drain any pending settle work
   })
 })

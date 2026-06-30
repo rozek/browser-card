@@ -195,7 +195,7 @@
           "visible": true,
           "Script": "await behaveLike('MarkdownView');",
           "Configuration": {},
-          "Value": "<b>Learn below how to navigate within this tutorial (and then proceed)</b>:"
+          "Value": "<b>Learn below how to navigate within this tour (and then proceed)</b>:"
         },
         {
           "Id": "bc-widget-8",
@@ -214,7 +214,7 @@
           "visible": true,
           "Script": "await behaveLike('MarkdownView');",
           "Configuration": {},
-          "Value": "Follow this small tutorial to see how you can use BrowserCard and get\nan impression of what you may achieve with this little tool."
+          "Value": "Follow this small tour to see how you can use BrowserCard and get\nan impression of what you may achieve with this little tool."
         },
         {
           "Id": "bc-widget-9",
@@ -317,7 +317,7 @@
           "visible": true,
           "Script": "await behaveLike('MarkdownView');",
           "Configuration": {},
-          "Value": "Click here to start searching within the tutorial"
+          "Value": "Click here to start searching within the tour"
         },
         {
           "Id": "bc-widget-14",
